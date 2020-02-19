@@ -1,0 +1,19 @@
+{
+    "eslint.validate": [
+        "javascript",
+        "typescript"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "editor.formatOnSave": true,
+    "[javascript]": {
+        "editor.formatOnSave": false,
+    },
+    "[typescript]": {
+        "editor.formatOnSave": false,
+    },
+    "eslint.enable": true,
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "docker.defaultRegistryPath": "charlocharlie",
+}

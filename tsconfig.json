@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2019", /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */
+    "module": "commonjs", /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "outDir": "./dist", /* Redirect output structure to the directory. */
+    "removeComments": true, /* Do not emit comments to output. */
+    "strict": true, /* Enable all strict type-checking options. */
+    "moduleResolution": "node", /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+    "typeRoots": [
+      "node_modules/@types"
+    ], /* List of folders to include type definitions from. */
+    "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
+    "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
+  },
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
