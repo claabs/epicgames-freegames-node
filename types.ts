@@ -87,3 +87,27 @@ export interface RootObject {
   data: Data;
   extensions: Extensions;
 }
+
+export interface RedirectResponse {
+  redirectUrl: string;
+  sid: string | null;
+}
+
+export interface OrderPreviewResponse {
+  affiliation: null;
+  catalogResponse: any;
+  country: string;
+  countryName: string;
+  message: null;
+  namespace: string;
+  offers: string[];
+  orderComplete: boolean;
+  orderError: boolean;
+  orderId: null;
+  orderPending: boolean;
+  orderResponse: any;
+  paypalError: null;
+  showCurrencyChangeMessage: boolean;
+  syncToken: string;
+  voucherList: null;
+}

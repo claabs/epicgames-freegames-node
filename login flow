@@ -1,0 +1,13 @@
+Retry until success. Loop:
+    CSRF
+    Login
+Redirect with client id (constant? 875a3b57d3a640a6b7f9b4e883463ab4)
+    Get sid
+Set SID
+Load purchase page with namespace and offer id
+    Get purchaseToken from input div
+Safetech with s=purchaseToken
+Payment methods???
+Order Preview with: X-Requested-With=purchaseToken
+    Get syncToken
+ConfirmOrder with purchase body w/ syncToken

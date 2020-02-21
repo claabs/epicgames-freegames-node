@@ -2,7 +2,14 @@
 import * as cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
 import axios from './axios';
-import { CSRFSetCookies, LoginBody, GraphQLBody, FreegamesResponse } from './types';
+import {
+  CSRFSetCookies,
+  LoginBody,
+  GraphQLBody,
+  FreegamesResponse,
+  RedirectResponse,
+  OrderPreviewResponse,
+} from './types';
 
 config();
 
@@ -38,10 +45,124 @@ async function login(email: string, password: string, totp: string): Promise<voi
       console.log('Session invalidated, retrying');
       await login(email, password, totp);
     } else {
-      console.error('LOGIN FAILED');
+      console.error('LOGIN FAILED:', e.response.data.errorCode);
       throw e;
     }
   }
+}
+
+async function setupSid(): Promise<string> {
+  const clientId = '875a3b57d3a640a6b7f9b4e883463ab4';
+
+  const redirectResp = await axios.get<RedirectResponse>(
+    'https://www.epicgames.com/id/api/redirect',
+    {
+      params: {
+        clientId,
+      },
+    }
+  );
+  const { sid } = redirectResp.data;
+  if (!sid) throw new Error('Sid returned null');
+  await axios.get('https://www.unrealengine.com/id/api/set-sid', {
+    params: {
+      sid,
+    },
+  });
+  return sid;
+}
+
+async function purchase(
+  linkedOfferNs: string,
+  linkedOfferId: string,
+  sessionId: string
+): Promise<void> {
+  //  Get purchase token
+  //  Safetech
+  //  Order Preview
+  //  Confirm Order
+  const purchasePageResp = await axios.get<Document>('https://www.epicgames.com/store/purchase', {
+    params: {
+      namespace: linkedOfferNs,
+      offers: linkedOfferId,
+    },
+  });
+  let purchaseToken = '';
+  const purchaseTokenInput = purchasePageResp.data.querySelector('#purchaseToken');
+  if (purchaseTokenInput && purchaseTokenInput.nodeValue) {
+    purchaseToken = purchaseTokenInput.nodeValue;
+  }
+
+  await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/safetech', {
+    params: {
+      s: sessionId,
+    },
+  });
+
+  await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/payment-methods', {
+    params: {
+      isOrderRequest: 1,
+      namespace: linkedOfferNs,
+    },
+    headers: {
+      'x-requested-with': purchaseToken,
+    },
+  });
+
+  const orderPreviewRequest = {
+    useDefault: true,
+    setDefault: false,
+    namespace: linkedOfferNs,
+    country: null,
+    countryName: null,
+    orderId: null,
+    orderComplete: null,
+    orderError: null,
+    orderPending: null,
+    offers: [linkedOfferId],
+    offerPrice: '',
+  };
+
+  const orderPreviewResp = await axios.post<OrderPreviewResponse>(
+    'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
+    orderPreviewRequest,
+    {
+      headers: {
+        'x-requested-with': purchaseToken,
+      },
+    }
+  );
+
+  const confirmOrderRequest = {
+    useDefault: true,
+    setDefault: false,
+    namespace: linkedOfferNs,
+    country: orderPreviewResp.data.country,
+    countryName: orderPreviewResp.data.countryName,
+    orderId: orderPreviewResp.data.orderId,
+    orderComplete: orderPreviewResp.data.orderComplete,
+    orderError: orderPreviewResp.data.orderError,
+    orderPending: orderPreviewResp.data.orderPending,
+    offers: orderPreviewResp.data.offers,
+    includeAccountBalance: false,
+    totalAmount: 0,
+    affiliateId: '',
+    creatorSource: '',
+    threeDSToken: '',
+    voucherCode: null,
+    syncToken: orderPreviewResp.data.syncToken,
+    isFreeOrder: false,
+  };
+
+  const confirmOrderResp = await axios.post(
+    'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order',
+    confirmOrderRequest,
+    {
+      headers: {
+        'x-requested-with': purchaseToken,
+      },
+    }
+  );
 }
 
 async function getFreeGames(): Promise<FreegamesResponse> {
@@ -83,5 +204,22 @@ async function getFreeGames(): Promise<FreegamesResponse> {
   return resp.data;
 }
 
-login(EMAIL, PASSWORD, '');
-// getFreeGames();
+async function main(): Promise<void> {
+  try {
+    // Login
+    await login(EMAIL, PASSWORD, '');
+    // Setup SID
+    const sessionId = await setupSid();
+    // Get list of free games to purchase
+    // For each game to purchase
+    await purchase(
+      'f9c2aedaff8442b286fbd026948b9f09',
+      'a141915f0de3494791151b205a712cda',
+      sessionId
+    );
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+main();
