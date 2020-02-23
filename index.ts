@@ -6,10 +6,12 @@ import {
   CSRFSetCookies,
   LoginBody,
   GraphQLBody,
-  FreegamesResponse,
   RedirectResponse,
   OrderPreviewResponse,
+  OfferInfo,
 } from './types';
+import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
+import { ProductInfo } from './interfaces/product-info';
 
 config();
 
@@ -88,10 +90,6 @@ async function purchase(
   linkedOfferId: string,
   sessionId: string
 ): Promise<void> {
-  //  Get purchase token
-  //  Safetech
-  //  Order Preview
-  //  Confirm Order
   const purchasePageResp = await axios.get<Document>('https://www.epicgames.com/store/purchase', {
     params: {
       namespace: linkedOfferNs,
@@ -104,12 +102,14 @@ async function purchase(
     purchaseToken = purchaseTokenInput.nodeValue;
   }
 
+  // TODO: Is this necessary???
   await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/safetech', {
     params: {
       s: sessionId,
     },
   });
 
+  // TODO: Pretty sure this isn't necessary
   // await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/payment-methods', {
   //   params: {
   //     isOrderRequest: 1,
@@ -144,6 +144,7 @@ async function purchase(
     }
   );
 
+  // TODO: Can probably just use a spread operator here?
   const confirmOrderRequest = {
     useDefault: true,
     setDefault: false,
@@ -176,7 +177,7 @@ async function purchase(
   );
 }
 
-async function getFreeGames(): Promise<FreegamesResponse> {
+async function getFreeGames(): Promise<OfferElement[]> {
   const query = `query promotionsQuery($namespace: String!, $country: String!, $locale: String!) {
     Catalog {
       catalogOffers(namespace: $namespace, locale: $locale, params: {category: "freegames", country: $country, sortBy: "effectiveDate", sortDir: "asc"}) {
@@ -205,14 +206,71 @@ async function getFreeGames(): Promise<FreegamesResponse> {
   }`;
   const variables = { namespace: 'epic', country: 'US', locale: 'en-US' };
   const data: GraphQLBody = { query, variables };
-  let resp;
+  const resp = await axios.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, data);
+  const nowDate = new Date();
+  const freeOfferedGames = resp.data.data.Catalog.catalogOffers.elements.filter(offer => {
+    let r = false;
+    offer.promotions.promotionalOffers.forEach(innerOffers => {
+      innerOffers.promotionalOffers.forEach(dates => {
+        const startDate = new Date(dates.startDate);
+        const endDate = new Date(dates.endDate);
+        if (startDate <= nowDate && nowDate <= endDate) {
+          r = true;
+        }
+      });
+    });
+    return r;
+  });
+
+  return freeOfferedGames;
+}
+
+// TODO: Parameterize region (en-US). Env var probably
+async function ownsGame(
+  linkedOfferNs: string,
+  linkedOfferId: string,
+  productSlug: string
+): Promise<boolean> {
+  const productInfoResp = await axios.get<ProductInfo>(
+    `https://www.epicgames.com/store/en-US/api/content/products/${productSlug}`
+  );
   try {
-    resp = await axios.post<FreegamesResponse>(GRAPHQL_ENDPOINT, data);
+    const matchedPage = productInfoResp.data.pages.find(page => {
+      try {
+        const match = page.offer.namespace === linkedOfferNs && page.offer.id === linkedOfferId;
+        return match;
+      } catch (e) {
+        // Inner try catch in case one of the pages is missing fields
+        console.log(e);
+        return false;
+      }
+    });
+    if (!matchedPage) return false;
+    return matchedPage.item.hasItem;
   } catch (e) {
-    console.error(e.response.data);
-    throw e;
+    // Outer try catch in case we get a bogus JSON response
+    console.log(e);
+    return false;
   }
-  return resp.data;
+}
+
+async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<OfferInfo[]> {
+  const ownsGamePromises = validOffers.map(offer => {
+    return ownsGame(offer.linkedOfferNs, offer.linkedOfferId, offer.productSlug);
+  });
+  const ownsGames = await Promise.all(ownsGamePromises);
+  const purchasableGames: OfferInfo[] = validOffers
+    .filter((offer, index) => {
+      return ownsGames[index];
+    })
+    .map(offer => {
+      return {
+        offerNamespace: offer.linkedOfferNs,
+        offerId: offer.linkedOfferId,
+        productName: offer.title,
+      };
+    });
+  return purchasableGames;
 }
 
 async function main(): Promise<void> {
@@ -221,14 +279,13 @@ async function main(): Promise<void> {
     await login(EMAIL, PASSWORD);
     // Setup SID
     const sessionId = await setupSid();
-    // Get list of free games to purchase
-    //    TODO: Find API to view owned games
-    // For each game to purchase
-    await purchase(
-      'f9c2aedaff8442b286fbd026948b9f09',
-      'a141915f0de3494791151b205a712cda',
-      sessionId
-    );
+    const validFreeGames = await getFreeGames();
+    const purchasableGames = await getPurchasableFreeGames(validFreeGames);
+    for (let i = 0; i < purchasableGames.length; i += 1) {
+      console.log(`Purchasing ${purchasableGames[i].productName}`);
+      // eslint-disable-next-line no-await-in-loop
+      await purchase(purchasableGames[i].offerNamespace, purchasableGames[i].offerId, sessionId);
+    }
   } catch (e) {
     console.error(e);
   }
