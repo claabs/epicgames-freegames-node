@@ -11,7 +11,7 @@ export interface CSRFSetCookies {
 export interface LoginBody {
   password: string;
   rememberMe: boolean;
-  captcha: '';
+  captcha: string;
   email: string;
 }
 

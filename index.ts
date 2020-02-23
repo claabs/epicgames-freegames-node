@@ -17,10 +17,14 @@ const CSRF_ENDPOINT = 'https://www.epicgames.com/id/api/csrf';
 const LOGIN_ENDPOINT = 'https://www.epicgames.com/id/api/login';
 const GRAPHQL_ENDPOINT = 'https://graphql.epicgames.com/graphql';
 
+const EPIC_CLIENT_ID = '875a3b57d3a640a6b7f9b4e883463ab4';
+const EPIC_ARKOSE_PUBLIC_KEY = '37D033EB-6489-3763-2AE1-A228C04103F5';
+const EPIC_ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
+
 const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
 
-async function login(email: string, password: string, totp: string): Promise<void> {
+async function login(email: string, password: string, captcha = '', totp?: string): Promise<void> {
   const csrfResp = await axios.get(CSRF_ENDPOINT);
   const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
     map: true,
@@ -30,7 +34,7 @@ async function login(email: string, password: string, totp: string): Promise<voi
   const loginBody: LoginBody = {
     password,
     rememberMe: false,
-    captcha: '',
+    captcha,
     email,
   };
   try {
@@ -43,7 +47,14 @@ async function login(email: string, password: string, totp: string): Promise<voi
   } catch (e) {
     if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
       console.log('Session invalidated, retrying');
-      await login(email, password, totp);
+      await login(email, password, captcha, totp);
+    } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
+      console.warn('Captcha required');
+      // TODO: We have some options here:
+      // 1. Provide web portal that the user can solve the captcha in
+      // 2. Just provide a link to the NoJS captcha page and have the use paste in the session token in a console
+      // 3. Use the image-based FunCaptcha solver project https://github.com/dmartingarcia/funcaptcha-solver
+      // 4. Use Google voice to text service on audio-based FunCaptcha. You get 60 minutes of audio transcription for free. Each user would provide their own token.
     } else {
       console.error('LOGIN FAILED:', e.response.data.errorCode);
       throw e;
@@ -99,15 +110,15 @@ async function purchase(
     },
   });
 
-  await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/payment-methods', {
-    params: {
-      isOrderRequest: 1,
-      namespace: linkedOfferNs,
-    },
-    headers: {
-      'x-requested-with': purchaseToken,
-    },
-  });
+  // await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/payment-methods', {
+  //   params: {
+  //     isOrderRequest: 1,
+  //     namespace: linkedOfferNs,
+  //   },
+  //   headers: {
+  //     'x-requested-with': purchaseToken,
+  //   },
+  // });
 
   const orderPreviewRequest = {
     useDefault: true,
@@ -207,10 +218,11 @@ async function getFreeGames(): Promise<FreegamesResponse> {
 async function main(): Promise<void> {
   try {
     // Login
-    await login(EMAIL, PASSWORD, '');
+    await login(EMAIL, PASSWORD);
     // Setup SID
     const sessionId = await setupSid();
     // Get list of free games to purchase
+    //    TODO: Find API to view owned games
     // For each game to purchase
     await purchase(
       'f9c2aedaff8442b286fbd026948b9f09',
