@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import * as cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
+import { JSDOM } from 'jsdom';
 import axios from './axios';
 import {
   CSRFSetCookies,
@@ -12,6 +13,7 @@ import {
 } from './types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
 import { ProductInfo } from './interfaces/product-info';
+import { getCaptchaSessionToken } from './captcha';
 
 config();
 
@@ -26,12 +28,21 @@ const EPIC_ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
 const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
 
-async function login(email: string, password: string, captcha = '', totp?: string): Promise<void> {
+async function login(
+  email: string,
+  password: string,
+  captcha = '',
+  attempt = 0,
+  totp?: string
+): Promise<void> {
   const csrfResp = await axios.get(CSRF_ENDPOINT);
   const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
     map: true,
   }) as unknown) as CSRFSetCookies;
   const csrfToken = cookies['XSRF-TOKEN'].value;
+  if (attempt > 5) {
+    throw new Error('Too many login attempts');
+  }
 
   const loginBody: LoginBody = {
     password,
@@ -49,9 +60,11 @@ async function login(email: string, password: string, captcha = '', totp?: strin
   } catch (e) {
     if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
       console.log('Session invalidated, retrying');
-      await login(email, password, captcha, totp);
+      await login(email, password, captcha, attempt + 1, totp);
     } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
       console.warn('Captcha required');
+      const captchaToken = await getCaptchaSessionToken();
+      await login(email, password, captchaToken, attempt + 1, totp);
       // TODO: We have some options here:
       // 1. Provide web portal that the user can solve the captcha in
       // 2. Just provide a link to the NoJS captcha page and have the use paste in the session token in a console
@@ -90,14 +103,15 @@ async function purchase(
   linkedOfferId: string,
   sessionId: string
 ): Promise<void> {
-  const purchasePageResp = await axios.get<Document>('https://www.epicgames.com/store/purchase', {
+  const purchasePageResp = await axios.get<string>('https://www.epicgames.com/store/purchase', {
     params: {
       namespace: linkedOfferNs,
       offers: linkedOfferId,
     },
   });
+  const purchaseDocument = new JSDOM(purchasePageResp.data).window.document;
   let purchaseToken = '';
-  const purchaseTokenInput = purchasePageResp.data.querySelector('#purchaseToken');
+  const purchaseTokenInput = purchaseDocument.querySelector('#purchaseToken');
   if (purchaseTokenInput && purchaseTokenInput.nodeValue) {
     purchaseToken = purchaseTokenInput.nodeValue;
   }
