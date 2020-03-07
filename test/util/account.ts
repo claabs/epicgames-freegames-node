@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import * as RandExp from 'randexp';
-import * as cookieParser from 'set-cookie-parser';
+import RandExp from 'randexp';
+import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
-import * as qs from 'qs';
+import qs from 'qs';
 import { config } from 'dotenv';
 import { login, setupSid } from '../../src/index';
 import TempMail from './temp-mail';

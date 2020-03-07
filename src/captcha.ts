@@ -3,11 +3,11 @@
 import { SpeechClient } from '@google-cloud/speech';
 import rawAxios from 'axios';
 import { google } from '@google-cloud/speech/build/protos/protos';
-import * as qs from 'qs';
+import qs from 'qs';
 import { JSDOM } from 'jsdom';
 import { encode as encodeArrayBuffer } from 'base64-arraybuffer';
-import * as readline from 'readline';
-import * as open from 'open';
+import readline from 'readline';
+import open from 'open';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -140,7 +140,10 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   if (errorMsg && errorMsg.innerHTML.includes('Audio challenge methods require some extra steps')) {
     return manuallySolveCaptcha(publicKey);
   }
-  console.warn('Captcha failed. Trying again');
-  console.log(submitResp.data);
-  return getCaptchaSessionToken(publicKey);
+  if (errorMsg && errorMsg.innerHTML.includes(`Whoops! That's not quite right.`)) {
+    console.warn('Got captcha incorrect');
+    return getCaptchaSessionToken(publicKey);
+  }
+  console.error('Unexpected error in captcha', submitResp.data);
+  throw new Error('Error solving captcha');
 }

@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import * as cookieParser from 'set-cookie-parser';
+import cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
 import { JSDOM } from 'jsdom';
 import { scheduleJob } from 'node-schedule';
@@ -69,6 +69,27 @@ export async function login(
       throw e;
     }
   }
+}
+
+export async function refreshLogin(): Promise<boolean> {
+  const csrfResp = await axios.get(CSRF_ENDPOINT);
+  const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
+    map: true,
+  }) as unknown) as CSRFSetCookies;
+  const csrfToken = cookies['XSRF-TOKEN'].value;
+  const redirectResp = await axios.get<RedirectResponse>(
+    'https://www.epicgames.com/id/api/redirect',
+    {
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+      params: {
+        clientId: EPIC_CLIENT_ID,
+      },
+    }
+  );
+  const { sid } = redirectResp.data;
+  return Boolean(sid);
 }
 
 export async function setupSid(): Promise<string> {
@@ -290,7 +311,12 @@ export async function getAllFreeGames(): Promise<void> {
 async function main(): Promise<void> {
   try {
     // Login
-    await login(EMAIL, PASSWORD);
+    if (await refreshLogin()) {
+      console.log('Successfully refreshed credentials');
+    } else {
+      console.log('Could not refresh credentials. Logging in fresh.');
+      await login(EMAIL, PASSWORD);
+    }
     await getAllFreeGames();
   } catch (e) {
     console.error(e);

@@ -27,9 +27,9 @@ I decided to take a different approach by only using the APIs that the Epic Game
   * Order preview
   * Order confirmation
 * Cookie management
-  * *TODO:* Save to file in case of shutdown
+  * Save to file in case of shutdown
 * Schedule check/purchase via cron string
-* *TODO:* Authentication refresh to reduce login count
+* Authentication refresh to reduce login count
 * *TODO:* Global store support (not just `en-US`)
 
 ### Potential future features
@@ -65,7 +65,7 @@ Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly e
 
 ### Docker Run
 
-`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /mnt/user/appdata/epicgames-freegames/:/usr/app/config charlocharlie/epicgames-freegames:latest`
+`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /mnt/user/appdata/epicgames-freegames/:/usr/app/config:rw charlocharlie/epicgames-freegames:latest`
 
 ### Future
 
