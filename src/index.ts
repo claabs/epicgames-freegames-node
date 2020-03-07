@@ -229,20 +229,22 @@ async function ownsGame(
   try {
     const matchedPage = productInfoResp.data.pages.find(page => {
       try {
-        const match = page.offer.namespace === linkedOfferNs && page.offer.id === linkedOfferId;
-        return match;
+        return page.offer.namespace === linkedOfferNs && page.offer.id === linkedOfferId;
       } catch (e) {
         // Inner try catch in case one of the pages is missing fields
-        console.log(e);
-        return false;
+        console.error(e);
+        return true; // Return true so we do nothing
       }
     });
-    if (!matchedPage) return false;
-    return matchedPage.item.hasItem;
+    if (!matchedPage) {
+      console.error('Could not find a page for the offer');
+      return true; // Return true so we do nothing
+    }
+    return matchedPage.offer.hasOffer;
   } catch (e) {
     // Outer try catch in case we get a bogus JSON response
     console.log(e);
-    return false;
+    return true; // Return true so we do nothing
   }
 }
 
