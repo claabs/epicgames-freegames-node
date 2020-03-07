@@ -64,7 +64,9 @@
   },
   "author": "Charlie Laabs",
   "eslintIgnore": [
-    "**/*.config.js"
+    "**/*.config.js",
+    "node_modules/**",
+    "dist/**"
   ],
   "license": "MIT"
 }
