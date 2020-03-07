@@ -76,7 +76,7 @@ export async function setupSid(): Promise<string> {
     'https://www.epicgames.com/id/api/redirect',
     {
       params: {
-        EPIC_CLIENT_ID,
+        clientId: EPIC_CLIENT_ID,
       },
     }
   );
@@ -268,7 +268,15 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
 export async function getAllFreeGames(): Promise<void> {
   await setupSid();
   const validFreeGames = await getFreeGames();
+  console.log(
+    'Available free games:',
+    validFreeGames.map(game => game.title)
+  );
   const purchasableGames = await getPurchasableFreeGames(validFreeGames);
+  console.log(
+    'Purchasable games:',
+    purchasableGames.map(game => game.productName)
+  );
   for (let i = 0; i < purchasableGames.length; i += 1) {
     console.log(`Purchasing ${purchasableGames[i].productName}`);
     // eslint-disable-next-line no-await-in-loop
