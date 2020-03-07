@@ -28,7 +28,7 @@ I decided to take a different approach by only using the APIs that the Epic Game
   * Order confirmation
 * Cookie management
   * *TODO:* Save to file in case of shutdown
-* *TODO:* Schedule check/purchase via cron string
+* Schedule check/purchase via cron string
 * *TODO:* Authentication refresh to reduce login count
 * *TODO:* Global store support (not just `en-US`)
 
@@ -44,13 +44,13 @@ I decided to take a different approach by only using the APIs that the Epic Game
 
 ### Environment Variables
 
-| Variable        | Example                       | Description                                                                           |
-|-----------------|-------------------------------|---------------------------------------------------------------------------------------|
-| EMAIL           | example@gmail.com             | Epic Games login email                                                                |
-| PASSWORD        | 993                           | Epic Games login password                                                             |
-| GCP_CONFIG_NAME | account-name-abcdef12345.json | GCP credentials JSON filename located in ./config/                                    |
-| RUN_ON_STARTUP  | true                          | (Optional) If true, the process will run on startup in addition to the scheduled time |
-| CRON_SCHEDULE   | 0 12 * * *                    | (Optional) Cron string of when to run the process                                     |
+| Variable        | Example                         | Description                                                                           |
+|-----------------|---------------------------------|---------------------------------------------------------------------------------------|
+| EMAIL           | `example@gmail.com`             | Epic Games login email                                                                |
+| PASSWORD        | `993`                           | Epic Games login password                                                             |
+| GCP_CONFIG_NAME | `account-name-abcdef12345.json` | GCP credentials JSON filename located in ./config/                                    |
+| RUN_ON_STARTUP  | `true`                          | (Optional) If true, the process will run on startup in addition to the scheduled time |
+| CRON_SCHEDULE   | `0 12 * * *`                    | (Optional) Cron string of when to run the process                                     |
 
 ### Future
 
@@ -62,21 +62,21 @@ Eventually, the project will be deployed in Docker and be configurable by either
 
 Place these variables in a `.env` file in the project root.
 
-| Variable      | Example | Description                                                                                                      |
-|---------------|---------|------------------------------------------------------------------------------------------------------------------|
-| TEST_USER     | abc123  | The default user to use when not provided in command options                                                     |
-| TEST_PASSWORD | xyz789  | The default password to use when not provided in command options                                                 |
-| ENV           | local   | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
+| Variable      | Example   | Description                                                                                                      |
+|---------------|-----------|------------------------------------------------------------------------------------------------------------------|
+| TEST_USER     | `abc123`  | The default user to use when not provided in command options                                                     |
+| TEST_PASSWORD | `xyz789`  | The default password to use when not provided in command options                                                 |
+| ENV           | `local`   | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
 
 ### Optional variables
 
 These variables are not currently necessary due to the plus-sign email exploit.
 
-| Variable                     | Example          | Description                              |
-|------------------------------|------------------|------------------------------------------|
-| PERMANENT_EMAIL_HOST         | imap.zoho.com    | The incoming IMAP server name            |
-| PERMANENT_EMAIL_PORT         | 993              | The incoming IMAP port                   |
-| PERMANENT_EMAIL_USER         | example@zoho.com | The IMAP username                        |
-| PERMANENT_EMAIL_PASS         | xyz789           | The IMAP password                        |
-| PERMANENT_EMAIL_ADDRESS      | example          | The email address portion before the '@' |
-| PERMANENT_EMAIL_ADDRESS_HOST | zohomail.com     | The email address portion after the '@'  |
+| Variable                     | Example            | Description                              |
+|------------------------------|--------------------|------------------------------------------|
+| PERMANENT_EMAIL_HOST         | `imap.zoho.com`    | The incoming IMAP server name            |
+| PERMANENT_EMAIL_PORT         | `993`              | The incoming IMAP port                   |
+| PERMANENT_EMAIL_USER         | `example@zoho.com` | The IMAP username                        |
+| PERMANENT_EMAIL_PASS         | `xyz789`           | The IMAP password                        |
+| PERMANENT_EMAIL_ADDRESS      | `example`          | The email address portion before the '@' |
+| PERMANENT_EMAIL_ADDRESS_HOST | `zohomail.com`     | The email address portion after the '@'  |
