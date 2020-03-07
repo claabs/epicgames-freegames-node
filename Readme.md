@@ -47,7 +47,7 @@ I decided to take a different approach by only using the APIs that the Epic Game
 | Variable        | Example                         | Description                                                                           |
 |-----------------|---------------------------------|---------------------------------------------------------------------------------------|
 | EMAIL           | `example@gmail.com`             | Epic Games login email                                                                |
-| PASSWORD        | `993`                           | Epic Games login password                                                             |
+| PASSWORD        | `abc123`                        | Epic Games login password                                                             |
 | GCP_CONFIG_NAME | `account-name-abcdef12345.json` | GCP credentials JSON filename located in ./config/                                    |
 | RUN_ON_STARTUP  | `true`                          | (Optional) If true, the process will run on startup in addition to the scheduled time |
 | CRON_SCHEDULE   | `0 12 * * *`                    | (Optional) Cron string of when to run the process                                     |
