@@ -33,4 +33,4 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Build and lint
-      run: npm run build
+      run: npm run lint
