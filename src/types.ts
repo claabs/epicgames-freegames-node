@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Cookie } from 'set-cookie-parser';
 
 export interface CSRFSetCookies {

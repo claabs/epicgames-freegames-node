@@ -8,6 +8,12 @@
 
 Assuming there will always be at least one free game offer available, test account creation can be done with the following strategy:
 
+### New Strategy
+
+Epic does not filter out the plus-sign suffix that many email mailboxes use to reuse emails. Because of this, we can just create accounts using the same permanent email address.
+
+### Old Strategy
+
 1. Have a **permanent email** on a trusted domain (e.g. gmail.com) that is used to create the account.
     * Epic blocks registering accounts with temp email domains. However they don't block temp email domains on the "change email" process.
 1. Create the account with a random first name, last name, username, and password.

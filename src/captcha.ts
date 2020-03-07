@@ -6,9 +6,15 @@ import { google } from '@google-cloud/speech/build/protos/protos';
 import * as qs from 'qs';
 import { JSDOM } from 'jsdom';
 import { encode as encodeArrayBuffer } from 'base64-arraybuffer';
+import * as readline from 'readline';
+import * as open from 'open';
+
+export enum EpicArkosePublicKey {
+  LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
+  CREATE = 'E8AD0E2A-2E72-0F06-2C52-706D88BECA75',
+}
 
 const ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
-const CAPTCHA_URL = `${ARKOSE_BASE_URL}/fc/api/nojs/?pkey=37D033EB-6489-3763-2AE1-A228C04103F5&gametype=audio`;
 
 const axios = rawAxios.create({
   headers: {
@@ -16,10 +22,41 @@ const axios = rawAxios.create({
   },
 });
 
-export async function getCaptchaSessionToken(): Promise<string> {
-  const speech = new SpeechClient({
-    keyFilename: './config/captcha-audio-720f15c34d3e.json',
+async function asyncReadline(question: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    rl.question(`${question}:\n`, (answer: string) => {
+      rl.close();
+      resolve(answer);
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rl.on('error', (err: any) => {
+      reject(err);
+    });
   });
+}
+
+const manuallySolveCaptcha = async (publicKey: EpicArkosePublicKey): Promise<string> => {
+  if (!process.env.ENV || process.env.ENV !== 'local') {
+    throw new Error('Audio captcha cannot be solved by a bot');
+  }
+  await open(`${ARKOSE_BASE_URL}/fc/api/nojs/?pkey=${publicKey}`);
+  const token = await asyncReadline(
+    'Solve the captcha, paste in the session token, and press enter'
+  );
+  return token;
+};
+
+export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Promise<string> {
+  const gcpConfigName = process.env.GCP_CONFIG_NAME || 'missing-gcp-config';
+  const speech = new SpeechClient({
+    keyFilename: `./config/${gcpConfigName}`,
+  });
+  const CAPTCHA_URL = `${ARKOSE_BASE_URL}/fc/api/nojs/?pkey=${publicKey}&gametype=audio`;
 
   const initialPage = await axios.get<string>(CAPTCHA_URL);
   const initialDocument = new JSDOM(initialPage.data).window.document;
@@ -31,6 +68,8 @@ export async function getCaptchaSessionToken(): Promise<string> {
   ) as HTMLInputElement).value;
   const audioPath = (initialDocument.querySelector('#audio_download') as HTMLAnchorElement).href;
   const audioURL = ARKOSE_BASE_URL + audioPath;
+
+  console.debug('audio URL', audioURL);
 
   const audioResp = await axios.get<ArrayBuffer>(audioURL, {
     responseType: 'arraybuffer',
@@ -63,10 +102,16 @@ export async function getCaptchaSessionToken(): Promise<string> {
     digitString = speechResponse.results[0].alternatives[0].transcript;
   } else {
     console.log('Transcript failed. Retrying.');
-    return getCaptchaSessionToken();
+    return getCaptchaSessionToken(publicKey);
   }
 
   digitString = digitString.replace(/\D/g, '');
+  if (digitString.length !== 7) {
+    console.log('Did not transcribe enough digits. Retrying');
+    return getCaptchaSessionToken(publicKey);
+  }
+
+  console.debug('Guessing', digitString);
 
   const submitBody = {
     'fc-game[session_token]': sessionToken,
@@ -82,6 +127,7 @@ export async function getCaptchaSessionToken(): Promise<string> {
   });
   const submitDocument = new JSDOM(submitResp.data).window.document;
   const verificationText = submitDocument.querySelector('#verification-txt > span');
+  const errorMsg = submitDocument.querySelector('#error-msg');
 
   if (verificationText && verificationText.innerHTML === 'Verification correct!') {
     console.log('Captcha successful');
@@ -91,6 +137,10 @@ export async function getCaptchaSessionToken(): Promise<string> {
     console.log('Captcha session token:', verificationCode);
     return verificationCode;
   }
+  if (errorMsg && errorMsg.innerHTML.includes('Audio challenge methods require some extra steps')) {
+    return manuallySolveCaptcha(publicKey);
+  }
   console.warn('Captcha failed. Trying again');
-  return getCaptchaSessionToken();
+  console.log(submitResp.data);
+  return getCaptchaSessionToken(publicKey);
 }

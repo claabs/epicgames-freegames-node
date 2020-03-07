@@ -2,7 +2,8 @@
 import * as cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
 import { JSDOM } from 'jsdom';
-import axios from './axios';
+import { scheduleJob } from 'node-schedule';
+import axios from './common/axios';
 import {
   CSRFSetCookies,
   LoginBody,
@@ -13,7 +14,7 @@ import {
 } from './types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
 import { ProductInfo } from './interfaces/product-info';
-import { getCaptchaSessionToken } from './captcha';
+import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
 
 config();
 
@@ -22,13 +23,11 @@ const LOGIN_ENDPOINT = 'https://www.epicgames.com/id/api/login';
 const GRAPHQL_ENDPOINT = 'https://graphql.epicgames.com/graphql';
 
 const EPIC_CLIENT_ID = '875a3b57d3a640a6b7f9b4e883463ab4';
-const EPIC_ARKOSE_PUBLIC_KEY = '37D033EB-6489-3763-2AE1-A228C04103F5';
-const EPIC_ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
 
 const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
 
-async function login(
+export async function login(
   email: string,
   password: string,
   captcha = '',
@@ -63,13 +62,8 @@ async function login(
       await login(email, password, captcha, attempt + 1, totp);
     } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
       console.warn('Captcha required');
-      const captchaToken = await getCaptchaSessionToken();
+      const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
       await login(email, password, captchaToken, attempt + 1, totp);
-      // TODO: We have some options here:
-      // 1. Provide web portal that the user can solve the captcha in
-      // 2. Just provide a link to the NoJS captcha page and have the use paste in the session token in a console
-      // 3. Use the image-based FunCaptcha solver project https://github.com/dmartingarcia/funcaptcha-solver
-      // 4. Use Google voice to text service on audio-based FunCaptcha. You get 60 minutes of audio transcription for free. Each user would provide their own token.
     } else {
       console.error('LOGIN FAILED:', e.response.data.errorCode);
       throw e;
@@ -77,14 +71,12 @@ async function login(
   }
 }
 
-async function setupSid(): Promise<string> {
-  const clientId = '875a3b57d3a640a6b7f9b4e883463ab4';
-
+export async function setupSid(): Promise<string> {
   const redirectResp = await axios.get<RedirectResponse>(
     'https://www.epicgames.com/id/api/redirect',
     {
       params: {
-        clientId,
+        EPIC_CLIENT_ID,
       },
     }
   );
@@ -98,11 +90,7 @@ async function setupSid(): Promise<string> {
   return sid;
 }
 
-async function purchase(
-  linkedOfferNs: string,
-  linkedOfferId: string,
-  sessionId: string
-): Promise<void> {
+export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
   const purchasePageResp = await axios.get<string>('https://www.epicgames.com/store/purchase', {
     params: {
       namespace: linkedOfferNs,
@@ -111,28 +99,14 @@ async function purchase(
   });
   const purchaseDocument = new JSDOM(purchasePageResp.data).window.document;
   let purchaseToken = '';
-  const purchaseTokenInput = purchaseDocument.querySelector('#purchaseToken');
-  if (purchaseTokenInput && purchaseTokenInput.nodeValue) {
-    purchaseToken = purchaseTokenInput.nodeValue;
+  const purchaseTokenInput = purchaseDocument.querySelector('#purchaseToken') as HTMLInputElement;
+  if (purchaseTokenInput && purchaseTokenInput.value) {
+    purchaseToken = purchaseTokenInput.value;
+  } else {
+    // console.error(purchasePageResp.data);
+    throw new Error('Missing purchase token');
   }
-
-  // TODO: Is this necessary???
-  await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/safetech', {
-    params: {
-      s: sessionId,
-    },
-  });
-
-  // TODO: Pretty sure this isn't necessary
-  // await axios.get('https://payment-website-pci.ol.epicgames.com/purchase/payment-methods', {
-  //   params: {
-  //     isOrderRequest: 1,
-  //     namespace: linkedOfferNs,
-  //   },
-  //   headers: {
-  //     'x-requested-with': purchaseToken,
-  //   },
-  // });
+  console.debug('purchaseToken', purchaseToken);
 
   const orderPreviewRequest = {
     useDefault: true,
@@ -148,6 +122,7 @@ async function purchase(
     offerPrice: '',
   };
 
+  console.debug('order preview request', orderPreviewRequest);
   const orderPreviewResp = await axios.post<OrderPreviewResponse>(
     'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
     orderPreviewRequest,
@@ -157,6 +132,7 @@ async function purchase(
       },
     }
   );
+  console.debug('order preview response', orderPreviewResp.data);
 
   // TODO: Can probably just use a spread operator here?
   const confirmOrderRequest = {
@@ -189,9 +165,10 @@ async function purchase(
       },
     }
   );
+  console.debug('confirm order response', confirmOrderResp.data);
 }
 
-async function getFreeGames(): Promise<OfferElement[]> {
+export async function getFreeGames(): Promise<OfferElement[]> {
   const query = `query promotionsQuery($namespace: String!, $country: String!, $locale: String!) {
     Catalog {
       catalogOffers(namespace: $namespace, locale: $locale, params: {category: "freegames", country: $country, sortBy: "effectiveDate", sortDir: "asc"}) {
@@ -245,8 +222,9 @@ async function ownsGame(
   linkedOfferId: string,
   productSlug: string
 ): Promise<boolean> {
+  const productName = productSlug.split('/')[0];
   const productInfoResp = await axios.get<ProductInfo>(
-    `https://www.epicgames.com/store/en-US/api/content/products/${productSlug}`
+    `https://www.epicgames.com/store/en-US/api/content/products/${productName}`
   );
   try {
     const matchedPage = productInfoResp.data.pages.find(page => {
@@ -275,7 +253,7 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
   const ownsGames = await Promise.all(ownsGamePromises);
   const purchasableGames: OfferInfo[] = validOffers
     .filter((offer, index) => {
-      return ownsGames[index];
+      return !ownsGames[index];
     })
     .map(offer => {
       return {
@@ -287,22 +265,29 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
   return purchasableGames;
 }
 
+export async function getAllFreeGames(): Promise<void> {
+  await setupSid();
+  const validFreeGames = await getFreeGames();
+  const purchasableGames = await getPurchasableFreeGames(validFreeGames);
+  for (let i = 0; i < purchasableGames.length; i += 1) {
+    console.log(`Purchasing ${purchasableGames[i].productName}`);
+    // eslint-disable-next-line no-await-in-loop
+    await purchase(purchasableGames[i].offerNamespace, purchasableGames[i].offerId);
+    console.log('Done purchasing');
+  }
+}
+
 async function main(): Promise<void> {
   try {
     // Login
     await login(EMAIL, PASSWORD);
-    // Setup SID
-    const sessionId = await setupSid();
-    const validFreeGames = await getFreeGames();
-    const purchasableGames = await getPurchasableFreeGames(validFreeGames);
-    for (let i = 0; i < purchasableGames.length; i += 1) {
-      console.log(`Purchasing ${purchasableGames[i].productName}`);
-      // eslint-disable-next-line no-await-in-loop
-      await purchase(purchasableGames[i].offerNamespace, purchasableGames[i].offerId, sessionId);
-    }
+    await getAllFreeGames();
   } catch (e) {
     console.error(e);
   }
 }
 
-main();
+if (process.env.RUN_ON_STARTUP) main();
+
+const cronTime = process.env.CRON_SCHEDULE || '0 12 * * *';
+scheduleJob(cronTime, async () => main());
