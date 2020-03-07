@@ -10,7 +10,7 @@ WORKDIR /usr/app
 ########
 FROM base as build
 
-# Copy all *.json, *.js, *.ts
+# Copy all source files
 COPY . .
 # Prod deps already installed, add dev deps
 RUN npm i
@@ -21,8 +21,6 @@ RUN npm run build
 # DEPLOY
 ########
 FROM base as deploy
-
-EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 

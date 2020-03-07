@@ -9,7 +9,7 @@ import TempMail from './temp-mail';
 import PermMail from './perm-mail';
 import axios from '../../src/common/axios';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from '../../src/captcha';
-import { CSRFSetCookies } from '../../src/types';
+import { CSRFSetCookies } from '../../src/interfaces/types';
 
 config();
 

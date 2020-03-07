@@ -8,8 +8,8 @@
     "start:ts": "ts-node src/index.ts",
     "build": "tsc",
     "lint": "tsc --noEmit && eslint **/*.ts",
-    "redeem": "ts-node src/commands.ts redeem",
-    "create": "ts-node src/commands.ts create",
+    "redeem": "ts-node commands.ts redeem",
+    "create": "ts-node commands.ts create",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest"
   },
   "dependencies": {
@@ -39,8 +39,6 @@
     "@typescript-eslint/parser": "^2.13.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-config-oclif": "^3.1.0",
-    "eslint-config-oclif-typescript": "^0.1.0",
     "eslint-config-prettier": "^6.7.0",
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-jest": "^23.8.1",
@@ -60,6 +58,11 @@
   "engines": {
     "node": "12"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/charlocharlie/epicgames-freegames-node.git"
+  },
+  "author": "Charlie Laabs",
   "eslintIgnore": [
     "**/*.config.js"
   ],

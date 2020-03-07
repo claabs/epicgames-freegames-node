@@ -13,7 +13,7 @@
                 "ts-node/register"
             ],
             "args": [
-                "${workspaceFolder}/src/commands.ts",
+                "${workspaceFolder}/commands.ts",
                 "redeem"
             ]
         }

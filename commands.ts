@@ -1,6 +1,6 @@
 import { usage } from 'yargs';
-import AccountManager from '../test/util/account';
-import { getAllFreeGames } from '.';
+import AccountManager from './test/util/account';
+import { getAllFreeGames } from './src';
 
 interface ReleaseArgs {
   [x: string]: unknown;

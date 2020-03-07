@@ -11,7 +11,7 @@ import {
   RedirectResponse,
   OrderPreviewResponse,
   OfferInfo,
-} from './types';
+} from './interfaces/types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
 import { ProductInfo } from './interfaces/product-info';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
