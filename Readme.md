@@ -18,7 +18,7 @@ I decided to take a different approach by only using the APIs that the Epic Game
   * CSRF/XSRF
   * Captcha
     * Automation via Google Cloud speech-to-text
-  * *TODO:* 2FA handing via TOTP token
+  * 2FA handing via TOTP token
   * Session ID
 * Game catalog discovery
   * Get list of available free games
@@ -38,8 +38,6 @@ I decided to take a different approach by only using the APIs that the Epic Game
 
 ## Setup
 
-**This project is still in development. Recommended for experts only.**
-
 ### Google Speech-to-text
 
 Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly easy to crack using Google Speech-to-text. Google gives you 60 minutes of free transcription, and charges a small fee after that.
@@ -55,18 +53,30 @@ Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly e
 
 ### Environment Variables
 
-| Variable        | Example                         | Description                                                                                         |
-|-----------------|---------------------------------|-----------------------------------------------------------------------------------------------------|
-| EMAIL           | `example@gmail.com`             | Epic Games login email                                                                              |
-| PASSWORD        | `abc123`                        | Epic Games login password                                                                           |
-| GCP_CONFIG_NAME | `account-name-abcdef12345.json` | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha |
-| RUN_ON_STARTUP  | `true`                          | (Optional) If true, the process will run on startup in addition to the scheduled time               |
-| CRON_SCHEDULE   | `0 12 * * *`                    | (Optional) Cron string of when to run the process                                                   |
-| LOG_LEVEL       | `info`                          | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                       |
+| Variable        | Example                                                | Description                                                                                         |
+|-----------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+| EMAIL           | `example@gmail.com`                                    | Epic Games login email                                                                              |
+| PASSWORD        | `abc123`                                               | Epic Games login password                                                                           |
+| TOTP            | `EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE` | (Optional) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)         |
+| GCP_CONFIG_NAME | `account-name-abcdef12345.json`                        | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha |
+| RUN_ON_STARTUP  | `true`                                                 | (Optional) If true, the process will run on startup in addition to the scheduled time               |
+| CRON_SCHEDULE   | `0 12 * * *`                                           | (Optional) Cron string of when to run the process                                                   |
+| LOG_LEVEL       | `info`                                                 | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                       |
+
+#### Two-factor login
+
+If you have two-factor authentication (2FA) enabled on your account, you need to add your TOTP secret as an environment variable. To get your TOTP secret, you may need to redo your 2FA setup:
+
+1. Go [here](https://www.epicgames.com/account/password) to enable 2FA.
+1. Click "enable authenticator app."
+1. In the section labeled "manual entry key," copy the key.
+1. Use your authenticator app to add scan the QR code.
+1. Activate 2FA by completing the form and clicking activate.
+1. Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.
 
 ### Docker Run
 
-`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /mnt/user/appdata/epicgames-freegames/:/usr/app/config:rw charlocharlie/epicgames-freegames:latest`
+`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /mnt/user/appdata/epicgames-freegames/:/usr/app/config:rw charlocharlie/epicgames-freegames:latest`
 
 ### Future
 

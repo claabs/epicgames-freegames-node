@@ -2,6 +2,7 @@ import cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
 import { JSDOM } from 'jsdom';
 import { scheduleJob } from 'node-schedule';
+import { TOTP } from 'otpauth';
 import L from './common/logger';
 import axios from './common/axios';
 import {
@@ -11,6 +12,7 @@ import {
   RedirectResponse,
   OrderPreviewResponse,
   OfferInfo,
+  MFABody,
 } from './interfaces/types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
 import { ProductInfo } from './interfaces/product-info';
@@ -27,18 +29,45 @@ const EPIC_CLIENT_ID = '875a3b57d3a640a6b7f9b4e883463ab4';
 const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
 
-export async function login(
-  email: string,
-  password: string,
-  captcha = '',
-  attempt = 0,
-  totp?: string
-): Promise<void> {
+export async function getCsrf(): Promise<string> {
   const csrfResp = await axios.get(CSRF_ENDPOINT);
   const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
     map: true,
   }) as unknown) as CSRFSetCookies;
-  const csrfToken = cookies['XSRF-TOKEN'].value;
+  return cookies['XSRF-TOKEN'].value;
+}
+
+export async function loginMFA(): Promise<void> {
+  L.debug('Logging in with MFA');
+  if (!process.env.TOTP) throw new Error('TOTP required for MFA login');
+  const totpSecret = process.env.TOTP;
+  const csrfToken = await getCsrf();
+  const totp = new TOTP({ secret: totpSecret });
+  const mfaRequest: MFABody = {
+    code: totp.generate(),
+    method: 'authenticator',
+    rememberDevice: true,
+  };
+  L.debug({ mfaRequest }, 'MFA Request');
+  try {
+    await axios.post('https://www.epicgames.com/id/api/login/mfa', mfaRequest, {
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+    });
+  } catch (e) {
+    L.error(e.response.data, 'MFA failed');
+    throw e;
+  }
+}
+
+export async function login(
+  email: string,
+  password: string,
+  captcha = '',
+  attempt = 0
+): Promise<void> {
+  const csrfToken = await getCsrf();
   if (attempt > 5) {
     throw new Error('Too many login attempts');
   }
@@ -59,24 +88,24 @@ export async function login(
   } catch (e) {
     if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
       L.debug('Session invalidated, retrying');
-      await login(email, password, captcha, attempt + 1, totp);
+      await login(email, password, captcha, attempt + 1);
     } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
       L.debug('Captcha required');
       const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
-      await login(email, password, captchaToken, attempt + 1, totp);
+      await login(email, password, captchaToken, attempt + 1);
+    } else if (
+      e.response.data.errorCode === 'errors.com.epicgames.common.two_factor_authentication.required'
+    ) {
+      await loginMFA();
     } else {
-      L.error(e.response.data.errorCode, 'Login failed');
+      L.error(e.response.data, 'Login failed');
       throw e;
     }
   }
 }
 
 export async function refreshLogin(): Promise<boolean> {
-  const csrfResp = await axios.get(CSRF_ENDPOINT);
-  const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
-    map: true,
-  }) as unknown) as CSRFSetCookies;
-  const csrfToken = cookies['XSRF-TOKEN'].value;
+  const csrfToken = await getCsrf();
   const redirectResp = await axios.get<RedirectResponse>(
     'https://www.epicgames.com/id/api/redirect',
     {

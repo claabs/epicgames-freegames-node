@@ -16,6 +16,12 @@ export interface LoginBody {
   email: string;
 }
 
+export interface MFABody {
+  code: string;
+  method: 'authenticator';
+  rememberDevice: boolean;
+}
+
 export interface GraphQLBody {
   query: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
