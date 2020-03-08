@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-/* eslint-disable import/prefer-default-export */
 import { SpeechClient } from '@google-cloud/speech';
 import rawAxios from 'axios';
 import { google } from '@google-cloud/speech/build/protos/protos';
@@ -8,6 +6,7 @@ import { JSDOM } from 'jsdom';
 import { encode as encodeArrayBuffer } from 'base64-arraybuffer';
 import readline from 'readline';
 import open from 'open';
+import L from './common/logger';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -69,7 +68,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   const audioPath = (initialDocument.querySelector('#audio_download') as HTMLAnchorElement).href;
   const audioURL = ARKOSE_BASE_URL + audioPath;
 
-  console.debug('audio URL', audioURL);
+  L.debug({ audioURL });
 
   const audioResp = await axios.get<ArrayBuffer>(audioURL, {
     responseType: 'arraybuffer',
@@ -101,17 +100,17 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   ) {
     digitString = speechResponse.results[0].alternatives[0].transcript;
   } else {
-    console.log('Transcript failed. Retrying.');
+    L.debug({ speechResponse }, 'Transcript failed. Retrying.');
     return getCaptchaSessionToken(publicKey);
   }
 
   digitString = digitString.replace(/\D/g, '');
   if (digitString.length !== 7) {
-    console.log('Did not transcribe enough digits. Retrying');
+    L.debug('Did not transcribe enough digits. Retrying');
     return getCaptchaSessionToken(publicKey);
   }
 
-  console.debug('Guessing', digitString);
+  L.debug({ digitString }, 'Guessing captcha');
 
   const submitBody = {
     'fc-game[session_token]': sessionToken,
@@ -130,20 +129,20 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   const errorMsg = submitDocument.querySelector('#error-msg');
 
   if (verificationText && verificationText.innerHTML === 'Verification correct!') {
-    console.log('Captcha successful');
+    L.info('Captcha successful');
     const verificationCode = (submitDocument.querySelector(
       '#verification-code'
     ) as HTMLInputElement).value;
-    console.log('Captcha session token:', verificationCode);
+    L.debug({ verificationCode }, 'Captcha session token');
     return verificationCode;
   }
   if (errorMsg && errorMsg.innerHTML.includes('Audio challenge methods require some extra steps')) {
     return manuallySolveCaptcha(publicKey);
   }
   if (errorMsg && errorMsg.innerHTML.includes(`Whoops! That's not quite right.`)) {
-    console.warn('Got captcha incorrect');
+    L.warn('Got captcha incorrect');
     return getCaptchaSessionToken(publicKey);
   }
-  console.error('Unexpected error in captcha', submitResp.data);
+  L.error({ error: submitResp.data }, 'Unexpected error in captcha');
   throw new Error('Error solving captcha');
 }

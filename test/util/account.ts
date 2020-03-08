@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 import RandExp from 'randexp';
 import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
 import qs from 'qs';
 import { config } from 'dotenv';
+import L from '../../src/common/logger';
 import { login, setupSid } from '../../src/index';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
@@ -92,10 +92,10 @@ export default class AccountManager {
 
   public async init(): Promise<void> {
     await this.tempMail.init();
-    console.log('USER:', this.username);
-    console.log('PASSWORD:', this.password);
-    console.log('PERM EMAIL:', this.permMailAddress);
-    console.log('TEMP EMAIL:', this.tempMail.emailAddress);
+    L.info({ username: this.username });
+    L.info({ password: this.password });
+    L.info({ permMailAddress: this.permMailAddress });
+    L.info({ tempMailAddress: this.tempMail.emailAddress });
     return this.createAccount(this.permMailAddress, this.password);
   }
 
@@ -128,20 +128,20 @@ export default class AccountManager {
           'x-xsrf-token': csrfToken,
         },
       });
-      console.log('ACCOUNT CREATED');
+      L.info('Account created');
     } catch (e) {
       if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
-        console.log('Session invalidated, retrying');
+        L.debug('Session invalidated, retrying');
         await this.createAccount(email, password, attempt + 1);
       } else if (
         e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
         (e.response.data.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
           e.response.data.message === 'captcha is required')
       ) {
-        console.warn('Captcha required');
+        L.debug('Captcha required');
         await this.createAccount(email, password, attempt + 1);
       } else {
-        console.error('ACCOUNT CREATION FAILED:', e.response.data);
+        L.error(e.response.data, 'Account creation failed');
         throw e;
       }
     }
@@ -154,13 +154,13 @@ export default class AccountManager {
     const initialChangeBody: ChangeEmailInitialRequest = {
       requestType: 'challenge',
     };
-    console.debug('Calling initial change');
+    L.debug('Calling initial change');
     try {
       await axios.post(CHANGE_EMAIL_ENDPOINT, qs.stringify(initialChangeBody), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
       const otp = await this.getPermOTP();
-      console.debug('Getting account ID');
+      L.debug('Getting account ID');
       await this.getAccountId();
       const verifyChangeBody: ChangeEmailVerifyRequest = {
         requestType: 'challenge_verify_and_proceed',
@@ -173,14 +173,14 @@ export default class AccountManager {
           'base64'
         ),
       };
-      console.debug('Calling verify change', verifyChangeBody);
+      L.debug('Calling verify change', verifyChangeBody);
       await axios.post(CHANGE_EMAIL_ENDPOINT, qs.stringify(verifyChangeBody), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
       await this.getTempVerification();
     } catch (err) {
-      console.error(err.request);
-      console.error(err.response.data);
+      L.error(err.request);
+      L.error(err.response.data);
       throw err;
     }
   }
@@ -190,22 +190,22 @@ export default class AccountManager {
   }
 
   private async getPermOTP(): Promise<string> {
-    console.debug('(getPermOTP) Waiting for email');
+    L.debug('Waiting for OTP email');
     const email = await this.permMail.waitForEmail();
     if (!email || !email.source) throw new Error('Empty email');
     const message = email.source.toString();
-    console.log('OTP message', message);
+    L.debug({ message }, 'OTP message');
     // TODO: Parse the email
     const otp = message;
     return otp;
   }
 
   private async getTempVerification(): Promise<void> {
-    console.debug('(getTempVerification) Waiting for email');
+    L.debug('Waiting for temp verification email');
     const email = await this.tempMail.waitForEmails();
     if (email.length < 1) throw new Error('Empty email');
     const message = email[0].mail_body;
-    console.log('Verify message', message);
+    L.debug({ message }, 'Verify message');
     // TODO: Parse the email
     const link = message;
     return axios.get(link);

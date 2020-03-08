@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
 import { ImapFlow } from 'imapflow';
 import waitFor from 'p-wait-for';
+import L from '../../src/common/logger';
 
 /**
  * Simple IMAP client to wait for an email on a mailbox
@@ -28,7 +28,7 @@ export default class PermMail {
         user: process.env.PERMANENT_EMAIL_USER || '',
         pass: process.env.PERMANENT_EMAIL_PASS || '',
       },
-      logger: false,
+      logger: L,
     });
     this.pollInterval = pollInterval || 20000;
     this.addressName = process.env.PERMANENT_EMAIL_ADDRESS || 'missing';
@@ -46,19 +46,19 @@ export default class PermMail {
   private async getLatestEmail(): Promise<void> {
     await this.imap.mailboxOpen('INBOX');
     const msg = await this.imap.fetchOne('*', { source: {} });
-    console.log('latest email:', msg);
+    L.debug({ msg }, 'Latest email');
     this.latestSeq = msg.seq;
   }
 
   private async isNewEmail(): Promise<boolean> {
     await this.imap.mailboxOpen('INBOX');
     const sequenceString = `${this.latestSeq + 1}`;
-    console.log('fetching with sequence string:', sequenceString);
+    L.debug({ sequenceString }, 'Fetching with sequence string');
     const msg = (await this.imap.fetchOne(sequenceString, {
       source: {},
       envelope: true,
     })) as FetchMessageObject | false;
-    console.log('fetch result', msg);
+    L.debug({ msg }, 'Fetch result');
     if (msg) {
       this.recentEmail = msg;
       return true;
@@ -73,7 +73,7 @@ export default class PermMail {
       interval: this.pollInterval,
     });
     if (this.recentEmail) {
-      console.log('recent email:', this.recentEmail);
+      L.debug({ recentEmail: this.recentEmail }, 'recent email');
       this.latestSeq = this.recentEmail.seq;
       const email = this.recentEmail;
       this.recentEmail = null;

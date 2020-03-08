@@ -1,8 +1,8 @@
-/* eslint-disable no-console */
 import cookieParser from 'set-cookie-parser';
 import { config } from 'dotenv';
 import { JSDOM } from 'jsdom';
 import { scheduleJob } from 'node-schedule';
+import L from './common/logger';
 import axios from './common/axios';
 import {
   CSRFSetCookies,
@@ -55,17 +55,17 @@ export async function login(
         'x-xsrf-token': csrfToken,
       },
     });
-    console.log('LOGGED IN!');
+    L.info('Logged in');
   } catch (e) {
     if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
-      console.log('Session invalidated, retrying');
+      L.debug('Session invalidated, retrying');
       await login(email, password, captcha, attempt + 1, totp);
     } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
-      console.warn('Captcha required');
+      L.debug('Captcha required');
       const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
       await login(email, password, captchaToken, attempt + 1, totp);
     } else {
-      console.error('LOGIN FAILED:', e.response.data.errorCode);
+      L.error(e.response.data.errorCode, 'Login failed');
       throw e;
     }
   }
@@ -124,10 +124,9 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
   if (purchaseTokenInput && purchaseTokenInput.value) {
     purchaseToken = purchaseTokenInput.value;
   } else {
-    // console.error(purchasePageResp.data);
     throw new Error('Missing purchase token');
   }
-  console.debug('purchaseToken', purchaseToken);
+  L.debug({ purchaseToken }, 'purchaseToken');
 
   const orderPreviewRequest = {
     useDefault: true,
@@ -143,7 +142,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     offerPrice: '',
   };
 
-  console.debug('order preview request', orderPreviewRequest);
+  L.debug({ orderPreviewRequest }, 'Order preview request');
   const orderPreviewResp = await axios.post<OrderPreviewResponse>(
     'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
     orderPreviewRequest,
@@ -153,7 +152,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
       },
     }
   );
-  console.debug('order preview response', orderPreviewResp.data);
+  L.debug({ orderPreviewResponse: orderPreviewResp.data }, 'Order preview response');
 
   // TODO: Can probably just use a spread operator here?
   const confirmOrderRequest = {
@@ -176,7 +175,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     syncToken: orderPreviewResp.data.syncToken,
     isFreeOrder: false,
   };
-
+  L.debug({ confirmOrderRequest }, 'Confirm order request');
   const confirmOrderResp = await axios.post(
     'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order',
     confirmOrderRequest,
@@ -186,7 +185,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
       },
     }
   );
-  console.debug('confirm order response', confirmOrderResp.data);
+  L.debug({ confirmOrderResponse: confirmOrderResp.data }, 'confirm order response');
 }
 
 export async function getFreeGames(): Promise<OfferElement[]> {
@@ -253,18 +252,18 @@ async function ownsGame(
         return page.offer.namespace === linkedOfferNs && page.offer.id === linkedOfferId;
       } catch (e) {
         // Inner try catch in case one of the pages is missing fields
-        console.error(e);
+        L.error(e);
         return true; // Return true so we do nothing
       }
     });
     if (!matchedPage) {
-      console.error('Could not find a page for the offer');
+      L.error('Could not find a page for the offer');
       return true; // Return true so we do nothing
     }
     return matchedPage.offer.hasOffer;
   } catch (e) {
     // Outer try catch in case we get a bogus JSON response
-    console.log(e);
+    L.error(e);
     return true; // Return true so we do nothing
   }
 }
@@ -291,20 +290,17 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
 export async function getAllFreeGames(): Promise<void> {
   await setupSid();
   const validFreeGames = await getFreeGames();
-  console.log(
-    'Available free games:',
-    validFreeGames.map(game => game.title)
-  );
+  L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
   const purchasableGames = await getPurchasableFreeGames(validFreeGames);
-  console.log(
-    'Purchasable games:',
-    purchasableGames.map(game => game.productName)
+  L.info(
+    { purchasableGames: purchasableGames.map(game => game.productName) },
+    'Unpurchased free games'
   );
   for (let i = 0; i < purchasableGames.length; i += 1) {
-    console.log(`Purchasing ${purchasableGames[i].productName}`);
+    L.info(`Purchasing ${purchasableGames[i].productName}`);
     // eslint-disable-next-line no-await-in-loop
     await purchase(purchasableGames[i].offerNamespace, purchasableGames[i].offerId);
-    console.log('Done purchasing');
+    L.debug('Done purchasing');
   }
 }
 
@@ -312,14 +308,14 @@ async function main(): Promise<void> {
   try {
     // Login
     if (await refreshLogin()) {
-      console.log('Successfully refreshed credentials');
+      L.info('Successfully refreshed login');
     } else {
-      console.log('Could not refresh credentials. Logging in fresh.');
+      L.debug('Could not refresh credentials. Logging in fresh.');
       await login(EMAIL, PASSWORD);
     }
     await getAllFreeGames();
   } catch (e) {
-    console.error(e);
+    L.error(e);
   }
 }
 

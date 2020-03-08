@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/camelcase */
 // Inspired by https://github.com/Dobby89/guerrillamail-api
 import axios from 'axios';
