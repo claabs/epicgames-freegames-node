@@ -62,6 +62,7 @@ Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly e
 | GCP_CONFIG_NAME | `account-name-abcdef12345.json` | GCP credentials JSON filename located in ./config/                                    |
 | RUN_ON_STARTUP  | `true`                          | (Optional) If true, the process will run on startup in addition to the scheduled time |
 | CRON_SCHEDULE   | `0 12 * * *`                    | (Optional) Cron string of when to run the process                                     |
+| LOG_LEVEL       | `info`                          | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]         |
 
 ### Docker Run
 
@@ -77,11 +78,11 @@ Eventually, the project will be deployed in Docker and be configurable by either
 
 Place these variables in a `.env` file in the project root.
 
-| Variable      | Example   | Description                                                                                                      |
-|---------------|-----------|------------------------------------------------------------------------------------------------------------------|
-| TEST_USER     | `abc123`  | The default user to use when not provided in command options                                                     |
-| TEST_PASSWORD | `xyz789`  | The default password to use when not provided in command options                                                 |
-| ENV           | `local`   | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
+| Variable      | Example  | Description                                                                                                      |
+|---------------|----------|------------------------------------------------------------------------------------------------------------------|
+| TEST_USER     | `abc123` | The default user to use when not provided in command options                                                     |
+| TEST_PASSWORD | `xyz789` | The default password to use when not provided in command options                                                 |
+| ENV           | `local`  | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
 
 ### Optional variables
 
