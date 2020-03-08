@@ -51,7 +51,9 @@ const manuallySolveCaptcha = async (publicKey: EpicArkosePublicKey): Promise<str
 };
 
 export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Promise<string> {
-  const gcpConfigName = process.env.GCP_CONFIG_NAME || 'missing-gcp-config';
+  const gcpConfigName = process.env.GCP_CONFIG_NAME;
+  if (!gcpConfigName)
+    throw new Error('Google Cloud Platform configuration required to bypass captcha');
   const speech = new SpeechClient({
     keyFilename: `./config/${gcpConfigName}`,
   });
