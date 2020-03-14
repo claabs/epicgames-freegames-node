@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/camelcase */
 // Inspired by https://github.com/Dobby89/guerrillamail-api
-import axios from 'axios';
+import rawRequest from 'got';
 import waitFor from 'p-wait-for';
 
 interface Email {
@@ -112,6 +113,9 @@ interface MailConfig {
 }
 
 const BASE_URL = 'https://api.guerrillamail.com/ajax.php';
+const request = rawRequest.extend({
+  responseType: 'json',
+});
 
 /**
  * Temp mail client for Guerrilla Mail to create and wait for emails on a fresh account
@@ -167,11 +171,13 @@ export default class TempMail {
       f: 'get_email_address',
     };
 
-    const resp = await axios.get<GetEmailAddressResponse>(BASE_URL, { params });
+    const resp = await request.get<GetEmailAddressResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
 
-    this.sidToken = resp.data.sid_token;
-    this.emailAddress = resp.data.email_addr;
-    return resp.data;
+    this.sidToken = resp.body.sid_token;
+    this.emailAddress = resp.body.email_addr;
+    return resp.body;
   }
 
   private async setEmailUser(): Promise<SetEmailUserResponse> {
@@ -180,10 +186,12 @@ export default class TempMail {
       email_user: this.config.username,
     };
 
-    const resp = await axios.get<SetEmailUserResponse>(BASE_URL, { params });
-    this.sidToken = resp.data.sid_token;
-    this.emailAddress = resp.data.email_addr;
-    return resp.data;
+    const resp = await request.get<SetEmailUserResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    this.sidToken = resp.body.sid_token;
+    this.emailAddress = resp.body.email_addr;
+    return resp.body;
   }
 
   public async checkEmail(seq?: number): Promise<CheckEmailResponse> {
@@ -192,8 +200,10 @@ export default class TempMail {
       sid_token: this.sidToken,
       seq: seq || this.seq,
     };
-    const resp = await axios.get<CheckEmailResponse>(BASE_URL, { params });
-    return resp.data;
+    const resp = await request.get<CheckEmailResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    return resp.body;
   }
 
   public async getEmailList(offset: number, seq?: string): Promise<GetEmailListResponse> {
@@ -204,8 +214,10 @@ export default class TempMail {
       seq,
     };
 
-    const resp = await axios.get<GetEmailListResponse>(BASE_URL, { params });
-    return resp.data;
+    const resp = await request.get<GetEmailListResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    return resp.body;
   }
 
   public async fetchEmail(email_id: number): Promise<FetchEmailResponse> {
@@ -215,8 +227,10 @@ export default class TempMail {
       email_id,
     };
 
-    const resp = await axios.get<FetchEmailResponse>(BASE_URL, { params });
-    return resp.data;
+    const resp = await request.get<FetchEmailResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    return resp.body;
   }
 
   public async forgetMe(): Promise<ForgetMeResponse> {
@@ -226,8 +240,10 @@ export default class TempMail {
       email_addr: this.emailAddress,
     };
 
-    const resp = await axios.get<ForgetMeResponse>(BASE_URL, { params });
-    return resp.data;
+    const resp = await request.get<ForgetMeResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    return resp.body;
   }
 
   public async delEmail(...email_ids: string[]): Promise<DelEmailResponse> {
@@ -236,7 +252,9 @@ export default class TempMail {
       sid_token: this.sidToken,
       email_ids: [...email_ids],
     };
-    const resp = await axios.get<DelEmailResponse>(BASE_URL, { params });
-    return resp.data;
+    const resp = await request.get<DelEmailResponse>(BASE_URL, {
+      searchParams: params as Record<string, any>,
+    });
+    return resp.body;
   }
 }

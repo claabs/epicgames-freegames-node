@@ -1,9 +1,7 @@
 import { SpeechClient } from '@google-cloud/speech';
-import rawAxios from 'axios';
+import rawRequest from 'got';
 import { google } from '@google-cloud/speech/build/protos/protos';
-import qs from 'qs';
 import { JSDOM } from 'jsdom';
-import { encode as encodeArrayBuffer } from 'base64-arraybuffer';
 import readline from 'readline';
 import open from 'open';
 import L from './common/logger';
@@ -15,7 +13,7 @@ export enum EpicArkosePublicKey {
 
 const ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
 
-const axios = rawAxios.create({
+const request = rawRequest.extend({
   headers: {
     'accept-language': 'en-US,en',
   },
@@ -59,8 +57,8 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   });
   const CAPTCHA_URL = `${ARKOSE_BASE_URL}/fc/api/nojs/?pkey=${publicKey}&gametype=audio`;
 
-  const initialPage = await axios.get<string>(CAPTCHA_URL);
-  const initialDocument = new JSDOM(initialPage.data).window.document;
+  const initialPage = await request.get<string>(CAPTCHA_URL);
+  const initialDocument = new JSDOM(initialPage.body).window.document;
   const sessionToken = (initialDocument.querySelector(
     '#fc-nojs-form > div.audioCtn > form > input[name="fc-game[session_token]"]'
   ) as HTMLInputElement).value;
@@ -72,13 +70,13 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
 
   L.debug({ audioURL });
 
-  const audioResp = await axios.get<ArrayBuffer>(audioURL, {
-    responseType: 'arraybuffer',
+  const audioResp = await request.get(audioURL, {
+    responseType: 'buffer',
   });
 
-  const request: google.cloud.speech.v1.IRecognizeRequest = {
+  const speechRequest: google.cloud.speech.v1.IRecognizeRequest = {
     audio: {
-      content: encodeArrayBuffer(audioResp.data),
+      content: Buffer.from(audioResp.body).toString('base64'),
     },
     config: {
       encoding: 'LINEAR16',
@@ -92,7 +90,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
     },
   };
 
-  const [speechResponse] = await speech.recognize(request);
+  const [speechResponse] = await speech.recognize(speechRequest);
 
   let digitString;
   if (
@@ -121,12 +119,10 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
     'fc-game[audio_guess]': digitString,
   };
 
-  const submitResp = await axios.post<string>(CAPTCHA_URL, qs.stringify(submitBody), {
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-    },
+  const submitResp = await request.post<string>(CAPTCHA_URL, {
+    form: submitBody,
   });
-  const submitDocument = new JSDOM(submitResp.data).window.document;
+  const submitDocument = new JSDOM(submitResp.body).window.document;
   const verificationText = submitDocument.querySelector('#verification-txt > span');
   const errorMsg = submitDocument.querySelector('#error-msg');
 
@@ -145,6 +141,6 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
     L.warn('Got captcha incorrect');
     return getCaptchaSessionToken(publicKey);
   }
-  L.error({ error: submitResp.data }, 'Unexpected error in captcha');
+  L.error({ error: submitResp.body }, 'Unexpected error in captcha');
   throw new Error('Error solving captcha');
 }

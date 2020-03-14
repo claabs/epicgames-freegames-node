@@ -1,13 +1,12 @@
 import RandExp from 'randexp';
 import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
-import qs from 'qs';
 import { config } from 'dotenv';
 import L from '../../src/common/logger';
 import { login, setupSid } from '../../src/index';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
-import axios from '../../src/common/axios';
+import request from '../../src/common/request';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
 
@@ -101,8 +100,8 @@ export default class AccountManager {
 
   public async createAccount(email: string, password: string, attempt = 0): Promise<void> {
     const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.CREATE);
-    const csrfResp = await axios.get(CSRF_ENDPOINT);
-    const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
+    const csrfResp = await request.get(CSRF_ENDPOINT);
+    const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
       map: true,
     }) as unknown) as CSRFSetCookies;
     const csrfToken = cookies['XSRF-TOKEN'].value;
@@ -123,7 +122,8 @@ export default class AccountManager {
       email,
     };
     try {
-      await axios.post('https://www.epicgames.com/id/api/account', createBody, {
+      await request.post('https://www.epicgames.com/id/api/account', {
+        json: createBody,
         headers: {
           'x-xsrf-token': csrfToken,
         },
@@ -156,8 +156,8 @@ export default class AccountManager {
     };
     L.debug('Calling initial change');
     try {
-      await axios.post(CHANGE_EMAIL_ENDPOINT, qs.stringify(initialChangeBody), {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      await request.post(CHANGE_EMAIL_ENDPOINT, {
+        form: initialChangeBody,
       });
       const otp = await this.getPermOTP();
       L.debug('Getting account ID');
@@ -174,8 +174,8 @@ export default class AccountManager {
         ),
       };
       L.debug('Calling verify change', verifyChangeBody);
-      await axios.post(CHANGE_EMAIL_ENDPOINT, qs.stringify(verifyChangeBody), {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      await request.post(CHANGE_EMAIL_ENDPOINT, {
+        form: verifyChangeBody,
       });
       await this.getTempVerification();
     } catch (err) {
@@ -207,13 +207,13 @@ export default class AccountManager {
     const message = email[0].mail_body;
     L.debug({ message }, 'Verify message');
     // TODO: Parse the email
-    const link = message;
-    return axios.get(link);
+    // const link = message;
+    // return request.get(link);
   }
 
   private async getAccountId(): Promise<void> {
     await setupSid();
-    const userInfo = await axios.get<UserInfoResponse>(USER_INFO_ENDPOINT);
-    this.accountId = userInfo.data.userInfo.id.value;
+    const userInfo = await request.get<UserInfoResponse>(USER_INFO_ENDPOINT);
+    this.accountId = userInfo.body.userInfo.id.value;
   }
 }

@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 import { scheduleJob } from 'node-schedule';
 import { TOTP } from 'otpauth';
 import L from './common/logger';
-import axios from './common/axios';
+import request from './common/request';
 import {
   CSRFSetCookies,
   LoginBody,
@@ -15,7 +15,7 @@ import {
   MFABody,
 } from './interfaces/types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
-import { ProductInfo } from './interfaces/product-info';
+import { ItemEntitlementResp } from './interfaces/product-info';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
 
 config();
@@ -30,8 +30,8 @@ const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
 
 export async function getCsrf(): Promise<string> {
-  const csrfResp = await axios.get(CSRF_ENDPOINT);
-  const cookies = (cookieParser(csrfResp.headers['set-cookie'], {
+  const csrfResp = await request.get(CSRF_ENDPOINT);
+  const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
     map: true,
   }) as unknown) as CSRFSetCookies;
   return cookies['XSRF-TOKEN'].value;
@@ -50,13 +50,14 @@ export async function loginMFA(): Promise<void> {
   };
   L.debug({ mfaRequest }, 'MFA Request');
   try {
-    await axios.post('https://www.epicgames.com/id/api/login/mfa', mfaRequest, {
+    await request.post('https://www.epicgames.com/id/api/login/mfa', {
+      json: mfaRequest,
       headers: {
         'x-xsrf-token': csrfToken,
       },
     });
   } catch (e) {
-    L.error(e.response.data, 'MFA failed');
+    L.error(e.response.body, 'MFA failed');
     throw e;
   }
 }
@@ -79,26 +80,27 @@ export async function login(
     email,
   };
   try {
-    await axios.post(LOGIN_ENDPOINT, loginBody, {
+    await request.post(LOGIN_ENDPOINT, {
+      json: loginBody,
       headers: {
         'x-xsrf-token': csrfToken,
       },
     });
     L.info('Logged in');
   } catch (e) {
-    if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
+    if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
       L.debug('Session invalidated, retrying');
       await login(email, password, captcha, attempt + 1);
-    } else if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
+    } else if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
       L.debug('Captcha required');
       const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
       await login(email, password, captchaToken, attempt + 1);
     } else if (
-      e.response.data.errorCode === 'errors.com.epicgames.common.two_factor_authentication.required'
+      e.response.body.errorCode === 'errors.com.epicgames.common.two_factor_authentication.required'
     ) {
       await loginMFA();
     } else {
-      L.error(e.response.data, 'Login failed');
+      L.error(e.response.body, 'Login failed');
       throw e;
     }
   }
@@ -106,34 +108,34 @@ export async function login(
 
 export async function refreshLogin(): Promise<boolean> {
   const csrfToken = await getCsrf();
-  const redirectResp = await axios.get<RedirectResponse>(
+  const redirectResp = await request.get<RedirectResponse>(
     'https://www.epicgames.com/id/api/redirect',
     {
       headers: {
         'x-xsrf-token': csrfToken,
       },
-      params: {
+      searchParams: {
         clientId: EPIC_CLIENT_ID,
       },
     }
   );
-  const { sid } = redirectResp.data;
+  const { sid } = redirectResp.body;
   return Boolean(sid);
 }
 
 export async function setupSid(): Promise<string> {
-  const redirectResp = await axios.get<RedirectResponse>(
+  const redirectResp = await request.get<RedirectResponse>(
     'https://www.epicgames.com/id/api/redirect',
     {
-      params: {
+      searchParams: {
         clientId: EPIC_CLIENT_ID,
       },
     }
   );
-  const { sid } = redirectResp.data;
+  const { sid } = redirectResp.body;
   if (!sid) throw new Error('Sid returned null');
-  await axios.get('https://www.unrealengine.com/id/api/set-sid', {
-    params: {
+  await request.get('https://www.unrealengine.com/id/api/set-sid', {
+    searchParams: {
       sid,
     },
   });
@@ -141,13 +143,13 @@ export async function setupSid(): Promise<string> {
 }
 
 export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
-  const purchasePageResp = await axios.get<string>('https://www.epicgames.com/store/purchase', {
-    params: {
+  const purchasePageResp = await request.get<string>('https://www.epicgames.com/store/purchase', {
+    searchParams: {
       namespace: linkedOfferNs,
       offers: linkedOfferId,
     },
   });
-  const purchaseDocument = new JSDOM(purchasePageResp.data).window.document;
+  const purchaseDocument = new JSDOM(purchasePageResp.body).window.document;
   let purchaseToken = '';
   const purchaseTokenInput = purchaseDocument.querySelector('#purchaseToken') as HTMLInputElement;
   if (purchaseTokenInput && purchaseTokenInput.value) {
@@ -172,49 +174,49 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
   };
 
   L.debug({ orderPreviewRequest }, 'Order preview request');
-  const orderPreviewResp = await axios.post<OrderPreviewResponse>(
+  const orderPreviewResp = await request.post<OrderPreviewResponse>(
     'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
-    orderPreviewRequest,
     {
+      json: orderPreviewRequest,
       headers: {
         'x-requested-with': purchaseToken,
       },
     }
   );
-  L.debug({ orderPreviewResponse: orderPreviewResp.data }, 'Order preview response');
+  L.debug({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
 
   // TODO: Can probably just use a spread operator here?
   const confirmOrderRequest = {
     useDefault: true,
     setDefault: false,
     namespace: linkedOfferNs,
-    country: orderPreviewResp.data.country,
-    countryName: orderPreviewResp.data.countryName,
-    orderId: orderPreviewResp.data.orderId,
-    orderComplete: orderPreviewResp.data.orderComplete,
-    orderError: orderPreviewResp.data.orderError,
-    orderPending: orderPreviewResp.data.orderPending,
-    offers: orderPreviewResp.data.offers,
+    country: orderPreviewResp.body.country,
+    countryName: orderPreviewResp.body.countryName,
+    orderId: orderPreviewResp.body.orderId,
+    orderComplete: orderPreviewResp.body.orderComplete,
+    orderError: orderPreviewResp.body.orderError,
+    orderPending: orderPreviewResp.body.orderPending,
+    offers: orderPreviewResp.body.offers,
     includeAccountBalance: false,
     totalAmount: 0,
     affiliateId: '',
     creatorSource: '',
     threeDSToken: '',
     voucherCode: null,
-    syncToken: orderPreviewResp.data.syncToken,
+    syncToken: orderPreviewResp.body.syncToken,
     isFreeOrder: false,
   };
   L.debug({ confirmOrderRequest }, 'Confirm order request');
-  const confirmOrderResp = await axios.post(
+  const confirmOrderResp = await request.post(
     'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order',
-    confirmOrderRequest,
     {
+      json: confirmOrderRequest,
       headers: {
         'x-requested-with': purchaseToken,
       },
     }
   );
-  L.debug({ confirmOrderResponse: confirmOrderResp.data }, 'confirm order response');
+  L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
 }
 
 export async function getFreeGames(): Promise<OfferElement[]> {
@@ -246,9 +248,9 @@ export async function getFreeGames(): Promise<OfferElement[]> {
   }`;
   const variables = { namespace: 'epic', country: 'US', locale: 'en-US' };
   const data: GraphQLBody = { query, variables };
-  const resp = await axios.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, data);
+  const resp = await request.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, { json: data });
   const nowDate = new Date();
-  const freeOfferedGames = resp.data.data.Catalog.catalogOffers.elements.filter(offer => {
+  const freeOfferedGames = resp.body.data.Catalog.catalogOffers.elements.filter(offer => {
     let r = false;
     offer.promotions.promotionalOffers.forEach(innerOffers => {
       innerOffers.promotionalOffers.forEach(dates => {
@@ -266,40 +268,37 @@ export async function getFreeGames(): Promise<OfferElement[]> {
 }
 
 // TODO: Parameterize region (en-US). Env var probably
-async function ownsGame(
-  linkedOfferNs: string,
-  linkedOfferId: string,
-  productSlug: string
-): Promise<boolean> {
-  const productName = productSlug.split('/')[0];
-  const productInfoResp = await axios.get<ProductInfo>(
-    `https://www.epicgames.com/store/en-US/api/content/products/${productName}`
+async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<boolean> {
+  L.debug(
+    {
+      linkedOfferNs,
+      linkedOfferId,
+    },
+    'Getting product info'
   );
-  try {
-    const matchedPage = productInfoResp.data.pages.find(page => {
-      try {
-        return page.offer.namespace === linkedOfferNs && page.offer.id === linkedOfferId;
-      } catch (e) {
-        // Inner try catch in case one of the pages is missing fields
-        L.error(e);
-        return true; // Return true so we do nothing
+  const query = `query launcherQuery($namespace:String!, $offerId:String!) {
+    Launcher {
+      entitledOfferItems(namespace: $namespace, offerId: $offerId) {
+        namespace
+        offerId
+        entitledToAllItemsInOffer
+        entitledToAnyItemInOffer
       }
-    });
-    if (!matchedPage) {
-      L.error('Could not find a page for the offer');
-      return true; // Return true so we do nothing
     }
-    return matchedPage.offer.hasOffer;
-  } catch (e) {
-    // Outer try catch in case we get a bogus JSON response
-    L.error(e);
-    return true; // Return true so we do nothing
-  }
+  }`;
+  const variables = {
+    namespace: linkedOfferNs,
+    offerId: linkedOfferId,
+  };
+  const data: GraphQLBody = { query, variables };
+  const entitlementResp = await request.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, { json: data });
+  const items = entitlementResp.body.data.Launcher.entitledOfferItems;
+  return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
 }
 
 async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<OfferInfo[]> {
   const ownsGamePromises = validOffers.map(offer => {
-    return ownsGame(offer.linkedOfferNs, offer.linkedOfferId, offer.productSlug);
+    return ownsGame(offer.linkedOfferNs, offer.linkedOfferId);
   });
   const ownsGames = await Promise.all(ownsGamePromises);
   const purchasableGames: OfferInfo[] = validOffers

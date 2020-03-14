@@ -396,3 +396,16 @@ export interface ProductInfo {
   _id: string;
   pages: Page[];
 }
+
+export interface ItemEntitlementResp {
+  data: {
+    Launcher: {
+      entitledOfferItems: {
+        namespace: string;
+        offerId: string;
+        entitledToAllItemsInOffer: boolean;
+        entitledToAnyItemInOffer: boolean;
+      };
+    };
+  };
+}

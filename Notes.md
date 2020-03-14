@@ -2,6 +2,15 @@
 
 ## Login
 
+## Free Games Lookup
+
+To determine if you own a game, use the `entitledOfferItems` GraphQL query. This will return `entitledToAllItemsInOffer: boolean` and `entitledToAnyItemInOffer: boolean`. The two variables make up various states of purchasability.
+
+|                                        | entitledToAllItemsInOffer = `true` | entitledToAllItemsInOffer = `false` |
+|----------------------------------------|------------------------------------|-------------------------------------|
+| **entitledToAnyItemInOffer = `true`**  | Already owned                      | Coming soon                         |
+| **entitledToAnyItemInOffer = `false`** | *TBD*                              | Purchasable                         |
+
 ## Purchase
 
 ## Testing
