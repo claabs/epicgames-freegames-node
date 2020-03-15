@@ -130,18 +130,18 @@ export default class AccountManager {
       });
       L.info('Account created');
     } catch (e) {
-      if (e.response.data.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
+      if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
         L.debug('Session invalidated, retrying');
         await this.createAccount(email, password, attempt + 1);
       } else if (
-        e.response.data.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
-        (e.response.data.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
-          e.response.data.message === 'captcha is required')
+        e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
+        (e.response.body.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
+          e.response.body.message === 'captcha is required')
       ) {
         L.debug('Captcha required');
         await this.createAccount(email, password, attempt + 1);
       } else {
-        L.error(e.response.data, 'Account creation failed');
+        L.error(e.response.body, 'Account creation failed');
         throw e;
       }
     }
@@ -180,7 +180,7 @@ export default class AccountManager {
       await this.getTempVerification();
     } catch (err) {
       L.error(err.request);
-      L.error(err.response.data);
+      L.error(err.response.body);
       throw err;
     }
   }
