@@ -29,7 +29,7 @@ export interface OfferElement {
   linkedOfferNs: string;
   linkedOfferId: string;
   productSlug: string;
-  promotions: Promotions;
+  promotions: Promotions | null;
 }
 
 export interface CatalogOffers {

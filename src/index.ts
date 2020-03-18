@@ -17,14 +17,14 @@ import {
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
 import { ItemEntitlementResp } from './interfaces/product-info';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
+import {
+  CSRF_ENDPOINT,
+  LOGIN_ENDPOINT,
+  GRAPHQL_ENDPOINT,
+  EPIC_CLIENT_ID,
+} from './common/constants';
 
 config();
-
-const CSRF_ENDPOINT = 'https://www.epicgames.com/id/api/csrf';
-const LOGIN_ENDPOINT = 'https://www.epicgames.com/id/api/login';
-const GRAPHQL_ENDPOINT = 'https://graphql.epicgames.com/graphql';
-
-const EPIC_CLIENT_ID = '875a3b57d3a640a6b7f9b4e883463ab4';
 
 const EMAIL = process.env.EMAIL || 'missing@email.com';
 const PASSWORD = process.env.PASSWORD || 'missing-password';
@@ -252,15 +252,17 @@ export async function getFreeGames(): Promise<OfferElement[]> {
   const nowDate = new Date();
   const freeOfferedGames = resp.body.data.Catalog.catalogOffers.elements.filter(offer => {
     let r = false;
-    offer.promotions.promotionalOffers.forEach(innerOffers => {
-      innerOffers.promotionalOffers.forEach(dates => {
-        const startDate = new Date(dates.startDate);
-        const endDate = new Date(dates.endDate);
-        if (startDate <= nowDate && nowDate <= endDate) {
-          r = true;
-        }
+    if (offer.promotions) {
+      offer.promotions.promotionalOffers.forEach(innerOffers => {
+        innerOffers.promotionalOffers.forEach(dates => {
+          const startDate = new Date(dates.startDate);
+          const endDate = new Date(dates.endDate);
+          if (startDate <= nowDate && nowDate <= endDate) {
+            r = true;
+          }
+        });
       });
-    });
+    }
     return r;
   });
 

@@ -9,6 +9,12 @@ import PermMail from './perm-mail';
 import request from '../../src/common/request';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
+import {
+  CSRF_ENDPOINT,
+  EPIC_CLIENT_ID,
+  CHANGE_EMAIL_ENDPOINT,
+  USER_INFO_ENDPOINT,
+} from '../../src/common/constants';
 
 config();
 
@@ -49,12 +55,6 @@ interface UserInfoResponse {
     // And much more
   };
 }
-
-const CSRF_ENDPOINT = 'https://www.epicgames.com/id/api/csrf';
-// const RESEND_VERIFICATION_ENDPOINT = 'https://www.epicgames.com/account/v2/resendEmailVerification';
-const CHANGE_EMAIL_ENDPOINT = 'https://www.epicgames.com/account/v2/api/email/change';
-const USER_INFO_ENDPOINT = 'https://www.epicgames.com/account/v2/personal/ajaxGet';
-const CLIENT_ID = '875a3b57d3a640a6b7f9b4e883463ab4';
 
 export default class AccountManager {
   private tempMail: TempMail;
@@ -115,7 +115,7 @@ export default class AccountManager {
       country: 'US',
       name: randName.gen(),
       lastName: randName.gen(),
-      createdForClientId: CLIENT_ID,
+      createdForClientId: EPIC_CLIENT_ID,
       displayName: this.username,
       password: this.password,
       captcha: captchaToken,

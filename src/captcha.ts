@@ -5,13 +5,12 @@ import { JSDOM } from 'jsdom';
 import readline from 'readline';
 import open from 'open';
 import L from './common/logger';
+import { ARKOSE_BASE_URL } from './common/constants';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
   CREATE = 'E8AD0E2A-2E72-0F06-2C52-706D88BECA75',
 }
-
-const ARKOSE_BASE_URL = 'https://epic-games-api.arkoselabs.com';
 
 const request = rawRequest.extend({
   headers: {
