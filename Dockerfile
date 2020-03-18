@@ -13,7 +13,7 @@ FROM base as build
 # Copy all source files
 COPY . .
 # Prod deps already installed, add dev deps
-RUN npm i
+RUN npm ci
 
 RUN npm run build
 
