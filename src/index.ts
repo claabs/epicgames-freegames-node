@@ -148,6 +148,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
       namespace: linkedOfferNs,
       offers: linkedOfferId,
     },
+    responseType: 'default',
   });
   const purchaseDocument = new JSDOM(purchasePageResp.body).window.document;
   let purchaseToken = '';
