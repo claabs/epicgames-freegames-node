@@ -143,12 +143,12 @@ export async function setupSid(): Promise<string> {
 }
 
 export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
-  const purchasePageResp = await request.get<string>('https://www.epicgames.com/store/purchase', {
+  const purchasePageResp = await request.get('https://www.epicgames.com/store/purchase', {
     searchParams: {
       namespace: linkedOfferNs,
       offers: linkedOfferId,
     },
-    responseType: 'default',
+    responseType: 'text',
   });
   const purchaseDocument = new JSDOM(purchasePageResp.body).window.document;
   let purchaseToken = '';
