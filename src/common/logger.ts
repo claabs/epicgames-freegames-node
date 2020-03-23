@@ -8,7 +8,7 @@ const logger = pino({
     translateTime: `SYS:standard`,
   },
   useLevelLabels: true,
-  level: process.env.LOG_LEVEL,
+  level: process.env.LOG_LEVEL || 'info',
 });
 
 export default logger;
