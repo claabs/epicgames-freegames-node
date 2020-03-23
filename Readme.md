@@ -53,15 +53,15 @@ Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly e
 
 ### Environment Variables
 
-| Variable        | Example                                                | Description                                                                                         |
-|-----------------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| EMAIL           | `example@gmail.com`                                    | Epic Games login email                                                                              |
-| PASSWORD        | `abc123`                                               | Epic Games login password                                                                           |
-| TOTP            | `EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE` | (Optional) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)         |
-| GCP_CONFIG_NAME | `account-name-abcdef12345.json`                        | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha |
-| RUN_ON_STARTUP  | `true`                                                 | (Optional) If true, the process will run on startup in addition to the scheduled time               |
-| CRON_SCHEDULE   | `0 12 * * *`                                           | (Optional) Cron string of when to run the process                                                   |
-| LOG_LEVEL       | `info`                                                 | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                       |
+| Variable        | Example                                                | Default      | Description                                                                                         |
+|-----------------|--------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------|
+| EMAIL           | `example@gmail.com`                                    |              | Epic Games login email                                                                              |
+| PASSWORD        | `abc123`                                               |              | Epic Games login password                                                                           |
+| TOTP            | `EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE` |              | (Optional) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)         |
+| GCP_CONFIG_NAME | `account-name-abcdef12345.json`                        |              | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha |
+| RUN_ON_STARTUP  | `true`                                                 | `false`      | (Optional) If true, the process will run on startup in addition to the scheduled time               |
+| CRON_SCHEDULE   | `0 12 * * *`                                           | `0 12 * * *` | (Optional) Cron string of when to run the process                                                   |
+| LOG_LEVEL       | `info`                                                 | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                       |
 
 #### Two-factor login
 
