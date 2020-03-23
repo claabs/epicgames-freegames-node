@@ -49,17 +49,12 @@ export async function loginMFA(): Promise<void> {
     rememberDevice: true,
   };
   L.debug({ mfaRequest }, 'MFA Request');
-  try {
-    await request.post('https://www.epicgames.com/id/api/login/mfa', {
-      json: mfaRequest,
-      headers: {
-        'x-xsrf-token': csrfToken,
-      },
-    });
-  } catch (e) {
-    L.error(e.response.body, 'MFA failed');
-    throw e;
-  }
+  await request.post('https://www.epicgames.com/id/api/login/mfa', {
+    json: mfaRequest,
+    headers: {
+      'x-xsrf-token': csrfToken,
+    },
+  });
 }
 
 export async function login(
@@ -347,6 +342,9 @@ async function main(): Promise<void> {
     await getAllFreeGames();
   } catch (e) {
     L.error(e);
+    if (e.response.body) {
+      L.error(e.response.body);
+    }
   }
 }
 
