@@ -10,6 +10,7 @@ export interface Category {
 export interface PromotionalOfferInner {
   startDate: Date;
   endDate: Date;
+  discountSetting: DiscountSetting;
 }
 
 export interface PromotionalOfferOuter {
@@ -63,4 +64,9 @@ export interface Extensions {
 export interface RootObject {
   data: Data;
   extensions: Extensions;
+}
+
+export interface DiscountSetting {
+  discountType: string;
+  discountPercentage: number;
 }

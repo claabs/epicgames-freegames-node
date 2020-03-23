@@ -235,6 +235,10 @@ export async function getFreeGames(): Promise<OfferElement[]> {
               promotionalOffers {
                 startDate
                 endDate
+                discountSetting {
+                  discountType
+                  discountPercentage
+                }
               }
             }
           }
@@ -250,10 +254,11 @@ export async function getFreeGames(): Promise<OfferElement[]> {
     let r = false;
     if (offer.promotions) {
       offer.promotions.promotionalOffers.forEach(innerOffers => {
-        innerOffers.promotionalOffers.forEach(dates => {
-          const startDate = new Date(dates.startDate);
-          const endDate = new Date(dates.endDate);
-          if (startDate <= nowDate && nowDate <= endDate) {
+        innerOffers.promotionalOffers.forEach(pOffer => {
+          const startDate = new Date(pOffer.startDate);
+          const endDate = new Date(pOffer.endDate);
+          const isFree = pOffer.discountSetting.discountPercentage === 0;
+          if (startDate <= nowDate && nowDate <= endDate && isFree) {
             r = true;
           }
         });
