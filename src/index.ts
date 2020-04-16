@@ -83,7 +83,7 @@ export async function login(
     });
     L.info('Logged in');
   } catch (e) {
-    if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
+    if (e.response.body.errorCode.includes('session_invalidated')) {
       L.debug('Session invalidated, retrying');
       await login(email, password, captcha, attempt + 1);
     } else if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
