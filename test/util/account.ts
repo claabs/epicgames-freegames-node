@@ -3,7 +3,7 @@ import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
 import { config } from 'dotenv';
 import L from '../../src/common/logger';
-import { login, setupSid } from '../../src/index';
+import { login, refreshAndSid } from '../../src/index';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
 import request from '../../src/common/request';
@@ -212,7 +212,7 @@ export default class AccountManager {
   }
 
   private async getAccountId(): Promise<void> {
-    await setupSid();
+    await refreshAndSid(true);
     const userInfo = await request.get<UserInfoResponse>(USER_INFO_ENDPOINT);
     this.accountId = userInfo.body.userInfo.id.value;
   }
