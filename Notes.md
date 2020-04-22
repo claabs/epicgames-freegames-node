@@ -2,6 +2,20 @@
 
 ## Login
 
+### Login Refresh
+
+Make a call to the redirect endpoint with a valid `EPIC_SESSION_AP` cookie to refresh your credential cookies.
+
+Sometimes it will give you 8 hour cookies, other times it will give you 30 day cookies. Not sure what determines that yet.
+
+Response sets the cookies:
+| Name              | Max-Age |
+|-------------------|---------|
+| EPIC_SSO          | 28800   |
+| EPIC_BEARER_TOKEN | 28800   |
+| EPIC_SSO_RM       | 2592000 |
+| EPIC_SESSION_AP   | 2592000 |
+
 ## Free Games Lookup
 
 To determine if you own a game, use the `entitledOfferItems` GraphQL query. This will return `entitledToAllItemsInOffer: boolean` and `entitledToAnyItemInOffer: boolean`. The two variables make up various states of purchasability.

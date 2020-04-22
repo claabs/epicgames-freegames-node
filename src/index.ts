@@ -22,6 +22,8 @@ import {
   LOGIN_ENDPOINT,
   GRAPHQL_ENDPOINT,
   EPIC_CLIENT_ID,
+  REDIRECT_ENDPOINT,
+  REPUTATION_ENDPOINT,
 } from './common/constants';
 
 config();
@@ -35,6 +37,10 @@ export async function getCsrf(): Promise<string> {
     map: true,
   }) as unknown) as CSRFSetCookies;
   return cookies['XSRF-TOKEN'].value;
+}
+
+export async function getReputation(): Promise<void> {
+  await request.get(REPUTATION_ENDPOINT);
 }
 
 export async function loginMFA(): Promise<void> {
@@ -101,40 +107,28 @@ export async function login(
   }
 }
 
-export async function refreshLogin(): Promise<boolean> {
+export async function refreshAndSid(error: boolean): Promise<boolean> {
   const csrfToken = await getCsrf();
-  const redirectResp = await request.get<RedirectResponse>(
-    'https://www.epicgames.com/id/api/redirect',
-    {
-      headers: {
-        'x-xsrf-token': csrfToken,
-      },
-      searchParams: {
-        clientId: EPIC_CLIENT_ID,
-      },
-    }
-  );
+  const redirectResp = await request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
+    headers: {
+      'x-xsrf-token': csrfToken,
+    },
+    searchParams: {
+      clientId: EPIC_CLIENT_ID,
+      redirectUrl: `https://www.epicgames.com/store/en-US/`,
+    },
+  });
   const { sid } = redirectResp.body;
-  return Boolean(sid);
-}
-
-export async function setupSid(): Promise<string> {
-  const redirectResp = await request.get<RedirectResponse>(
-    'https://www.epicgames.com/id/api/redirect',
-    {
-      searchParams: {
-        clientId: EPIC_CLIENT_ID,
-      },
-    }
-  );
-  const { sid } = redirectResp.body;
-  if (!sid) throw new Error('Sid returned null');
+  if (!sid) {
+    if (error) throw new Error('Sid returned null');
+    return false;
+  }
   await request.get('https://www.unrealengine.com/id/api/set-sid', {
     searchParams: {
       sid,
     },
   });
-  return sid;
+  return true;
 }
 
 export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
@@ -294,7 +288,9 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
     offerId: linkedOfferId,
   };
   const data: GraphQLBody = { query, variables };
-  const entitlementResp = await request.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, { json: data });
+  const entitlementResp = await request.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
+    json: data,
+  });
   const items = entitlementResp.body.data.Launcher.entitledOfferItems;
   return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
 }
@@ -319,7 +315,6 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
 }
 
 export async function getAllFreeGames(): Promise<void> {
-  await setupSid();
   const validFreeGames = await getFreeGames();
   L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
   const purchasableGames = await getPurchasableFreeGames(validFreeGames);
@@ -338,11 +333,13 @@ export async function getAllFreeGames(): Promise<void> {
 async function main(): Promise<void> {
   try {
     // Login
-    if (await refreshLogin()) {
+    if (await refreshAndSid(false)) {
       L.info('Successfully refreshed login');
     } else {
       L.debug('Could not refresh credentials. Logging in fresh.');
+      await getReputation();
       await login(EMAIL, PASSWORD);
+      await refreshAndSid(true);
     }
     await getAllFreeGames();
   } catch (e) {
