@@ -210,21 +210,20 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
 }
 
 export async function getFreeGames(): Promise<OfferElement[]> {
-  const query = `query promotionsQuery($namespace: String!, $country: String!, $locale: String!) {
+  const query = `query searchStoreQuery($allowCountries: String, $category: String, $count: Int, $country: String!, $keywords: String, $locale: String, $namespace: String, $sortBy: String, $sortDir: String, $start: Int, $tag: String, $withPromotions: Boolean = false) {
     Catalog {
-      catalogOffers(namespace: $namespace, locale: $locale, params: {category: "freegames", country: $country, sortBy: "effectiveDate", sortDir: "asc"}) {
+      searchStore(allowCountries: $allowCountries, category: $category, count: $count, country: $country, keywords: $keywords, locale: $locale, namespace: $namespace, sortBy: $sortBy, sortDir: $sortDir, start: $start, tag: $tag) {
         elements {
           title
-          description
           id
           namespace
-          categories {
-            path
-          }
-          linkedOfferNs
-          linkedOfferId
+          description
           productSlug
-          promotions {
+          items {
+            id
+            namespace
+          }
+          promotions(category: $category) @include(if: $withPromotions) {
             promotionalOffers {
               promotionalOffers {
                 startDate
@@ -237,14 +236,27 @@ export async function getFreeGames(): Promise<OfferElement[]> {
             }
           }
         }
+        paging {
+          count
+          total
+        }
       }
     }
   }`;
-  const variables = { namespace: 'epic', country: 'US', locale: 'en-US' };
+  const variables = {
+    category: 'freegames',
+    sortBy: 'effectiveDate',
+    sortDir: 'asc',
+    count: 1000,
+    country: 'US',
+    allowCountries: 'US',
+    locale: 'en-US',
+    withPromotions: true,
+  };
   const data: GraphQLBody = { query, variables };
   const resp = await request.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, { json: data });
   const nowDate = new Date();
-  const freeOfferedGames = resp.body.data.Catalog.catalogOffers.elements.filter(offer => {
+  const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
     let r = false;
     if (offer.promotions) {
       offer.promotions.promotionalOffers.forEach(innerOffers => {
@@ -297,7 +309,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
 
 async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<OfferInfo[]> {
   const ownsGamePromises = validOffers.map(offer => {
-    return ownsGame(offer.linkedOfferNs, offer.linkedOfferId);
+    return ownsGame(offer.namespace, offer.id);
   });
   const ownsGames = await Promise.all(ownsGamePromises);
   const purchasableGames: OfferInfo[] = validOffers
@@ -306,8 +318,8 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
     })
     .map(offer => {
       return {
-        offerNamespace: offer.linkedOfferNs,
-        offerId: offer.linkedOfferId,
+        offerNamespace: offer.namespace,
+        offerId: offer.id,
         productName: offer.title,
       };
     });

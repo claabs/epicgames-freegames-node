@@ -3,10 +3,6 @@ export interface PromotionsQueryResponse {
   extensions: Extensions;
 }
 
-export interface Category {
-  path: string;
-}
-
 export interface PromotionalOfferInner {
   startDate: Date;
   endDate: Date;
@@ -21,24 +17,27 @@ export interface Promotions {
   promotionalOffers: PromotionalOfferOuter[];
 }
 
-export interface OfferElement {
-  title: string;
-  description: string;
+export interface Items {
   id: string;
   namespace: string;
-  categories: Category[];
-  linkedOfferNs: string;
-  linkedOfferId: string;
+}
+
+export interface OfferElement {
+  title: string;
+  id: string;
+  namespace: string;
+  description: string;
   productSlug: string;
+  items: Items;
   promotions: Promotions | null;
 }
 
-export interface CatalogOffers {
+export interface SearchStore {
   elements: OfferElement[];
 }
 
 export interface Catalog {
-  catalogOffers: CatalogOffers;
+  searchStore: SearchStore;
 }
 
 export interface Data {
