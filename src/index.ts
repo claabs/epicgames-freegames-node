@@ -76,7 +76,7 @@ export async function login(
 
   const loginBody: LoginBody = {
     password,
-    rememberMe: false,
+    rememberMe: true,
     captcha,
     email,
   };

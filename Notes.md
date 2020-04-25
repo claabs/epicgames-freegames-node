@@ -6,9 +6,9 @@
 
 Make a call to the redirect endpoint with a valid `EPIC_SESSION_AP` cookie to refresh your credential cookies.
 
-Sometimes it will give you 8 hour cookies, other times it will give you 30 day cookies. Not sure what determines that yet.
+`rememberMe: false` during login will give you 8 hour cookies. `rememberMe: true` will give you 30 day cookies.
 
-Response sets the cookies:
+`rememberMe: true` response sets the cookies:
 | Name              | Max-Age |
 |-------------------|---------|
 | EPIC_SSO          | 28800   |
