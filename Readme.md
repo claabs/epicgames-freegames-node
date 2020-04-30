@@ -51,19 +51,30 @@ Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly e
 1. Add this JSON key file to the config folder for the project (`./config/account-name-abcdef12345.json`).
 1. [Enable data logging](https://console.cloud.google.com/apis/api/speech.googleapis.com/data_logging) to be charged a lower fee in case you go over 60 minutes of transcription.
 
-### Environment Variables
+### Docker Congifuration
 
-| Variable        | Example                                                | Default      | Description                                                                                         |
-|-----------------|--------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------|
-| EMAIL           | `example@gmail.com`                                    |              | Epic Games login email                                                                              |
-| PASSWORD        | `abc123`                                               |              | Epic Games login password                                                                           |
-| TOTP            | `EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE` |              | (Optional) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)         |
-| GCP_CONFIG_NAME | `account-name-abcdef12345.json`                        |              | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha |
-| RUN_ON_STARTUP  | `true`                                                 | `false`      | (Optional) If true, the process will run on startup in addition to the scheduled time               |
-| CRON_SCHEDULE   | `0 12 * * *`                                           | `0 12 * * *` | (Optional) Cron string of when to run the process                                                   |
-| LOG_LEVEL       | `info`                                                 | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                       |
+#### Environment Variables
+
+| Variable        | Example                                                | Default      | Description                                                                                                                                        |
+|-----------------|--------------------------------------------------------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| EMAIL           | `example@gmail.com`                                    |              | Epic Games login email                                                                                                                             |
+| PASSWORD        | `abc123`                                               |              | Epic Games login password                                                                                                                          |
+| TOTP            | `EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE` |              | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                              |
+| GCP_CONFIG_NAME | `account-name-abcdef12345.json`                        |              | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha                                                |
+| RUN_ON_STARTUP  | `true`                                                 | `false`      | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
+| CRON_SCHEDULE   | `0 12 * * *`                                           | `0 12 * * *` | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
+| LOG_LEVEL       | `info`                                                 | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                                                                      |
+| TZ              | `America/Chicago`                                      | `UTC`        | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                 |
+
+#### Volumes
+
+| Host location   | Container location | Mode | Description                            |
+|-----------------|--------------------|------|----------------------------------------|
+| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file |
 
 #### Two-factor login
+
+**Epic has begun [enforcing two-factor](https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games) when claiming free games. It may be necessary when using this tool.**
 
 If you have two-factor authentication (2FA) enabled on your account, you need to add your TOTP secret as an environment variable. To get your TOTP secret, you may need to redo your 2FA setup:
 
@@ -76,11 +87,7 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 
 ### Docker Run
 
-`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /mnt/user/appdata/epicgames-freegames/:/usr/app/config:rw charlocharlie/epicgames-freegames:latest`
-
-### Future
-
-Eventually, the project will be deployed in Docker and be configurable by either environment variables, configuration file, or both. Not all accounts require Captcha on login, so Google Speech-to-text will be optional unless necessary.
+`docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e GCP_CONFIG_NAME=account-name-abcdef12345.json -e RUN_ON_STARTUP=true -v /my/host/dir/:/usr/app/config:rw charlocharlie/epicgames-freegames:latest`
 
 ## Development
 
