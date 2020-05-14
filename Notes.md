@@ -42,6 +42,8 @@ Make a call to the redirect endpoint with a valid `EPIC_SESSION_AP` cookie to re
 
 ## Free Games Lookup
 
+### Determining Ownership
+
 To determine if you own a game, use the `entitledOfferItems` GraphQL query. This will return `entitledToAllItemsInOffer: boolean` and `entitledToAnyItemInOffer: boolean`. The two variables make up various states of purchasability.
 
 |                                        | entitledToAllItemsInOffer = `true` | entitledToAllItemsInOffer = `false` |
@@ -50,6 +52,24 @@ To determine if you own a game, use the `entitledOfferItems` GraphQL query. This
 | **entitledToAnyItemInOffer = `false`** | *TBD*                              | Purchasable                         |
 
 ## Purchase
+
+A general overview of the purchase process. See the code for specifics.
+
+### Purchase Prerequesites
+
+- Logged in
+- offerId of game to be purchased
+- namespaceId of game to be purchased
+
+### Purchase Process
+
+1. Call `/store/purchase` with the namespaceId and offerId as parameters. 
+    1. Remember the purchase token located at `<input id="purchaseToken">` in the HTML document
+1. *(Optional)* Call Safetech with the purchase token as a parameter
+    1. Doesn't seem necessary as of now
+1. Call order preview with the namespaceId and offerId in the body, and the purchase token in a header
+    1. Remember the order preview response
+1. Call confirm order with essentially the contents of order preview, and the purchase token in a header
 
 ## Testing
 
