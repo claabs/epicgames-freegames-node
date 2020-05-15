@@ -8,7 +8,8 @@
     "strict": true, /* Enable all strict type-checking options. */
     "moduleResolution": "node", /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
     "typeRoots": [
-      "node_modules/@types"
+      "node_modules/@types",
+      "types"
     ], /* List of folders to include type definitions from. */
     "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
