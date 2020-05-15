@@ -15,7 +15,7 @@ import {
   MFABody,
 } from './interfaces/types';
 import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
-import { ItemEntitlementResp } from './interfaces/product-info';
+import { ItemEntitlementResp, ProductInfo } from './interfaces/product-info';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
 import {
   CSRF_ENDPOINT,
@@ -24,6 +24,7 @@ import {
   EPIC_CLIENT_ID,
   REDIRECT_ENDPOINT,
   REPUTATION_ENDPOINT,
+  STORE_CONTENT,
 } from './common/constants';
 
 config();
@@ -174,6 +175,9 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     }
   );
   L.debug({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
+  if (orderPreviewResp.body.orderResponse && orderPreviewResp.body.orderResponse.error) {
+    L.error(orderPreviewResp.body.orderResponse.message);
+  }
 
   // TODO: Can probably just use a spread operator here?
   const confirmOrderRequest = {
@@ -321,19 +325,36 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
         offerNamespace: offer.namespace,
         offerId: offer.id,
         productName: offer.title,
+        productSlug: offer.productSlug,
       };
     });
   return purchasableGames;
 }
 
+async function getOfferIds(offers: OfferInfo[]): Promise<OfferInfo[]> {
+  const promises = offers.map(offer => {
+    return request.get<ProductInfo>(`${STORE_CONTENT}/${offer.productSlug}`);
+  });
+  const responses = await Promise.all(promises);
+  return responses.map((resp, index) => {
+    return {
+      productName: offers[index].productName,
+      productSlug: offers[index].productSlug,
+      offerId: resp.body.pages[0].offer.id,
+      offerNamespace: resp.body.pages[0].offer.namespace,
+    };
+  });
+}
+
 export async function getAllFreeGames(): Promise<void> {
   const validFreeGames = await getFreeGames();
   L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
-  const purchasableGames = await getPurchasableFreeGames(validFreeGames);
+  let purchasableGames = await getPurchasableFreeGames(validFreeGames);
   L.info(
     { purchasableGames: purchasableGames.map(game => game.productName) },
     'Unpurchased free games'
   );
+  purchasableGames = await getOfferIds(purchasableGames);
   for (let i = 0; i < purchasableGames.length; i += 1) {
     L.info(`Purchasing ${purchasableGames[i].productName}`);
     // eslint-disable-next-line no-await-in-loop

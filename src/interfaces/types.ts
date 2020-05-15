@@ -33,6 +33,28 @@ export interface RedirectResponse {
   sid: string | null;
 }
 
+export interface OrderResponse extends Record<string, any> {
+  error: boolean;
+  message: string;
+}
+
+export interface CatalogResponse {
+  currencySymbolPlacement: string;
+  code: string;
+  displayName: string;
+  ratingSystem: string;
+  embargoed: boolean;
+  sellerOfRecord: string;
+  vatChargeRate: number;
+  ratingSystems: any[];
+  vatPercentage: number;
+  defaultCurrency: string;
+  vatIncluded: boolean;
+  region: string;
+  sellerOfRecordName: string;
+  paymentCurrency: string;
+}
+
 export interface OrderPreviewResponse {
   affiliation: null;
   catalogResponse: any;
@@ -41,11 +63,11 @@ export interface OrderPreviewResponse {
   message: null;
   namespace: string;
   offers: string[];
-  orderComplete: boolean;
-  orderError: boolean;
-  orderId: null;
-  orderPending: boolean;
-  orderResponse: any;
+  orderComplete: boolean | null;
+  orderError: boolean | null;
+  orderId: null | null;
+  orderPending: boolean | null;
+  orderResponse: OrderResponse;
   paypalError: null;
   showCurrencyChangeMessage: boolean;
   syncToken: string;
@@ -56,4 +78,5 @@ export interface OfferInfo {
   offerNamespace: string;
   offerId: string;
   productName: string;
+  productSlug: string;
 }
