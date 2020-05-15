@@ -331,17 +331,16 @@ async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<Off
   return purchasableGames;
 }
 
-async function getOfferIds(offers: OfferInfo[]): Promise<OfferInfo[]> {
+async function updateIds(offers: OfferElement[]): Promise<OfferElement[]> {
   const promises = offers.map(offer => {
     return request.get<ProductInfo>(`${STORE_CONTENT}/${offer.productSlug}`);
   });
   const responses = await Promise.all(promises);
   return responses.map((resp, index) => {
     return {
-      productName: offers[index].productName,
-      productSlug: offers[index].productSlug,
-      offerId: resp.body.pages[0].offer.id,
-      offerNamespace: resp.body.pages[0].offer.namespace,
+      ...offers[index],
+      id: resp.body.pages[0].offer.id,
+      namespace: resp.body.pages[0].offer.namespace,
     };
   });
 }
@@ -349,12 +348,12 @@ async function getOfferIds(offers: OfferInfo[]): Promise<OfferInfo[]> {
 export async function getAllFreeGames(): Promise<void> {
   const validFreeGames = await getFreeGames();
   L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
-  let purchasableGames = await getPurchasableFreeGames(validFreeGames);
+  const updatedOffers = await updateIds(validFreeGames);
+  const purchasableGames = await getPurchasableFreeGames(updatedOffers);
   L.info(
     { purchasableGames: purchasableGames.map(game => game.productName) },
     'Unpurchased free games'
   );
-  purchasableGames = await getOfferIds(purchasableGames);
   for (let i = 0; i < purchasableGames.length; i += 1) {
     L.info(`Purchasing ${purchasableGames[i].productName}`);
     // eslint-disable-next-line no-await-in-loop
