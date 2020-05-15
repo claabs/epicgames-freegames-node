@@ -1,6 +1,7 @@
 import { usage } from 'yargs';
 import AccountManager from './test/util/account';
-import { getAllFreeGames } from './src';
+import { getAllFreeGames } from './src/free-games';
+import { purchaseGames } from './src/purchase';
 
 interface ReleaseArgs {
   [x: string]: unknown;
@@ -35,7 +36,8 @@ const redeemGames = async (args: RedeemArgs): Promise<void> => {
   if (!user || !pass) throw new Error('Missing username or password');
   const account = new AccountManager(user, pass);
   await account.login();
-  await getAllFreeGames();
+  const offers = await getAllFreeGames(); // Get purchasable offers
+  await purchaseGames(offers); // Purchase games;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

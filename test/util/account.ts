@@ -3,7 +3,7 @@ import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
 import { config } from 'dotenv';
 import L from '../../src/common/logger';
-import { login, refreshAndSid } from '../../src/index';
+import { login, refreshAndSid } from '../../src/login';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
 import request from '../../src/common/request';

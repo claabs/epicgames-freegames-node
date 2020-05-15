@@ -8,6 +8,7 @@
     "start:ts": "ts-node src/index.ts",
     "build": "tsc",
     "lint": "tsc --noEmit && eslint **/*.ts",
+    "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest"
@@ -68,7 +69,8 @@
   "eslintIgnore": [
     "**/*.config.js",
     "node_modules/**",
-    "dist/**"
+    "dist/**",
+    "**/*.d.ts"
   ],
   "license": "MIT"
 }
