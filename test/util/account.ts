@@ -1,9 +1,11 @@
+/* eslint-disable class-methods-use-this */
 import RandExp from 'randexp';
 import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
 import { config } from 'dotenv';
+import { TOTP } from 'otpauth';
 import L from '../../src/common/logger';
-import { login, refreshAndSid } from '../../src/login';
+import { refreshAndSid, sendVerify, fullLogin } from '../../src/login';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
 import request from '../../src/common/request';
@@ -14,6 +16,9 @@ import {
   EPIC_CLIENT_ID,
   CHANGE_EMAIL_ENDPOINT,
   USER_INFO_ENDPOINT,
+  SETUP_MFA,
+  ACCOUNT_CSRF_ENDPOINT,
+  ACCOUNT_SESSION_ENDPOINT,
 } from '../../src/common/constants';
 
 config();
@@ -56,20 +61,37 @@ interface UserInfoResponse {
   };
 }
 
+interface MFASetupResponse {
+  isSuccess: boolean;
+  settings: null;
+  type: string;
+  enabled: string;
+  verify: {
+    otpauth: string;
+    secret: string; // Use this one
+    challenge: string;
+    errorCode: string;
+  };
+  requiresVerification: boolean;
+  error: null;
+}
+
 export default class AccountManager {
   private tempMail: TempMail;
 
   private permMail: PermMail;
 
-  private permMailAddress: string;
+  public permMailAddress: string;
 
-  private username: string;
+  public username: string;
 
-  private password: string;
+  public password: string;
+
+  public totp?: string;
 
   private accountId = '';
 
-  constructor(user?: string, pass?: string) {
+  constructor(user?: string, pass?: string, totp?: string) {
     if (user) {
       this.username = user;
     } else {
@@ -82,25 +104,29 @@ export default class AccountManager {
       const randPass = new RandExp(/[a-zA-Z]{4,8}[0-9]{3,8}/);
       this.password = randPass.gen();
     }
+    this.totp = totp;
     this.tempMail = new TempMail({
       username: this.username,
     });
+    request.newCookieJar(this.username);
     this.permMail = new PermMail();
     this.permMailAddress = `${this.permMail.addressName}+${this.username}@${this.permMail.addressHost}`;
   }
 
   public async init(): Promise<void> {
     await this.tempMail.init();
-    L.info({ username: this.username });
-    L.info({ password: this.password });
-    L.info({ permMailAddress: this.permMailAddress });
-    L.info({ tempMailAddress: this.tempMail.emailAddress });
-    return this.createAccount(this.permMailAddress, this.password);
+    L.info({ username: this.username, password: this.password, email: this.permMailAddress });
+    await this.createAccount(this.permMailAddress, this.password);
   }
 
-  public async createAccount(email: string, password: string, attempt = 0): Promise<void> {
-    const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.CREATE);
-    const csrfResp = await request.get(CSRF_ENDPOINT);
+  public async createAccount(
+    email: string,
+    password: string,
+    attempt = 0,
+    captcha?: string
+  ): Promise<void> {
+    const captchaToken = captcha || (await getCaptchaSessionToken(EpicArkosePublicKey.CREATE));
+    const csrfResp = await request.client.get(CSRF_ENDPOINT);
     const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
       map: true,
     }) as unknown) as CSRFSetCookies;
@@ -122,29 +148,102 @@ export default class AccountManager {
       email,
     };
     try {
-      await request.post('https://www.epicgames.com/id/api/account', {
+      await request.client.post('https://www.epicgames.com/id/api/account', {
         json: createBody,
         headers: {
           'x-xsrf-token': csrfToken,
         },
       });
-      L.info('Account created');
+      await this.enableMFA();
+      L.info(
+        {
+          email: this.permMailAddress,
+          password: this.password,
+          username: this.username,
+          totp: this.totp,
+        },
+        'Account created'
+      );
     } catch (e) {
-      if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.session_invalidated') {
-        L.debug('Session invalidated, retrying');
-        await this.createAccount(email, password, attempt + 1);
-      } else if (
-        e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
-        (e.response.body.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
-          e.response.body.message === 'captcha is required')
-      ) {
-        L.debug('Captcha required');
-        await this.createAccount(email, password, attempt + 1);
-      } else {
-        L.error(e.response.body, 'Account creation failed');
-        throw e;
+      if (e.response && e.response.body && e.response.body.errorCode) {
+        if (e.response.body.errorCode.includes('session_invalidated')) {
+          L.debug('Session invalidated, retrying');
+          await this.createAccount(email, password, attempt + 1, captchaToken);
+        } else if (
+          e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
+          (e.response.body.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
+            e.response.body.message === 'captcha is required')
+        ) {
+          L.debug('Captcha required');
+          await this.createAccount(email, password, attempt + 1, captchaToken);
+        } else if (e.response.body.errorCode.includes('email_verification_required')) {
+          const code = await this.getPermVerification();
+          await sendVerify(code);
+          await this.createAccount(email, password, attempt + 1, captchaToken);
+        } else {
+          L.error(e.response.body, 'Account creation failed');
+          throw e;
+        }
       }
+      L.error(e, 'Account creation failed');
+      throw e;
     }
+  }
+
+  private async accountCsrf(): Promise<string> {
+    const csrfResp = await request.client.post(ACCOUNT_CSRF_ENDPOINT);
+    L.debug({ headers: csrfResp.headers });
+    const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
+      map: true,
+    }) as unknown) as CSRFSetCookies;
+    return cookies['XSRF-AM-TOKEN'].value;
+  }
+
+  private async startAccountSession(): Promise<void> {
+    await request.client.get(ACCOUNT_SESSION_ENDPOINT, {
+      responseType: 'text',
+      headers: {
+        'content-type': 'text/html',
+      },
+      searchParams: {
+        productName: 'epicgames',
+        lang: 'en',
+      },
+    });
+  }
+
+  private async enableMFA(): Promise<void> {
+    L.info('Enabling MFA');
+    await fullLogin(this.permMailAddress, this.password);
+    L.debug('Getting account client cookies');
+    await this.startAccountSession();
+    L.debug('Getting account CSRF');
+    const csrfToken = await this.accountCsrf();
+    L.debug('Requesting MFA setup');
+    const resp = await request.client.post<MFASetupResponse>(SETUP_MFA, {
+      form: {
+        type: 'authenticator',
+        enabled: 'true',
+      },
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+    });
+    const { challenge } = resp.body.verify;
+    this.totp = resp.body.verify.secret;
+    const totp = new TOTP({ secret: this.totp });
+    L.debug('Verifying MFA setup');
+    await request.client.post<MFASetupResponse>(SETUP_MFA, {
+      form: {
+        type: 'authenticator',
+        enabled: 'true',
+        otp: totp.generate(),
+        challenge,
+      },
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+    });
   }
 
   /**
@@ -156,7 +255,7 @@ export default class AccountManager {
     };
     L.debug('Calling initial change');
     try {
-      await request.post(CHANGE_EMAIL_ENDPOINT, {
+      await request.client.post(CHANGE_EMAIL_ENDPOINT, {
         form: initialChangeBody,
       });
       const otp = await this.getPermOTP();
@@ -174,7 +273,7 @@ export default class AccountManager {
         ),
       };
       L.debug('Calling verify change', verifyChangeBody);
-      await request.post(CHANGE_EMAIL_ENDPOINT, {
+      await request.client.post(CHANGE_EMAIL_ENDPOINT, {
         form: verifyChangeBody,
       });
       await this.getTempVerification();
@@ -186,7 +285,7 @@ export default class AccountManager {
   }
 
   public async login(): Promise<void> {
-    return login(this.permMailAddress, this.password);
+    return fullLogin(this.permMailAddress, this.password, this.totp);
   }
 
   private async getPermOTP(): Promise<string> {
@@ -208,12 +307,24 @@ export default class AccountManager {
     L.debug({ message }, 'Verify message');
     // TODO: Parse the email
     // const link = message;
-    // return request.get(link);
+    // return request.client.get(link);
+  }
+
+  private async getPermVerification(): Promise<string> {
+    L.debug('Waiting for perm verification email');
+    const email = await this.permMail.waitForEmail();
+    if (!email || !email.source) throw new Error('Empty email');
+    const source = email.source.toString();
+    const matches = source.match(/[\r\n]([0-9]{6})[\r\n]/g);
+    if (!matches) throw new Error('No code matches');
+    const code = matches[0].trim();
+    L.debug({ code }, 'Email code');
+    return code;
   }
 
   private async getAccountId(): Promise<void> {
     await refreshAndSid(true);
-    const userInfo = await request.get<UserInfoResponse>(USER_INFO_ENDPOINT);
+    const userInfo = await request.client.get<UserInfoResponse>(USER_INFO_ENDPOINT);
     this.accountId = userInfo.body.userInfo.id.value;
   }
 }

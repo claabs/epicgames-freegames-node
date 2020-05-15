@@ -10,13 +10,14 @@ import {
   EPIC_CLIENT_ID,
   REDIRECT_ENDPOINT,
   REPUTATION_ENDPOINT,
+  EMAIL_VERIFY,
 } from './common/constants';
 
 export const EMAIL = process.env.EMAIL || 'missing@email.com';
 export const PASSWORD = process.env.PASSWORD || 'missing-password';
 
 export async function getCsrf(): Promise<string> {
-  const csrfResp = await request.get(CSRF_ENDPOINT);
+  const csrfResp = await request.client.get(CSRF_ENDPOINT);
   const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
     map: true,
   }) as unknown) as CSRFSetCookies;
@@ -24,13 +25,12 @@ export async function getCsrf(): Promise<string> {
 }
 
 export async function getReputation(): Promise<void> {
-  await request.get(REPUTATION_ENDPOINT);
+  await request.client.get(REPUTATION_ENDPOINT);
 }
 
-export async function loginMFA(): Promise<void> {
+export async function loginMFA(totpSecret?: string): Promise<void> {
   L.debug('Logging in with MFA');
-  if (!process.env.TOTP) throw new Error('TOTP required for MFA login');
-  const totpSecret = process.env.TOTP;
+  if (!totpSecret) throw new Error('TOTP required for MFA login');
   const csrfToken = await getCsrf();
   const totp = new TOTP({ secret: totpSecret });
   const mfaRequest: MFABody = {
@@ -39,8 +39,20 @@ export async function loginMFA(): Promise<void> {
     rememberDevice: true,
   };
   L.debug({ mfaRequest }, 'MFA Request');
-  await request.post('https://www.epicgames.com/id/api/login/mfa', {
+  await request.client.post('https://www.epicgames.com/id/api/login/mfa', {
     json: mfaRequest,
+    headers: {
+      'x-xsrf-token': csrfToken,
+    },
+  });
+}
+
+export async function sendVerify(code: string): Promise<void> {
+  const csrfToken = await getCsrf();
+  await request.client.post(EMAIL_VERIFY, {
+    json: {
+      verificationCode: code,
+    },
     headers: {
       'x-xsrf-token': csrfToken,
     },
@@ -51,6 +63,7 @@ export async function login(
   email: string,
   password: string,
   captcha = '',
+  totp = '',
   attempt = 0
 ): Promise<void> {
   const csrfToken = await getCsrf();
@@ -64,7 +77,7 @@ export async function login(
     email,
   };
   try {
-    await request.post(LOGIN_ENDPOINT, {
+    await request.client.post(LOGIN_ENDPOINT, {
       json: loginBody,
       headers: {
         'x-xsrf-token': csrfToken,
@@ -72,19 +85,27 @@ export async function login(
     });
     L.info('Logged in');
   } catch (e) {
-    if (e.response.body.errorCode.includes('session_invalidated')) {
-      L.debug('Session invalidated, retrying');
-      await login(email, password, captcha, attempt + 1);
-    } else if (e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid') {
-      L.debug('Captcha required');
-      const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
-      await login(email, password, captchaToken, attempt + 1);
-    } else if (
-      e.response.body.errorCode === 'errors.com.epicgames.common.two_factor_authentication.required'
-    ) {
-      await loginMFA();
+    if (e.response && e.response.body && e.response.body.errorCode) {
+      if (e.response.body.errorCode.includes('session_invalidated')) {
+        L.debug('Session invalidated, retrying');
+        await login(email, password, captcha, totp, attempt + 1);
+      } else if (
+        e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
+      ) {
+        L.debug('Captcha required');
+        const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
+        await login(email, password, captchaToken, totp, attempt + 1);
+      } else if (
+        e.response.body.errorCode ===
+        'errors.com.epicgames.common.two_factor_authentication.required'
+      ) {
+        await loginMFA(totp);
+      } else {
+        L.error(e.response.body, 'Login failed');
+        throw e;
+      }
     } else {
-      L.error(e.response.body, 'Login failed');
+      L.error(e, 'Login failed');
       throw e;
     }
   }
@@ -92,7 +113,7 @@ export async function login(
 
 export async function refreshAndSid(error: boolean): Promise<boolean> {
   const csrfToken = await getCsrf();
-  const redirectResp = await request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
+  const redirectResp = await request.client.get<RedirectResponse>(REDIRECT_ENDPOINT, {
     headers: {
       'x-xsrf-token': csrfToken,
     },
@@ -106,7 +127,7 @@ export async function refreshAndSid(error: boolean): Promise<boolean> {
     if (error) throw new Error('Sid returned null');
     return false;
   }
-  await request.get('https://www.unrealengine.com/id/api/set-sid', {
+  await request.client.get('https://www.unrealengine.com/id/api/set-sid', {
     searchParams: {
       sid,
     },
@@ -114,13 +135,17 @@ export async function refreshAndSid(error: boolean): Promise<boolean> {
   return true;
 }
 
-export async function fullLogin(): Promise<void> {
+export async function fullLogin(
+  email = process.env.EMAIL || 'missing@email.com',
+  password = process.env.PASSWORD || 'missing-password',
+  totp = process.env.TOTP
+): Promise<void> {
   if (await refreshAndSid(false)) {
     L.info('Successfully refreshed login');
   } else {
     L.debug('Could not refresh credentials. Logging in fresh.');
     await getReputation();
-    await login(EMAIL, PASSWORD);
+    await login(email, password, '', totp);
     await refreshAndSid(true);
   }
 }

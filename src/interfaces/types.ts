@@ -6,6 +6,7 @@ export interface CSRFSetCookies {
   EPIC_DEVICE: Cookie;
   EPIC_SESSION_ID: Cookie;
   'XSRF-TOKEN': Cookie;
+  'XSRF-AM-TOKEN': Cookie;
   EPIC_SESSION_AP: Cookie;
 }
 

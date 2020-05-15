@@ -48,6 +48,7 @@ const manuallySolveCaptcha = async (publicKey: EpicArkosePublicKey): Promise<str
 };
 
 export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Promise<string> {
+  if (publicKey === EpicArkosePublicKey.CREATE) return manuallySolveCaptcha(publicKey);
   const gcpConfigName = process.env.GCP_CONFIG_NAME;
   if (!gcpConfigName)
     throw new Error('Google Cloud Platform configuration required to bypass captcha');

@@ -47,7 +47,7 @@
     "eslint-plugin-import": "^2.19.1",
     "eslint-plugin-jest": "^23.8.1",
     "eslint-plugin-prettier": "^3.1.2",
-    "imapflow": "^1.0.26",
+    "imapflow": "1.0.26",
     "jest": "^25.1.0",
     "p-wait-for": "^3.1.0",
     "prettier": "^1.19.1",

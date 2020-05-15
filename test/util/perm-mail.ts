@@ -73,7 +73,7 @@ export default class PermMail {
       interval: this.pollInterval,
     });
     if (this.recentEmail) {
-      L.debug({ recentEmail: this.recentEmail }, 'recent email');
+      L.debug('recent email');
       this.latestSeq = this.recentEmail.seq;
       const email = this.recentEmail;
       this.recentEmail = null;

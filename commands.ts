@@ -15,6 +15,7 @@ interface RedeemArgs {
   [x: string]: unknown;
   u?: string;
   p?: string;
+  t?: string;
   _: string[];
   $0: string;
 }
@@ -33,8 +34,9 @@ const releaseAccount = async (args: ReleaseArgs): Promise<void> => {
 const redeemGames = async (args: RedeemArgs): Promise<void> => {
   const user = process.env.TEST_USER || args.u;
   const pass = process.env.TEST_PASSWORD || args.p;
-  if (!user || !pass) throw new Error('Missing username or password');
-  const account = new AccountManager(user, pass);
+  const totp = process.env.TEST_TOTP || args.t;
+  if (!user || !pass || !totp) throw new Error('Missing username, password, or TOTP');
+  const account = new AccountManager(user, pass, totp);
   await account.login();
   const offers = await getAllFreeGames(); // Get purchasable offers
   await purchaseGames(offers); // Purchase games;
@@ -89,6 +91,11 @@ const { argv } = usage('$0 <command> [option]')
         })
         .option('p', {
           alias: ['pass', 'password'],
+          type: 'string',
+          demandOption: false,
+        })
+        .option('t', {
+          alias: ['totp', 'mfa'],
           type: 'string',
           demandOption: false,
         })

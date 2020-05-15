@@ -50,7 +50,7 @@ export async function getFreeGames(): Promise<OfferElement[]> {
     withPromotions: true,
   };
   const data: GraphQLBody = { query, variables };
-  const resp = await request.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, { json: data });
+  const resp = await request.client.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, { json: data });
   const nowDate = new Date();
   const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
     let r = false;
@@ -95,7 +95,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
     offerId: linkedOfferId,
   };
   const data: GraphQLBody = { query, variables };
-  const entitlementResp = await request.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
+  const entitlementResp = await request.client.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
     json: data,
   });
   const items = entitlementResp.body.data.Launcher.entitledOfferItems;
@@ -124,7 +124,7 @@ export async function getPurchasableFreeGames(validOffers: OfferElement[]): Prom
 
 export async function updateIds(offers: OfferElement[]): Promise<OfferElement[]> {
   const promises = offers.map(offer => {
-    return request.get<ProductInfo>(`${STORE_CONTENT}/${offer.productSlug}`);
+    return request.client.get<ProductInfo>(`${STORE_CONTENT}/${offer.productSlug}`);
   });
   const responses = await Promise.all(promises);
   return responses.map((resp, index) => {

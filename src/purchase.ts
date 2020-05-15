@@ -4,7 +4,7 @@ import request from './common/request';
 import { OrderPreviewResponse, OfferInfo } from './interfaces/types';
 
 export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
-  const purchasePageResp = await request.get('https://www.epicgames.com/store/purchase', {
+  const purchasePageResp = await request.client.get('https://www.epicgames.com/store/purchase', {
     searchParams: {
       namespace: linkedOfferNs,
       offers: linkedOfferId,
@@ -34,7 +34,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     offerPrice: '',
   };
   L.debug({ orderPreviewRequest }, 'Order preview request');
-  const orderPreviewResp = await request.post<OrderPreviewResponse>(
+  const orderPreviewResp = await request.client.post<OrderPreviewResponse>(
     'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
     {
       json: orderPreviewRequest,
@@ -69,7 +69,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     isFreeOrder: false,
   };
   L.debug({ confirmOrderRequest }, 'Confirm order request');
-  const confirmOrderResp = await request.post(
+  const confirmOrderResp = await request.client.post(
     'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order',
     {
       json: confirmOrderRequest,

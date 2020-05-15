@@ -7,7 +7,22 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Debug Test User",
+            "name": "Debug Create",
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register"
+            ],
+            "args": [
+                "${workspaceFolder}/commands.ts",
+                "create"
+            ],
+            "outputCapture": "std",
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Redeem",
             "runtimeArgs": [
                 "-r",
                 "ts-node/register"
@@ -15,7 +30,8 @@
             "args": [
                 "${workspaceFolder}/commands.ts",
                 "redeem"
-            ]
+            ],
+            "outputCapture": "std"
         },
         {
             "type": "node",
@@ -27,7 +43,8 @@
             ],
             "args": [
                 "${workspaceFolder}/src/index.ts"
-            ]
+            ],
+            "outputCapture": "std"
         }
     ]
 }
