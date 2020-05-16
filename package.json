@@ -39,6 +39,7 @@
     "@types/pino": "^5.15.5",
     "@types/qs": "^6.9.1",
     "@types/set-cookie-parser": "0.0.6",
+    "@types/tough-cookie-file-store": "^2.0.0",
     "@types/uuid": "^7.0.0",
     "@types/yargs": "^15.0.4",
     "@typescript-eslint/eslint-plugin": "^2.13.0",
