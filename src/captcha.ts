@@ -6,6 +6,7 @@ import readline from 'readline';
 import open from 'open';
 import L from './common/logger';
 import { ARKOSE_BASE_URL } from './common/constants';
+import { config } from './common/config';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -49,7 +50,7 @@ const manuallySolveCaptcha = async (publicKey: EpicArkosePublicKey): Promise<str
 
 export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Promise<string> {
   if (publicKey === EpicArkosePublicKey.CREATE) return manuallySolveCaptcha(publicKey);
-  const gcpConfigName = process.env.GCP_CONFIG_NAME;
+  const { gcpConfigName } = config;
   if (!gcpConfigName)
     throw new Error('Google Cloud Platform configuration required to bypass captcha');
   const speech = new SpeechClient({

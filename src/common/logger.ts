@@ -1,14 +1,12 @@
 import pino from 'pino';
-import { config } from 'dotenv';
-
-config();
+import { config } from './config';
 
 const logger = pino({
   prettyPrint: {
     translateTime: `SYS:standard`,
   },
   useLevelLabels: true,
-  level: process.env.LOG_LEVEL || 'info',
+  level: config.logLevel,
 });
 
 export default logger;

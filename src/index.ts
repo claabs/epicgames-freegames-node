@@ -1,11 +1,9 @@
-import { config } from 'dotenv';
 import { scheduleJob } from 'node-schedule';
+import { config } from './common/config';
 import L from './common/logger';
 import { fullLogin } from './login';
 import { getAllFreeGames } from './free-games';
 import { purchaseGames } from './purchase';
-
-config();
 
 async function main(): Promise<void> {
   try {
@@ -20,7 +18,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.env.RUN_ON_STARTUP) main();
+if (config.runOnStartup) main();
 
-const cronTime = process.env.CRON_SCHEDULE || '0 12 * * *';
+const cronTime = config.cronSchedule;
 scheduleJob(cronTime, async () => main());

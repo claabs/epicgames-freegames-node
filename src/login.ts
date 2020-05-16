@@ -12,9 +12,7 @@ import {
   REPUTATION_ENDPOINT,
   EMAIL_VERIFY,
 } from './common/constants';
-
-export const EMAIL = process.env.EMAIL || 'missing@email.com';
-export const PASSWORD = process.env.PASSWORD || 'missing-password';
+import { config } from './common/config';
 
 export async function getCsrf(): Promise<string> {
   const csrfResp = await request.client.get(CSRF_ENDPOINT);
@@ -136,9 +134,9 @@ export async function refreshAndSid(error: boolean): Promise<boolean> {
 }
 
 export async function fullLogin(
-  email = process.env.EMAIL || 'missing@email.com',
-  password = process.env.PASSWORD || 'missing-password',
-  totp = process.env.TOTP
+  email = config.accounts[0].email,
+  password = config.accounts[0].password,
+  totp = config.accounts[0].totp
 ): Promise<void> {
   if (await refreshAndSid(false)) {
     L.info('Successfully refreshed login');
