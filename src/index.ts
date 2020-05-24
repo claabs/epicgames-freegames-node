@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import { scheduleJob } from 'node-schedule';
 import { config } from './common/config';
 import L from './common/logger';
@@ -11,7 +12,7 @@ async function main(): Promise<void> {
     const offers = await getAllFreeGames(); // Get purchasable offers
     await purchaseGames(offers); // Purchase games
   } catch (e) {
-    if (e.response.body) {
+    if (e.response && e.response.body) {
       L.error(e.response.body);
     }
     L.error(e);
