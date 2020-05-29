@@ -11,6 +11,7 @@ import {
   REDIRECT_ENDPOINT,
   REPUTATION_ENDPOINT,
   EMAIL_VERIFY,
+  STORE_HOMEPAGE,
 } from './common/constants';
 import { config } from './common/config';
 
@@ -133,6 +134,15 @@ export async function refreshAndSid(error: boolean): Promise<boolean> {
   return true;
 }
 
+/**
+ * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
+ */
+export async function getStoreToken(): Promise<void> {
+  await request.client.get(STORE_HOMEPAGE, {
+    responseType: 'text',
+  });
+}
+
 export async function fullLogin(
   email = config.accounts[0].email,
   password = config.accounts[0].password,
@@ -146,4 +156,5 @@ export async function fullLogin(
     await login(email, password, '', totp);
     await refreshAndSid(true);
   }
+  await getStoreToken();
 }

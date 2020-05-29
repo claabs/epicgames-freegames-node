@@ -1,56 +1,23 @@
 import L from './common/logger';
 import request from './common/request';
 import { GraphQLBody, OfferInfo } from './interfaces/types';
-import { PromotionsQueryResponse, OfferElement } from './interfaces/promotions-response';
+import { PromotionsQueryResponse, Element } from './interfaces/promotions-response';
 import { ItemEntitlementResp, ProductInfo } from './interfaces/product-info';
-import { GRAPHQL_ENDPOINT, STORE_CONTENT } from './common/constants';
+import {
+  GRAPHQL_ENDPOINT,
+  STORE_CONTENT,
+  FREE_GAMES_PROMOTIONS_ENDPOINT,
+} from './common/constants';
+import { BundlesContent } from './interfaces/bundles-content';
 
-export async function getFreeGames(): Promise<OfferElement[]> {
-  const query = `query searchStoreQuery($allowCountries: String, $category: String, $count: Int, $country: String!, $keywords: String, $locale: String, $namespace: String, $sortBy: String, $sortDir: String, $start: Int, $tag: String, $withPromotions: Boolean = false) {
-    Catalog {
-      searchStore(allowCountries: $allowCountries, category: $category, count: $count, country: $country, keywords: $keywords, locale: $locale, namespace: $namespace, sortBy: $sortBy, sortDir: $sortDir, start: $start, tag: $tag) {
-        elements {
-          title
-          id
-          namespace
-          description
-          productSlug
-          items {
-            id
-            namespace
-          }
-          promotions(category: $category) @include(if: $withPromotions) {
-            promotionalOffers {
-              promotionalOffers {
-                startDate
-                endDate
-                discountSetting {
-                  discountType
-                  discountPercentage
-                }
-              }
-            }
-          }
-        }
-        paging {
-          count
-          total
-        }
-      }
-    }
-  }`;
-  const variables = {
-    category: 'freegames',
-    sortBy: 'effectiveDate',
-    sortDir: 'asc',
-    count: 1000,
-    country: 'US',
-    allowCountries: 'US',
-    locale: 'en-US',
-    withPromotions: true,
-  };
-  const data: GraphQLBody = { query, variables };
-  const resp = await request.client.post<PromotionsQueryResponse>(GRAPHQL_ENDPOINT, { json: data });
+export async function getFreeGames(): Promise<Element[]> {
+  const resp = await request.client.get<PromotionsQueryResponse>(FREE_GAMES_PROMOTIONS_ENDPOINT, {
+    searchParams: {
+      locale: 'en',
+      country: 'US',
+      allowCountries: 'US',
+    },
+  });
   const nowDate = new Date();
   const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
     let r = false;
@@ -95,6 +62,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
     offerId: linkedOfferId,
   };
   const data: GraphQLBody = { query, variables };
+  L.debug({ data, url: GRAPHQL_ENDPOINT }, 'Posting for offer entitlement');
   const entitlementResp = await request.client.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
     json: data,
   });
@@ -102,7 +70,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
   return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
 }
 
-export async function getPurchasableFreeGames(validOffers: OfferElement[]): Promise<OfferInfo[]> {
+export async function getPurchasableFreeGames(validOffers: Element[]): Promise<OfferInfo[]> {
   const ownsGamePromises = validOffers.map(offer => {
     return ownsGame(offer.namespace, offer.id);
   });
@@ -122,18 +90,35 @@ export async function getPurchasableFreeGames(validOffers: OfferElement[]): Prom
   return purchasableGames;
 }
 
-export async function updateIds(offers: OfferElement[]): Promise<OfferElement[]> {
-  const promises = offers.map(offer => {
-    return request.client.get<ProductInfo>(`${STORE_CONTENT}/${offer.productSlug}`);
-  });
+export async function updateIds(offers: Element[]): Promise<Element[]> {
+  const promises = offers.map(
+    async (offer, index): Promise<Element> => {
+      const productType = offer.categories[2].path;
+      if (productType === 'games') {
+        const url = `${STORE_CONTENT}/products/${offer.productSlug}`;
+        L.debug({ url }, 'Fetching updated IDs');
+        const productsResp = await request.client.get<ProductInfo>(url);
+        return {
+          ...offers[index],
+          id: productsResp.body.pages[0].offer.id,
+          namespace: productsResp.body.pages[0].offer.namespace,
+        };
+      }
+      if (productType === 'bundles') {
+        const url = `${STORE_CONTENT}/bundles/${offer.productSlug}`;
+        L.debug({ url }, 'Fetching updated IDs');
+        const bundlesResp = await request.client.get<BundlesContent>(url);
+        return {
+          ...offers[index],
+          id: bundlesResp.body.offer.id,
+          namespace: bundlesResp.body.offer.namespace,
+        };
+      }
+      throw new Error(`Unrecognized productType: ${productType}`);
+    }
+  );
   const responses = await Promise.all(promises);
-  return responses.map((resp, index) => {
-    return {
-      ...offers[index],
-      id: resp.body.pages[0].offer.id,
-      namespace: resp.body.pages[0].offer.namespace,
-    };
-  });
+  return responses;
 }
 
 export async function getAllFreeGames(): Promise<OfferInfo[]> {

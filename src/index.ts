@@ -12,8 +12,9 @@ async function main(): Promise<void> {
     const offers = await getAllFreeGames(); // Get purchasable offers
     await purchaseGames(offers); // Purchase games
   } catch (e) {
-    if (e.response && e.response.body) {
-      L.error(e.response.body);
+    if (e.response) {
+      if (e.response.body) L.error(e.response.body);
+      else L.error(e.response);
     }
     L.error(e);
   }

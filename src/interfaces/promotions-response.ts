@@ -1,39 +1,123 @@
-export interface PromotionsQueryResponse {
-  data: Data;
-  extensions: Extensions;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface KeyImage {
+  type: string;
+  url: string;
 }
 
-export interface PromotionalOfferInner {
+export interface Seller {
+  id: string;
+  name: string;
+}
+
+export interface Item {
+  id: string;
+  namespace: string;
+}
+
+export interface CustomAttribute {
+  key: string;
+  value: string;
+}
+
+export interface Category {
+  path: string;
+}
+
+export interface Tag {
+  id: string;
+}
+
+export interface CurrencyInfo {
+  decimals: number;
+}
+
+export interface FmtPrice {
+  originalPrice: string;
+  discountPrice: string;
+  intermediatePrice: string;
+}
+
+export interface TotalPrice {
+  discountPrice: number;
+  originalPrice: number;
+  voucherDiscount: number;
+  discount: number;
+  currencyCode: string;
+  currencyInfo: CurrencyInfo;
+  fmtPrice: FmtPrice;
+}
+
+export interface LineOffer {
+  appliedRules: any[];
+}
+
+export interface Price {
+  totalPrice: TotalPrice;
+  lineOffers: LineOffer[];
+}
+
+export interface DiscountSetting {
+  discountType: string;
+  discountPercentage: number;
+}
+
+export interface PromotionalOffer2 {
   startDate: Date;
   endDate: Date;
   discountSetting: DiscountSetting;
 }
 
-export interface PromotionalOfferOuter {
-  promotionalOffers: PromotionalOfferInner[];
+export interface PromotionalOffer {
+  promotionalOffers: PromotionalOffer2[];
+}
+
+export interface DiscountSetting2 {
+  discountType: string;
+  discountPercentage: number;
+}
+
+export interface PromotionalOffer3 {
+  startDate: Date;
+  endDate: Date;
+  discountSetting: DiscountSetting2;
+}
+
+export interface UpcomingPromotionalOffer {
+  promotionalOffers: PromotionalOffer3[];
 }
 
 export interface Promotions {
-  promotionalOffers: PromotionalOfferOuter[];
+  promotionalOffers: PromotionalOffer[];
+  upcomingPromotionalOffers: UpcomingPromotionalOffer[];
 }
 
-export interface Items {
-  id: string;
-  namespace: string;
-}
-
-export interface OfferElement {
+export interface Element {
   title: string;
   id: string;
   namespace: string;
   description: string;
+  effectiveDate: Date;
+  keyImages: KeyImage[];
+  seller: Seller;
   productSlug: string;
-  items: Items;
-  promotions: Promotions | null;
+  urlSlug: string;
+  url?: any;
+  items: Item[];
+  customAttributes: CustomAttribute[];
+  categories: Category[];
+  tags: Tag[];
+  price: Price;
+  promotions: Promotions;
+}
+
+export interface Paging {
+  count: number;
+  total: number;
 }
 
 export interface SearchStore {
-  elements: OfferElement[];
+  elements: Element[];
+  paging: Paging;
 }
 
 export interface Catalog {
@@ -45,11 +129,9 @@ export interface Data {
 }
 
 export interface Hint {
-  path: ExtensionPath[];
+  path: any[];
   maxAge: number;
 }
-
-export type ExtensionPath = string | number;
 
 export interface CacheControl {
   version: number;
@@ -60,12 +142,7 @@ export interface Extensions {
   cacheControl: CacheControl;
 }
 
-export interface RootObject {
+export interface PromotionsQueryResponse {
   data: Data;
   extensions: Extensions;
-}
-
-export interface DiscountSetting {
-  discountType: string;
-  discountPercentage: number;
 }
