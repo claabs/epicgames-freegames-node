@@ -11,6 +11,7 @@ import { config } from './common/config';
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
   CREATE = 'E8AD0E2A-2E72-0F06-2C52-706D88BECA75',
+  PURCHASE = 'B73BD16E-3C8E-9082-F9C7-FA780FF2E68B',
 }
 
 const request = rawRequest.extend({

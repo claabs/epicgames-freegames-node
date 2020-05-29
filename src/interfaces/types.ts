@@ -75,6 +75,12 @@ export interface OrderPreviewResponse {
   voucherList: null;
 }
 
+export interface ConfirmPurcaseError {
+  captchaResult: string;
+  syncToken: string;
+  errorCode: string;
+}
+
 export interface OfferInfo {
   offerNamespace: string;
   offerId: string;
