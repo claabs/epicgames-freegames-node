@@ -50,7 +50,7 @@ export async function confirmOrder(
     newPreview.syncToken = confirmOrderResp.body.syncToken;
     L.debug('Captcha required');
     const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.PURCHASE);
-    confirmOrder(newPreview, purchaseToken, captchaToken);
+    await confirmOrder(newPreview, purchaseToken, captchaToken);
   } else {
     L.info('Purchase successful');
   }
@@ -100,7 +100,7 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
   if (orderPreviewResp.body.orderResponse && orderPreviewResp.body.orderResponse.error) {
     L.error(orderPreviewResp.body.orderResponse.message);
   }
-  confirmOrder(orderPreviewResp.body, purchaseToken);
+  await confirmOrder(orderPreviewResp.body, purchaseToken);
 }
 
 export async function purchaseGames(offers: OfferInfo[]): Promise<void> {
