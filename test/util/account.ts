@@ -95,7 +95,7 @@ export default class AccountManager {
     if (user) {
       this.username = user;
     } else {
-      const randUser = new RandExp(/[0-9a-zA-Z-]{8,16}/);
+      const randUser = new RandExp(/[0-9a-zA-Z]{8,16}/);
       this.username = randUser.gen();
     }
     if (pass) {
@@ -125,15 +125,15 @@ export default class AccountManager {
     attempt = 0,
     captcha?: string
   ): Promise<void> {
+    if (attempt > 5) {
+      throw new Error('Too many creation attempts');
+    }
     const captchaToken = captcha || (await getCaptchaSessionToken(EpicArkosePublicKey.CREATE));
     const csrfResp = await request.client.get(CSRF_ENDPOINT);
     const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
       map: true,
     }) as unknown) as CSRFSetCookies;
     const csrfToken = cookies['XSRF-TOKEN'].value;
-    if (attempt > 5) {
-      throw new Error('Too many creation attempts');
-    }
 
     const randName = new RandExp(/[a-zA-Z]{3,12}/);
     const createBody: CreateAccountRequest = {
@@ -148,6 +148,7 @@ export default class AccountManager {
       email,
     };
     try {
+      L.debug({ createBody }, 'account POST');
       await request.client.post('https://www.epicgames.com/id/api/account', {
         json: createBody,
         headers: {
@@ -166,6 +167,7 @@ export default class AccountManager {
       );
     } catch (e) {
       if (e.response && e.response.body && e.response.body.errorCode) {
+        L.debug({ body: e.response.body }, 'Error body');
         if (e.response.body.errorCode.includes('session_invalidated')) {
           L.debug('Session invalidated, retrying');
           await this.createAccount(email, password, attempt + 1, captchaToken);
