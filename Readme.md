@@ -30,11 +30,8 @@ I decided to take a different approach by only using the APIs that the Epic Game
   * Save to file in case of shutdown
 * Schedule check/purchase via cron string
 * Authentication refresh to reduce login count
-* *TODO:* Global store support (not just `en-US`)
-
-### Potential future features
-
 * Support for multiple accounts
+* *TODO:* Proper global store support (not just `en-US`)
 
 ## Setup
 
@@ -43,7 +40,7 @@ I decided to take a different approach by only using the APIs that the Epic Game
 Epic uses FunCaptcha to stop bots, however the FunCaptcha audio game is fairly easy to crack using Google Speech-to-text. Google gives you 60 minutes of free transcription, and charges a small fee after that.
 
 1. Create a new project for this bot. [GCP Console](https://console.cloud.google.com/)
-1. [Add a billing account](https://console.cloud.google.com/billing) for the project. This is required even for the free 60 minutes of transcription. To limit your spending, using a [Privacy Card](https://privacy.com/) is recommended.
+1. [Add a billing account](https://console.cloud.google.com/billing) for the project. This is required even for the free 60 minutes of transcription per month. To limit your spending, using a [Privacy Card](https://privacy.com/) is recommended.
 1. [Create a service account](https://console.cloud.google.com/iam-admin/serviceaccounts) for the project.
     * Don't add any roles to the service account
     * Don't add any users to the service account
@@ -89,7 +86,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 | GCP_CONFIG_NAME | `account-name-abcdef12345.json` |              | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha                                                |
 | RUN_ON_STARTUP  | `true`                          | `false`      | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
 | CRON_SCHEDULE   | `0 12 * * *`                    | `0 12 * * *` | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
-| LOG_LEVEL       | `info`                          | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug]                                                                      |
+| LOG_LEVEL       | `info`                          | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                               |
 | TZ              | `America/Chicago`               | `UTC`        | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                 |
 
 #### Volumes
