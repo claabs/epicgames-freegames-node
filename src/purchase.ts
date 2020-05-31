@@ -3,6 +3,11 @@ import L from './common/logger';
 import request from './common/request';
 import { OrderPreviewResponse, OfferInfo, ConfirmPurcaseError } from './interfaces/types';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
+import {
+  ORDER_CONFIRM_ENDPOINT,
+  ORDER_PREVIEW_ENDPOINT,
+  EPIC_PURCHASE_ENDPOINT,
+} from './common/constants';
 
 export async function confirmOrder(
   orderPreview: OrderPreviewResponse,
@@ -31,37 +36,39 @@ export async function confirmOrder(
     syncToken: orderPreview.syncToken,
     isFreeOrder: false,
   };
-  L.debug({ confirmOrderRequest }, 'Confirm order request');
-  const confirmOrderResp = await request.client.post<ConfirmPurcaseError>(
-    'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order',
-    {
-      json: confirmOrderRequest,
-      headers: {
-        'x-requested-with': purchaseToken,
-      },
-    }
-  );
+  L.trace({ body: confirmOrderRequest, url: ORDER_CONFIRM_ENDPOINT }, 'Confirm order request');
+  const confirmOrderResp = await request.client.post<ConfirmPurcaseError>(ORDER_CONFIRM_ENDPOINT, {
+    json: confirmOrderRequest,
+    headers: {
+      'x-requested-with': purchaseToken,
+    },
+  });
   L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
   if (
     confirmOrderResp.body.errorCode &&
     confirmOrderResp.body.errorCode.includes('captcha.challenge')
   ) {
+    L.debug('Captcha required');
     const newPreview = orderPreview;
     newPreview.syncToken = confirmOrderResp.body.syncToken;
-    L.debug('Captcha required');
     const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.PURCHASE);
     await confirmOrder(newPreview, purchaseToken, captchaToken);
   } else {
-    L.info('Purchase successful');
+    L.debug('Purchase successful');
   }
 }
 
 export async function purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
-  const purchasePageResp = await request.client.get('https://www.epicgames.com/store/purchase', {
-    searchParams: {
-      namespace: linkedOfferNs,
-      offers: linkedOfferId,
-    },
+  const purchaseSearchParams = {
+    namespace: linkedOfferNs,
+    offers: linkedOfferId,
+  };
+  L.trace(
+    { searchParams: purchaseSearchParams, url: EPIC_PURCHASE_ENDPOINT },
+    'Request for purchase token'
+  );
+  const purchasePageResp = await request.client.get(EPIC_PURCHASE_ENDPOINT, {
+    searchParams: purchaseSearchParams,
     responseType: 'text',
   });
   const purchaseDocument = new JSDOM(purchasePageResp.body).window.document;
@@ -86,16 +93,13 @@ export async function purchase(linkedOfferNs: string, linkedOfferId: string): Pr
     offers: [linkedOfferId],
     offerPrice: '',
   };
-  L.debug({ orderPreviewRequest }, 'Order preview request');
-  const orderPreviewResp = await request.client.post<OrderPreviewResponse>(
-    'https://payment-website-pci.ol.epicgames.com/purchase/order-preview',
-    {
-      json: orderPreviewRequest,
-      headers: {
-        'x-requested-with': purchaseToken,
-      },
-    }
-  );
+  L.trace({ body: orderPreviewRequest, url: ORDER_PREVIEW_ENDPOINT }, 'Order preview request');
+  const orderPreviewResp = await request.client.post<OrderPreviewResponse>(ORDER_PREVIEW_ENDPOINT, {
+    json: orderPreviewRequest,
+    headers: {
+      'x-requested-with': purchaseToken,
+    },
+  });
   L.debug({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
   if (orderPreviewResp.body.orderResponse && orderPreviewResp.body.orderResponse.error) {
     L.error(orderPreviewResp.body.orderResponse.message);
@@ -109,6 +113,6 @@ export async function purchaseGames(offers: OfferInfo[]): Promise<void> {
     // Async for-loop as running purchases in parallel may break
     // eslint-disable-next-line no-await-in-loop
     await purchase(offers[i].offerNamespace, offers[i].offerId);
-    L.debug('Done purchasing');
+    L.info(`Done purchasing ${offers[i].productName}`);
   }
 }

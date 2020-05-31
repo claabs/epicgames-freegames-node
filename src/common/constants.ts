@@ -19,3 +19,10 @@ export const SETUP_MFA =
 export const FREE_GAMES_PROMOTIONS_ENDPOINT =
   'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
 export const STORE_HOMEPAGE = 'https://www.epicgames.com/store/en-US/';
+export const ORDER_CONFIRM_ENDPOINT =
+  'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order';
+export const ORDER_PREVIEW_ENDPOINT =
+  'https://payment-website-pci.ol.epicgames.com/purchase/order-preview';
+export const EPIC_PURCHASE_ENDPOINT = 'https://www.epicgames.com/store/purchase';
+export const MFA_LOGIN_ENDPOINT = 'https://www.epicgames.com/id/api/login/mfa';
+export const SET_SID_ENDPOINT = 'https://www.unrealengine.com/id/api/set-sid';

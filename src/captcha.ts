@@ -59,6 +59,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   });
   const CAPTCHA_URL = `${ARKOSE_BASE_URL}/fc/api/nojs/?pkey=${publicKey}&gametype=audio`;
 
+  L.trace({ url: CAPTCHA_URL }, 'Requesting initial captcha page');
   const initialPage = await request.get<string>(CAPTCHA_URL);
   const initialDocument = new JSDOM(initialPage.body).window.document;
   const sessionToken = (initialDocument.querySelector(
@@ -70,8 +71,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   const audioPath = (initialDocument.querySelector('#audio_download') as HTMLAnchorElement).href;
   const audioURL = ARKOSE_BASE_URL + audioPath;
 
-  L.debug({ audioURL });
-
+  L.trace({ url: audioURL }, 'Requesting audio file');
   const audioResp = await request.get(audioURL, {
     responseType: 'buffer',
   });
@@ -121,6 +121,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
     'fc-game[audio_guess]': digitString,
   };
 
+  L.trace({ form: submitBody, url: CAPTCHA_URL }, 'Captcha POST request');
   const submitResp = await request.post<string>(CAPTCHA_URL, {
     form: submitBody,
   });
@@ -129,7 +130,7 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   const errorMsg = submitDocument.querySelector('#error-msg');
 
   if (verificationText && verificationText.innerHTML === 'Verification correct!') {
-    L.info('Captcha successful');
+    L.info('Captcha solved successfully');
     const verificationCode = (submitDocument.querySelector(
       '#verification-code'
     ) as HTMLInputElement).value;
@@ -137,10 +138,11 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
     return verificationCode;
   }
   if (errorMsg && errorMsg.innerHTML.includes('Audio challenge methods require some extra steps')) {
+    L.debug('Restricted audio challenge');
     return manuallySolveCaptcha(publicKey);
   }
   if (errorMsg && errorMsg.innerHTML.includes(`Whoops! That's not quite right.`)) {
-    L.warn('Got captcha incorrect');
+    L.debug('Got captcha incorrect');
     return getCaptchaSessionToken(publicKey);
   }
   L.error({ error: submitResp.body }, 'Unexpected error in captcha');

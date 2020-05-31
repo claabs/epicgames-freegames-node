@@ -11,12 +11,18 @@ import {
 import { BundlesContent } from './interfaces/bundles-content';
 
 export async function getFreeGames(): Promise<Element[]> {
+  L.debug('Getting current free games list');
+  const freeGamesSearchParams = {
+    locale: 'en',
+    country: 'US',
+    allowCountries: 'US',
+  };
+  L.trace(
+    { url: FREE_GAMES_PROMOTIONS_ENDPOINT, params: freeGamesSearchParams },
+    'Getting free games list'
+  );
   const resp = await request.client.get<PromotionsQueryResponse>(FREE_GAMES_PROMOTIONS_ENDPOINT, {
-    searchParams: {
-      locale: 'en',
-      country: 'US',
-      allowCountries: 'US',
-    },
+    searchParams: freeGamesSearchParams,
   });
   const nowDate = new Date();
   const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
@@ -62,7 +68,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
     offerId: linkedOfferId,
   };
   const data: GraphQLBody = { query, variables };
-  L.debug({ data, url: GRAPHQL_ENDPOINT }, 'Posting for offer entitlement');
+  L.trace({ data, url: GRAPHQL_ENDPOINT }, 'Posting for offer entitlement');
   const entitlementResp = await request.client.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
     json: data,
   });
@@ -71,6 +77,7 @@ async function ownsGame(linkedOfferNs: string, linkedOfferId: string): Promise<b
 }
 
 export async function getPurchasableFreeGames(validOffers: Element[]): Promise<OfferInfo[]> {
+  L.debug('Checking ownership on available games');
   const ownsGamePromises = validOffers.map(offer => {
     return ownsGame(offer.namespace, offer.id);
   });
@@ -91,12 +98,13 @@ export async function getPurchasableFreeGames(validOffers: Element[]): Promise<O
 }
 
 export async function updateIds(offers: Element[]): Promise<Element[]> {
+  L.debug('Mapping IDs to offer');
   const promises = offers.map(
     async (offer, index): Promise<Element> => {
       const productType = offer.categories[2].path;
       if (productType === 'games') {
         const url = `${STORE_CONTENT}/products/${offer.productSlug}`;
-        L.debug({ url }, 'Fetching updated IDs');
+        L.trace({ url }, 'Fetching updated IDs');
         const productsResp = await request.client.get<ProductInfo>(url);
         return {
           ...offers[index],
@@ -106,7 +114,7 @@ export async function updateIds(offers: Element[]): Promise<Element[]> {
       }
       if (productType === 'bundles') {
         const url = `${STORE_CONTENT}/bundles/${offer.productSlug}`;
-        L.debug({ url }, 'Fetching updated IDs');
+        L.trace({ url }, 'Fetching updated IDs');
         const bundlesResp = await request.client.get<BundlesContent>(url);
         return {
           ...offers[index],
