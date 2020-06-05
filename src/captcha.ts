@@ -1,9 +1,9 @@
 import { SpeechClient } from '@google-cloud/speech';
-import rawRequest from 'got';
 import { google } from '@google-cloud/speech/build/protos/protos';
 import { JSDOM } from 'jsdom';
 import readline from 'readline';
 import open from 'open';
+import acctRequest from './common/request';
 import L from './common/logger';
 import { ARKOSE_BASE_URL } from './common/constants';
 import { config } from './common/config';
@@ -14,10 +14,11 @@ export enum EpicArkosePublicKey {
   PURCHASE = 'B73BD16E-3C8E-9082-F9C7-FA780FF2E68B',
 }
 
-const request = rawRequest.extend({
+const request = acctRequest.client.extend({
   headers: {
     'accept-language': 'en-US,en',
   },
+  responseType: 'text',
 });
 
 async function asyncReadline(question: string): Promise<string> {
@@ -143,6 +144,10 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   }
   if (errorMsg && errorMsg.innerHTML.includes(`Whoops! That's not quite right.`)) {
     L.debug('Got captcha incorrect');
+    return getCaptchaSessionToken(publicKey);
+  }
+  if (submitResp.body && submitResp.body.includes('Reloading')) {
+    L.debug('Reloading...');
     return getCaptchaSessionToken(publicKey);
   }
   L.error({ error: submitResp.body }, 'Unexpected error in captcha');
