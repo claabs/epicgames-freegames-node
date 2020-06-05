@@ -1,7 +1,12 @@
 import { JSDOM } from 'jsdom';
 import L from './common/logger';
 import request from './common/request';
-import { OrderPreviewResponse, OfferInfo, ConfirmPurcaseError } from './interfaces/types';
+import {
+  OrderPreviewResponse,
+  OfferInfo,
+  ConfirmPurcaseError,
+  OrderConfirmRequest,
+} from './interfaces/types';
 import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
@@ -15,7 +20,7 @@ export async function confirmOrder(
   captcha?: string
 ): Promise<void> {
   // TODO: Can probably just use a spread operator here?
-  const confirmOrderRequest = {
+  const confirmOrderRequest: OrderConfirmRequest = {
     captchaToken: captcha,
     useDefault: true,
     setDefault: false,
@@ -23,9 +28,9 @@ export async function confirmOrder(
     country: orderPreview.country,
     countryName: orderPreview.countryName,
     orderId: orderPreview.orderId,
-    orderComplete: orderPreview.orderComplete,
-    orderError: orderPreview.orderError,
-    orderPending: orderPreview.orderPending,
+    orderComplete: orderPreview.orderComplete || false,
+    orderError: orderPreview.orderError || false,
+    orderPending: orderPreview.orderPending || false,
     offers: orderPreview.offers,
     includeAccountBalance: false,
     totalAmount: 0,
@@ -34,7 +39,9 @@ export async function confirmOrder(
     threeDSToken: '',
     voucherCode: null,
     syncToken: orderPreview.syncToken,
-    isFreeOrder: false,
+    eulaId: null,
+    useDefaultBillingAccount: true,
+    canQuickPurchase: true,
   };
   L.trace({ body: confirmOrderRequest, url: ORDER_CONFIRM_ENDPOINT }, 'Confirm order request');
   const confirmOrderResp = await request.client.post<ConfirmPurcaseError>(ORDER_CONFIRM_ENDPOINT, {

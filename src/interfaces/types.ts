@@ -75,6 +75,30 @@ export interface OrderPreviewResponse {
   voucherList: null;
 }
 
+export interface OrderConfirmRequest {
+  useDefault: boolean;
+  setDefault: boolean;
+  namespace: string;
+  country: string;
+  countryName: string;
+  orderId: string | null;
+  orderComplete: boolean;
+  orderError: boolean;
+  orderPending: boolean;
+  offers: string[];
+  includeAccountBalance: boolean;
+  totalAmount: number;
+  affiliateId: string;
+  creatorSource: string;
+  threeDSToken: string;
+  voucherCode: string | null;
+  eulaId: string | null;
+  useDefaultBillingAccount: boolean;
+  syncToken: string;
+  captchaToken?: string;
+  canQuickPurchase?: boolean;
+}
+
 export interface ConfirmPurcaseError {
   captchaResult: string;
   syncToken: string;

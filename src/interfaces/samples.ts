@@ -1,0 +1,48 @@
+import { OrderConfirmRequest } from './types';
+
+export const confirmOrderReqSample1: OrderConfirmRequest = {
+  useDefault: true,
+  setDefault: false,
+  namespace: '4561b40e52584ac2bcf34bbd5c401480',
+  country: 'US',
+  countryName: 'United States',
+  orderId: null,
+  orderComplete: false,
+  orderError: false,
+  orderPending: false,
+  offers: ['e9428ad618aa45f4b3371b8c8c4f9de9'],
+  includeAccountBalance: false,
+  totalAmount: 0,
+  affiliateId: '',
+  creatorSource: '',
+  threeDSToken: '',
+  voucherCode: null,
+  eulaId: null,
+  useDefaultBillingAccount: true,
+  syncToken: '7c004b4b-2403-4e04-b5aa-e957ab1da77d',
+  canQuickPurchase: true,
+};
+
+export const confirmOrderReqSample2: OrderConfirmRequest = {
+  useDefault: true,
+  setDefault: false,
+  namespace: '4561b40e52584ac2bcf34bbd5c401480',
+  country: 'US',
+  countryName: 'United States',
+  orderId: null,
+  orderComplete: false,
+  orderError: false,
+  orderPending: false,
+  offers: ['e9428ad618aa45f4b3371b8c8c4f9de9'],
+  includeAccountBalance: false,
+  totalAmount: 0,
+  affiliateId: '',
+  creatorSource: '',
+  threeDSToken: '',
+  voucherCode: null,
+  eulaId: null,
+  useDefaultBillingAccount: true,
+  syncToken: '54780dc6-2798-4fcb-b4a3-16f1e7e43262',
+  captchaToken:
+    '7165eda99c06f1a67.1810703201|r=us-east-1|metabgclr=%23202020|maintxtclr=%23808080|mainbgclr=%23202020|guitextcolor=%23808080|metaiconclr=%23808080|meta_height=384|meta_width=340|meta=11|pk=B73BD16E-3C8E-9082-F9C7-FA780FF2E68B|at=40|atp=2|cdn_url=https://cdn.arkoselabs.com/fc|lurl=https://audio-us-east-1.arkoselabs.com|surl=https://epic-games-api.arkoselabs.com',
+};
