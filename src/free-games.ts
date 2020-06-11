@@ -101,8 +101,8 @@ export async function updateIds(offers: Element[]): Promise<Element[]> {
   L.debug('Mapping IDs to offer');
   const promises = offers.map(
     async (offer, index): Promise<Element> => {
-      const productType = offer.categories[2].path;
-      if (productType === 'games') {
+      const productTypes = offer.categories.map(cat => cat.path);
+      if (productTypes.includes('games')) {
         const url = `${STORE_CONTENT}/products/${offer.productSlug}`;
         L.trace({ url }, 'Fetching updated IDs');
         const productsResp = await request.client.get<ProductInfo>(url);
@@ -112,7 +112,7 @@ export async function updateIds(offers: Element[]): Promise<Element[]> {
           namespace: productsResp.body.pages[0].offer.namespace,
         };
       }
-      if (productType === 'bundles') {
+      if (productTypes.includes('bundles')) {
         const url = `${STORE_CONTENT}/bundles/${offer.productSlug}`;
         L.trace({ url }, 'Fetching updated IDs');
         const bundlesResp = await request.client.get<BundlesContent>(url);
@@ -122,7 +122,7 @@ export async function updateIds(offers: Element[]): Promise<Element[]> {
           namespace: bundlesResp.body.offer.namespace,
         };
       }
-      throw new Error(`Unrecognized productType: ${productType}`);
+      throw new Error(`Unrecognized productType: ${productTypes}`);
     }
   );
   const responses = await Promise.all(promises);
