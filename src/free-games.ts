@@ -106,10 +106,19 @@ export async function updateIds(offers: Element[]): Promise<Element[]> {
         const url = `${STORE_CONTENT}/products/${offer.productSlug}`;
         L.trace({ url }, 'Fetching updated IDs');
         const productsResp = await request.client.get<ProductInfo>(url);
+        // eslint-disable-next-line no-underscore-dangle
+        let mainGamePage = productsResp.body.pages.find(page => page._slug === 'home');
+        if (!mainGamePage) {
+          L.debug('No home page found, using first');
+          [mainGamePage] = productsResp.body.pages;
+        }
+        if (!mainGamePage) {
+          throw new Error('No product pages available');
+        }
         return {
           ...offers[index],
-          id: productsResp.body.pages[0].offer.id,
-          namespace: productsResp.body.pages[0].offer.namespace,
+          id: mainGamePage.offer.id,
+          namespace: mainGamePage.offer.namespace,
         };
       }
       if (productTypes.includes('bundles')) {
