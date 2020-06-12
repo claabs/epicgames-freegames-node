@@ -59,6 +59,7 @@ export async function confirmOrder(
     const newPreview = orderPreview;
     newPreview.syncToken = confirmOrderResp.body.syncToken;
     const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.PURCHASE);
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
     await confirmOrder(newPreview, purchaseToken, captchaToken);
   } else {
     L.debug('Purchase successful');
