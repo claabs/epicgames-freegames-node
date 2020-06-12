@@ -68,6 +68,7 @@ The config file is store in the mounted `./config` directory.
     "gcpConfigName": "account-name-abcdef12345.json",
     "runOnStartup": true,
     "cronSchedule": "0 12 * * *",
+    "runOnce": false,
     "logLevel": "info",
 }
 ```
@@ -86,6 +87,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 | GCP_CONFIG_NAME | `account-name-abcdef12345.json` |              | (Optional) GCP credentials JSON filename located in `./config/`. Required if login requires captcha                                                |
 | RUN_ON_STARTUP  | `true`                          | `false`      | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
 | CRON_SCHEDULE   | `0 12 * * *`                    | `0 12 * * *` | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
+| RUN_ONCE        | `true`                          | `false`      | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                         |
 | LOG_LEVEL       | `info`                          | `info`       | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                               |
 | TZ              | `America/Chicago`               | `UTC`        | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                 |
 

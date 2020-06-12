@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
-import { scheduleJob } from 'node-schedule';
 import { config } from './common/config';
 import L from './common/logger';
 import { fullLogin } from './login';
@@ -27,7 +26,4 @@ async function main(): Promise<void> {
   }
 }
 
-if (config.runOnStartup) main();
-
-const cronTime = config.cronSchedule;
-scheduleJob(cronTime, async () => main());
+main();
