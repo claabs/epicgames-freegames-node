@@ -25,7 +25,7 @@ FROM base as deploy
 VOLUME [ "/usr/app/config" ]
 
 RUN apk update \
-    && apk add jq \
+    && apk add jq tzdata \
     && rm -rf /var/cache/apk/*
 
 ADD https://github.com/hjson/hjson-go/releases/download/v3.0.0/linux_amd64.tar.gz /tmp/hjson.tar.gz

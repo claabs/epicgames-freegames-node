@@ -44,6 +44,11 @@ echo "Run on startup: ${C_RUN_ON_STARTUP}"
 echo "Run once: ${C_RUN_ONCE}"
 [ "$C_RUN_ON_STARTUP" = "true" ] && npm start --prefix /usr/app
 if [ "$C_RUN_ONCE" = "false" ]; then
+    if [ ! -z "$TZ" ]; then
+        echo "Setting timezone: $TZ"
+        ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+        echo "$TZ" > /etc/timezone
+    fi
     echo "Setting cron schedule as ${C_CRON_SCHEDULE}"
     echo "${C_CRON_SCHEDULE} npm start --prefix /usr/app" | crontab -
     /usr/sbin/crond -f -l 8
