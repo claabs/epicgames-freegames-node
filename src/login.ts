@@ -119,6 +119,15 @@ export async function login(
   }
 }
 
+/**
+ * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
+ */
+export async function getStoreToken(): Promise<void> {
+  L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
+  const resp = await request.client.get(STORE_HOMEPAGE, { responseType: 'text' });
+  L.trace({ headers: resp.headers }, 'Store homepage response headers');
+}
+
 export async function refreshAndSid(error: boolean): Promise<boolean> {
   L.debug('Setting SID');
   const csrfToken = await getCsrf();
@@ -137,16 +146,10 @@ export async function refreshAndSid(error: boolean): Promise<boolean> {
   }
   const sidSearchParams = { sid };
   L.trace({ params: sidSearchParams, url: SET_SID_ENDPOINT }, 'Set SID request');
-  await request.client.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
+  const sidResp = await request.client.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
+  L.trace({ headers: sidResp.headers }, 'Set SID response headers');
+  await getStoreToken();
   return true;
-}
-
-/**
- * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
- */
-export async function getStoreToken(): Promise<void> {
-  L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
-  await request.client.get(STORE_HOMEPAGE, { responseType: 'text' });
 }
 
 export async function fullLogin(
@@ -163,5 +166,4 @@ export async function fullLogin(
     await refreshAndSid(true);
     L.info('Successfully logged in fresh');
   }
-  await getStoreToken();
 }
