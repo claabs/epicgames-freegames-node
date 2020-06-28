@@ -108,10 +108,10 @@ export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Pr
   }
 
   digitString = digitString.replace(/\D/g, '');
-  if (digitString.length !== 7) {
-    L.debug('Did not transcribe enough digits. Retrying');
-    return getCaptchaSessionToken(publicKey);
-  }
+  // if (digitString.length !== 7) {
+  //   L.debug('Did not transcribe enough digits. Retrying');
+  //   return getCaptchaSessionToken(publicKey);
+  // }
 
   L.debug({ digitString }, 'Guessing captcha');
 
