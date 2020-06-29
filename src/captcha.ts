@@ -3,6 +3,10 @@ import { google } from '@google-cloud/speech/build/protos/protos';
 import { JSDOM } from 'jsdom';
 import readline from 'readline';
 import open from 'open';
+import { v4 as uuid } from 'uuid';
+import querystring from 'querystring';
+import EventEmitter from 'events';
+import nodemailer from 'nodemailer';
 import acctRequest from './common/request';
 import L from './common/logger';
 import { ARKOSE_BASE_URL } from './common/constants';
@@ -14,11 +18,27 @@ export enum EpicArkosePublicKey {
   PURCHASE = 'B73BD16E-3C8E-9082-F9C7-FA780FF2E68B',
 }
 
+export interface CaptchaSolution {
+  id: string;
+  sessionData: string;
+}
+
+let pendingCaptchas: string[] = [];
+
+const captchaEmitter = new EventEmitter();
+
 const request = acctRequest.client.extend({
   headers: {
     'accept-language': 'en-US,en',
   },
   responseType: 'text',
+});
+
+const emailTransporter = nodemailer.createTransport({
+  host: config.email.smtpHost,
+  port: config.email.smtpPort,
+  secure: config.email.secure,
+  auth: config.email.auth,
 });
 
 async function asyncReadline(question: string): Promise<string> {
@@ -49,6 +69,56 @@ const manuallySolveCaptcha = async (publicKey: EpicArkosePublicKey): Promise<str
   );
   return token;
 };
+
+export async function notifyManualCaptcha(publicKey: EpicArkosePublicKey): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const id = uuid();
+    pendingCaptchas.push(id);
+    const qs = querystring.stringify({
+      id,
+      pkey: publicKey,
+    });
+    const url = `${config.baseUrl}?${qs}`;
+    L.debug(`Go to ${url} and solve the captcha`);
+
+    const catpchaReason = {
+      [EpicArkosePublicKey.LOGIN]: 'login',
+      [EpicArkosePublicKey.CREATE]: 'create an account',
+      [EpicArkosePublicKey.PURCHASE]: 'make a purchase',
+    };
+
+    emailTransporter
+      .sendMail({
+        from: {
+          address: config.email.emailSenderAddress,
+          name: config.email.emailSenderName,
+        },
+        to: config.email.emailRecipientAddress,
+        subject: 'Epic Games free games needs a Captcha solved',
+        html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
+               <p>Open this page and solve the captcha: <a href=${url}>${url}</a></p>`,
+      })
+      .then(() => {
+        L.info({ id }, 'Email sent. Waiting for Captcha to be solved');
+        captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
+          if (captcha.id === id) resolve(captcha.sessionData);
+        });
+      })
+      .catch(err => {
+        L.error(err);
+        reject(err);
+      });
+  });
+}
+
+export async function responseManualCaptcha(captchaSolution: CaptchaSolution): Promise<void> {
+  if (pendingCaptchas.includes(captchaSolution.id)) {
+    pendingCaptchas = pendingCaptchas.filter(e => e !== captchaSolution.id);
+    captchaEmitter.emit('solved', captchaSolution);
+  } else {
+    L.error(`Could not find captcha id: ${captchaSolution.id}`);
+  }
+}
 
 export async function getCaptchaSessionToken(publicKey: EpicArkosePublicKey): Promise<string> {
   if (publicKey === EpicArkosePublicKey.CREATE) return manuallySolveCaptcha(publicKey);

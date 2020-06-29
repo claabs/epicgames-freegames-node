@@ -3,7 +3,7 @@ import { TOTP } from 'otpauth';
 import L from './common/logger';
 import request from './common/request';
 import { CSRFSetCookies, LoginBody, RedirectResponse, MFABody } from './interfaces/types';
-import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
+import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
 import {
   CSRF_ENDPOINT,
   LOGIN_ENDPOINT,
@@ -101,7 +101,7 @@ export async function login(
         e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
       ) {
         L.debug('Captcha required');
-        const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.LOGIN);
+        const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN);
         await login(email, password, captchaToken, totp, attempt + 1);
       } else if (
         e.response.body.errorCode ===

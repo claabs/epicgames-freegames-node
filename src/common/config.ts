@@ -12,12 +12,27 @@ export interface Account {
   totp?: string;
 }
 
+export interface EmailConfig {
+  smtpHost: string;
+  smtpPort: number;
+  emailSenderAddress: string;
+  emailSenderName: string;
+  emailRecipientAddress: string;
+  secure: boolean;
+  auth?: {
+    user: string;
+    pass: string;
+  };
+}
+
 export interface PartialConfig {
   accounts?: Partial<Account>[];
   gcpConfigName?: string;
   runOnStartup?: boolean;
   cronSchedule?: string;
   logLevel?: string;
+  baseUrl?: string;
+  email?: Partial<EmailConfig>;
 }
 
 export interface ConfigObject extends PartialConfig {
@@ -25,6 +40,8 @@ export interface ConfigObject extends PartialConfig {
   runOnStartup: boolean;
   cronSchedule: string;
   logLevel: string;
+  baseUrl: string;
+  email: EmailConfig;
 }
 
 const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
@@ -46,12 +63,28 @@ function validateConfig(config: PartialConfig): ConfigObject {
       }
     });
 
+    if (!config.email) throw new Error('Email config is required for captcha notification');
+    if (!config.email.smtpHost) throw new Error('Incomplete email config: smtpHost');
+    if (!config.email.smtpPort) throw new Error('Incomplete email config: smtpPort');
+    if (!config.email.emailSenderAddress)
+      throw new Error('Incomplete email config: emailSenderAddress');
+    if (!config.email.emailSenderName) throw new Error('Incomplete email config: emailSenderName');
+    if (!config.email.emailRecipientAddress)
+      throw new Error('Incomplete email config: emailRecipientAddress');
+    if (config.email.secure === undefined) throw new Error('Incomplete email config: secure');
+    if (config.email.auth && !config.email.auth.user)
+      throw new Error('Missing user from email auth config');
+    if (config.email.auth && !config.email.auth.pass)
+      throw new Error('Missing pass from email auth config');
+
     const validConfig: ConfigObject = {
       accounts: (config.accounts as unknown) as Account[], // Native type checking doesn't work through arrays?
       gcpConfigName: config.gcpConfigName,
       runOnStartup: config.runOnStartup || true,
       cronSchedule: config.cronSchedule || '0 12 * * *',
       logLevel: config.logLevel || 'info',
+      baseUrl: config.baseUrl || 'http://localhost:3000',
+      email: (config.email as unknown) as EmailConfig,
     };
     return validConfig;
   } catch (err) {
@@ -85,6 +118,7 @@ const envVarConfig: PartialConfig = {
   runOnStartup: Boolean(process.env.RUN_ON_STARTUP),
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,
+  baseUrl: process.env.BASE_URL,
 };
 
 partialConfig = {

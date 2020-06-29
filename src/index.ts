@@ -6,6 +6,7 @@ import { fullLogin } from './login';
 import { getAllFreeGames } from './free-games';
 import { purchaseGames } from './purchase';
 import request from './common/request';
+import './site/app';
 
 async function main(): Promise<void> {
   // eslint-disable-next-line no-restricted-syntax

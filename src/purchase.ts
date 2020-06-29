@@ -7,7 +7,7 @@ import {
   ConfirmPurcaseError,
   OrderConfirmRequest,
 } from './interfaces/types';
-import { getCaptchaSessionToken, EpicArkosePublicKey } from './captcha';
+import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
@@ -58,7 +58,7 @@ export async function confirmOrder(
     L.debug('Captcha required');
     const newPreview = orderPreview;
     newPreview.syncToken = confirmOrderResp.body.syncToken;
-    const captchaToken = await getCaptchaSessionToken(EpicArkosePublicKey.PURCHASE);
+    const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.PURCHASE);
     await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
     await confirmOrder(newPreview, purchaseToken, captchaToken);
   } else {
