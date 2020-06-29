@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "start:ts": "ts-node src/index.ts",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc && cp -r src/site/public dist/src/site/public",
     "lint": "tsc --noEmit && eslint **/*.ts",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
