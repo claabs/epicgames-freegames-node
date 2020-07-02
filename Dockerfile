@@ -11,7 +11,8 @@ WORKDIR /usr/app
 FROM base as build
 
 # Copy all source files
-COPY src package*.json tsconfig.json ./
+COPY src src
+COPY package*.json tsconfig.json ./
 # Prod deps already installed, add dev deps
 RUN npm ci
 
