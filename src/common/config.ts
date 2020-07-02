@@ -12,6 +12,11 @@ export interface Account {
   totp?: string;
 }
 
+export interface SmtpAuth {
+  user: string;
+  pass: string;
+}
+
 export interface EmailConfig {
   smtpHost: string;
   smtpPort: number;
@@ -19,10 +24,17 @@ export interface EmailConfig {
   emailSenderName: string;
   emailRecipientAddress: string;
   secure: boolean;
-  auth?: {
-    user: string;
-    pass: string;
-  };
+  auth?: SmtpAuth;
+}
+
+export interface PartialEmailConfig {
+  smtpHost?: string;
+  smtpPort?: number;
+  emailSenderAddress?: string;
+  emailSenderName?: string;
+  emailRecipientAddress?: string;
+  secure?: boolean;
+  auth?: Partial<SmtpAuth>;
 }
 
 export interface PartialConfig {
@@ -32,7 +44,7 @@ export interface PartialConfig {
   cronSchedule?: string;
   logLevel?: string;
   baseUrl?: string;
-  email?: Partial<EmailConfig>;
+  email?: PartialEmailConfig;
 }
 
 export interface ConfigObject extends PartialConfig {
@@ -119,6 +131,18 @@ const envVarConfig: PartialConfig = {
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,
   baseUrl: process.env.BASE_URL,
+  email: {
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: Number(process.env.SMTP_PORT),
+    emailSenderAddress: process.env.EMAIL_SENDER_ADDRESS,
+    emailSenderName: process.env.EMAIL_SENDER_NAME,
+    emailRecipientAddress: process.env.EMAIL_RECIPIENT_ADDRESS,
+    secure: Boolean(process.env.SMTP_SECURE),
+    auth: {
+      user: process.env.SMTP_USERNAME,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  },
 };
 
 partialConfig = {
