@@ -1,6 +1,6 @@
 {
   "name": "epicgames-freegames-node",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
