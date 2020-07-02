@@ -1,7 +1,8 @@
 import cookieParser from 'set-cookie-parser';
 import { TOTP } from 'otpauth';
-import L from './common/logger';
-import request from './common/request';
+import { Got } from 'got';
+import { Logger } from 'pino';
+import logger from './common/logger';
 import { CSRFSetCookies, LoginBody, RedirectResponse, MFABody } from './interfaces/types';
 import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
 import {
@@ -17,153 +18,166 @@ import {
 } from './common/constants';
 import { config } from './common/config';
 
-export async function getCsrf(): Promise<string> {
-  L.debug('Refreshing CSRF');
-  L.trace({ url: CSRF_ENDPOINT }, 'CSRF request');
-  const csrfResp = await request.client.get(CSRF_ENDPOINT);
-  const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
-    map: true,
-  }) as unknown) as CSRFSetCookies;
-  return cookies['XSRF-TOKEN'].value;
-}
+export default class Login {
+  private request: Got;
 
-export async function getReputation(): Promise<void> {
-  L.trace({ url: REPUTATION_ENDPOINT }, 'Reputation request');
-  await request.client.get(REPUTATION_ENDPOINT);
-}
+  private L: Logger;
 
-export async function loginMFA(totpSecret?: string): Promise<void> {
-  L.debug('Logging in with MFA');
-  if (!totpSecret) throw new Error('TOTP required for MFA login');
-  const csrfToken = await getCsrf();
-  const totp = new TOTP({ secret: totpSecret });
-  const mfaRequest: MFABody = {
-    code: totp.generate(),
-    method: 'authenticator',
-    rememberDevice: true,
-  };
-  L.trace({ body: mfaRequest, url: MFA_LOGIN_ENDPOINT }, 'MFA request');
-  await request.client.post(MFA_LOGIN_ENDPOINT, {
-    json: mfaRequest,
-    headers: {
-      'x-xsrf-token': csrfToken,
-    },
-  });
-}
-
-export async function sendVerify(code: string): Promise<void> {
-  const csrfToken = await getCsrf();
-  const verifyBody = {
-    verificationCode: code,
-  };
-  L.trace({ body: verifyBody, url: EMAIL_VERIFY }, 'Verify email request');
-  await request.client.post(EMAIL_VERIFY, {
-    json: verifyBody,
-    headers: {
-      'x-xsrf-token': csrfToken,
-    },
-  });
-}
-
-export async function login(
-  email: string,
-  password: string,
-  captcha = '',
-  totp = '',
-  attempt = 0
-): Promise<void> {
-  L.debug({ email, captcha, attempt }, 'Attempting login');
-  const csrfToken = await getCsrf();
-  if (attempt > 5) {
-    throw new Error('Too many login attempts');
+  constructor(requestClient: Got, email: string) {
+    this.request = requestClient;
+    this.L = logger.child({
+      user: email,
+    });
   }
-  const loginBody: LoginBody = {
-    password,
-    rememberMe: true,
-    captcha,
-    email,
-  };
-  try {
-    L.trace({ body: loginBody, url: LOGIN_ENDPOINT }, 'Login request');
-    await request.client.post(LOGIN_ENDPOINT, {
-      json: loginBody,
+
+  async getCsrf(): Promise<string> {
+    this.L.debug('Refreshing CSRF');
+    this.L.trace({ url: CSRF_ENDPOINT }, 'CSRF request');
+    const csrfResp = await this.request.get(CSRF_ENDPOINT);
+    const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
+      map: true,
+    }) as unknown) as CSRFSetCookies;
+    return cookies['XSRF-TOKEN'].value;
+  }
+
+  async getReputation(): Promise<void> {
+    this.L.trace({ url: REPUTATION_ENDPOINT }, 'Reputation request');
+    await this.request.get(REPUTATION_ENDPOINT);
+  }
+
+  async loginMFA(totpSecret?: string): Promise<void> {
+    this.L.debug('Logging in with MFA');
+    if (!totpSecret) throw new Error('TOTP required for MFA login');
+    const csrfToken = await this.getCsrf();
+    const totp = new TOTP({ secret: totpSecret });
+    const mfaRequest: MFABody = {
+      code: totp.generate(),
+      method: 'authenticator',
+      rememberDevice: true,
+    };
+    this.L.trace({ body: mfaRequest, url: MFA_LOGIN_ENDPOINT }, 'MFA request');
+    await this.request.post(MFA_LOGIN_ENDPOINT, {
+      json: mfaRequest,
       headers: {
         'x-xsrf-token': csrfToken,
       },
     });
-    L.debug('Logged in');
-  } catch (e) {
-    if (e.response && e.response.body && e.response.body.errorCode) {
-      if (e.response.body.errorCode.includes('session_invalidated')) {
-        L.debug('Session invalidated, retrying');
-        await login(email, password, captcha, totp, attempt + 1);
-      } else if (
-        e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
-      ) {
-        L.debug('Captcha required');
-        const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN);
-        await login(email, password, captchaToken, totp, attempt + 1);
-      } else if (
-        e.response.body.errorCode ===
-        'errors.com.epicgames.common.two_factor_authentication.required'
-      ) {
-        await loginMFA(totp);
+  }
+
+  async sendVerify(code: string): Promise<void> {
+    const csrfToken = await this.getCsrf();
+    const verifyBody = {
+      verificationCode: code,
+    };
+    this.L.trace({ body: verifyBody, url: EMAIL_VERIFY }, 'Verify email request');
+    await this.request.post(EMAIL_VERIFY, {
+      json: verifyBody,
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+    });
+  }
+
+  async login(
+    email: string,
+    password: string,
+    captcha = '',
+    totp = '',
+    attempt = 0
+  ): Promise<void> {
+    this.L.debug({ email, captcha, attempt }, 'Attempting login');
+    const csrfToken = await this.getCsrf();
+    if (attempt > 5) {
+      throw new Error('Too many login attempts');
+    }
+    const loginBody: LoginBody = {
+      password,
+      rememberMe: true,
+      captcha,
+      email,
+    };
+    try {
+      this.L.trace({ body: loginBody, url: LOGIN_ENDPOINT }, 'Login request');
+      await this.request.post(LOGIN_ENDPOINT, {
+        json: loginBody,
+        headers: {
+          'x-xsrf-token': csrfToken,
+        },
+      });
+      this.L.debug('Logged in');
+    } catch (e) {
+      if (e.response && e.response.body && e.response.body.errorCode) {
+        if (e.response.body.errorCode.includes('session_invalidated')) {
+          this.L.debug('Session invalidated, retrying');
+          await this.login(email, password, captcha, totp, attempt + 1);
+        } else if (
+          e.response.body.errorCode === 'errors.com.epicgames.accountportathis.L.captcha_invalid'
+        ) {
+          this.L.debug('Captcha required');
+          const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN);
+          await this.login(email, password, captchaToken, totp, attempt + 1);
+        } else if (
+          e.response.body.errorCode ===
+          'errors.com.epicgames.common.two_factor_authentication.required'
+        ) {
+          await this.loginMFA(totp);
+        } else {
+          this.L.error(e.response.body, 'Login failed');
+          throw e;
+        }
       } else {
-        L.error(e.response.body, 'Login failed');
+        this.L.error(e, 'Login failed');
         throw e;
       }
-    } else {
-      L.error(e, 'Login failed');
-      throw e;
     }
   }
-}
 
-/**
- * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
- */
-export async function getStoreToken(): Promise<void> {
-  L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
-  const resp = await request.client.get(STORE_HOMEPAGE, { responseType: 'text' });
-  L.trace({ headers: resp.headers }, 'Store homepage response headers');
-}
-
-export async function refreshAndSid(error: boolean): Promise<boolean> {
-  L.debug('Setting SID');
-  const csrfToken = await getCsrf();
-  const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
-  L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
-  const redirectResp = await request.client.get<RedirectResponse>(REDIRECT_ENDPOINT, {
-    headers: {
-      'x-xsrf-token': csrfToken,
-    },
-    searchParams: redirectSearchParams,
-  });
-  const { sid } = redirectResp.body;
-  if (!sid) {
-    if (error) throw new Error('Sid returned null');
-    return false;
+  /**
+   * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
+   */
+  async getStoreToken(): Promise<void> {
+    this.L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
+    const resp = await this.request.get(STORE_HOMEPAGE, { responseType: 'text' });
+    this.L.trace({ headers: resp.headers }, 'Store homepage response headers');
   }
-  const sidSearchParams = { sid };
-  L.trace({ params: sidSearchParams, url: SET_SID_ENDPOINT }, 'Set SID request');
-  const sidResp = await request.client.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
-  L.trace({ headers: sidResp.headers }, 'Set SID response headers');
-  await getStoreToken();
-  return true;
-}
 
-export async function fullLogin(
-  email = config.accounts[0].email,
-  password = config.accounts[0].password,
-  totp = config.accounts[0].totp
-): Promise<void> {
-  if (await refreshAndSid(false)) {
-    L.info('Successfully refreshed login');
-  } else {
-    L.debug('Could not refresh credentials. Logging in fresh.');
-    await getReputation();
-    await login(email, password, '', totp);
-    await refreshAndSid(true);
-    L.info('Successfully logged in fresh');
+  async refreshAndSid(error: boolean): Promise<boolean> {
+    this.L.debug('Setting SID');
+    const csrfToken = await this.getCsrf();
+    const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
+    this.L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
+    const redirectResp = await this.request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
+      headers: {
+        'x-xsrf-token': csrfToken,
+      },
+      searchParams: redirectSearchParams,
+    });
+    const { sid } = redirectResp.body;
+    if (!sid) {
+      if (error) throw new Error('Sid returned null');
+      return false;
+    }
+    const sidSearchParams = { sid };
+    this.L.trace({ params: sidSearchParams, url: SET_SID_ENDPOINT }, 'Set SID request');
+    const sidResp = await this.request.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
+    this.L.trace({ headers: sidResp.headers }, 'Set SID response headers');
+    await this.getStoreToken();
+    return true;
+  }
+
+  async fullLogin(
+    email = config.accounts[0].email,
+    password = config.accounts[0].password,
+    totp = config.accounts[0].totp
+  ): Promise<void> {
+    if (await this.refreshAndSid(false)) {
+      this.L.info('Successfully refreshed login');
+    } else {
+      this.L.debug('Could not refresh credentials. Logging in fresh.');
+      await this.getReputation();
+      await this.login(email, password, '', totp);
+      await this.refreshAndSid(true);
+      this.L.info('Successfully logged in fresh');
+    }
   }
 }

@@ -11,10 +11,10 @@
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
-    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest"
+    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest",
+    "docker:build-test": "docker build . -t charlocharlie/epicgames-freegames-test:latest"
   },
   "dependencies": {
-    "@google-cloud/speech": "^3.6.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "filenamify": "^4.1.0",
