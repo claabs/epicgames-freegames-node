@@ -4,15 +4,15 @@
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "start:ts": "ts-node src/index.ts",
-    "build": "rm -rf dist && tsc && mkdir -p dist/src/site/public && cp -r src/site/public dist/src/site/public",
+    "build": "rm -rf dist && tsc && copyfiles src/**/*.html dist",
     "lint": "tsc --noEmit && eslint **/*.ts",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
-    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest",
-    "docker:build-test": "docker build . -t charlocharlie/epicgames-freegames-test:latest"
+    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
+    "docker:build-test": "docker build . -t charlocharlie/epicgames-freegames-test:latest --target deploy"
   },
   "dependencies": {
     "dotenv": "^8.2.0",
@@ -47,6 +47,7 @@
     "@types/yargs": "^15.0.4",
     "@typescript-eslint/eslint-plugin": "^2.13.0",
     "@typescript-eslint/parser": "^2.13.0",
+    "copyfiles": "^2.3.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-config-prettier": "^6.7.0",
