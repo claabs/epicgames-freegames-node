@@ -21,6 +21,7 @@ import {
   ACCOUNT_CSRF_ENDPOINT,
   ACCOUNT_SESSION_ENDPOINT,
 } from '../../src/common/constants';
+import '../../src/site/app';
 
 config();
 
