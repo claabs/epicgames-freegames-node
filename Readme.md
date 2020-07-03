@@ -32,7 +32,8 @@ I decided to take a different approach by only using the APIs that the Epic Game
 * Schedule check/purchase via cron string
 * Authentication refresh to reduce login count
 * Support for multiple accounts
-* *TODO:* Proper global store support (not just `en-US`)
+* *TODO:* Proper global store support (Works fine for now)
+* *TODO:* Redeem all free games, not just the weekly promotion
 
 ## Setup
 
