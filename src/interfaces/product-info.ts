@@ -398,6 +398,7 @@ export interface ProductInfo {
 }
 
 export interface ItemEntitlementResp {
+  errors?: GraphQLError[];
   data: {
     Launcher: {
       entitledOfferItems: {
@@ -408,4 +409,21 @@ export interface ItemEntitlementResp {
       };
     };
   };
+}
+
+export interface GraphQLError {
+  message: string;
+  correlationId: string;
+  serviceResponse: string;
+  stack: null;
+}
+
+export interface AuthErrorJSON {
+  errorCode: string;
+  errorMessage: string;
+  messageVars: string[];
+  numericErrorCode: number;
+  originatingService: string;
+  intent: string;
+  errorStatus: number;
 }

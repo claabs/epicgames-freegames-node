@@ -3,21 +3,25 @@ import { Logger } from 'pino';
 import logger from './common/logger';
 import { GraphQLBody, OfferInfo } from './interfaces/types';
 import { PromotionsQueryResponse, Element } from './interfaces/promotions-response';
-import { ItemEntitlementResp, ProductInfo } from './interfaces/product-info';
+import { ItemEntitlementResp, ProductInfo, AuthErrorJSON } from './interfaces/product-info';
 import {
   GRAPHQL_ENDPOINT,
   STORE_CONTENT,
   FREE_GAMES_PROMOTIONS_ENDPOINT,
 } from './common/constants';
 import { BundlesContent } from './interfaces/bundles-content';
+import Login from './login';
 
 export default class FreeGames {
   private request: Got;
 
   private L: Logger;
 
+  private email: string;
+
   constructor(requestClient: Got, email: string) {
     this.request = requestClient;
+    this.email = email;
     this.L = logger.child({
       user: email,
     });
@@ -85,6 +89,18 @@ export default class FreeGames {
     const entitlementResp = await this.request.post<ItemEntitlementResp>(GRAPHQL_ENDPOINT, {
       json: data,
     });
+    if (entitlementResp.body.errors && entitlementResp.body.errors[0]) {
+      const error = entitlementResp.body.errors[0];
+      const errorJSON: AuthErrorJSON = JSON.parse(error.serviceResponse);
+      if (errorJSON.errorCode.includes('authentication_failed')) {
+        this.L.warn('Failed to authenticate with GraphQL API, trying again');
+        const login = new Login(this.request, this.email);
+        await login.refreshAndSid(true);
+        return this.ownsGame(linkedOfferNs, linkedOfferId);
+      }
+      this.L.error(error);
+      throw new Error(error.message);
+    }
     const items = entitlementResp.body.data.Launcher.entitledOfferItems;
     return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
   }
