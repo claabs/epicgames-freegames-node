@@ -28,6 +28,7 @@ async function main(): Promise<void> {
     }
   });
   await Promise.all(accountPromises);
+  process.exit(); // necessary for some reason
 }
 
 main();
