@@ -43,6 +43,7 @@ export interface PartialConfig {
   cronSchedule?: string;
   logLevel?: string;
   baseUrl?: string;
+  serverPort?: number;
   email?: PartialEmailConfig;
 }
 
@@ -52,6 +53,7 @@ export interface ConfigObject extends PartialConfig {
   cronSchedule: string;
   logLevel: string;
   baseUrl: string;
+  serverPort: number;
   email: EmailConfig;
 }
 
@@ -94,6 +96,7 @@ function validateConfig(config: PartialConfig): ConfigObject {
       cronSchedule: config.cronSchedule || '0 12 * * *',
       logLevel: config.logLevel || 'info',
       baseUrl: config.baseUrl || 'http://localhost:3000',
+      serverPort: config.serverPort || 3000,
       email: (config.email as unknown) as EmailConfig,
     };
     return validConfig;
@@ -128,6 +131,7 @@ const envVarConfig: PartialConfig = {
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,
   baseUrl: process.env.BASE_URL,
+  serverPort: Number(process.env.SERVER_PORT),
   email: {
     smtpHost: process.env.SMTP_HOST,
     smtpPort: Number(process.env.SMTP_PORT),

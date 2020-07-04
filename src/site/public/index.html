@@ -13,18 +13,11 @@
     <meta name="theme-color" content="#202020" />
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-        }
-
         body {
-            background-color: rgb(32, 32, 32);
-        }
-
-        h2 {
+            font-family: sans-serif;
+            text-align: center;
             color: white;
+            background-color: rgb(32, 32, 32);
         }
     </style>
     <script src="https://epic-games-api.arkoselabs.com/fc/api/?onload=loadChallenge" async defer></script>
@@ -33,6 +26,7 @@
 <body>
     <h2>Solve the Captcha below</h2>
     <div id="CAPTCHA"></div>
+    <h3>After solving, you may receive more Captcha emails</h3>
     <script>
         const params = new URLSearchParams(document.location.search);
         const pkey = params.get("pkey") || '37D033EB-6489-3763-2AE1-A228C04103F5';
@@ -45,7 +39,7 @@
                 target_html: "CAPTCHA",
                 callback: async (sessionData) => {
                     console.log("Captcha sessionData:", sessionData);
-                    const postPath = `${window.location.origin}/solve`;
+                    const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
                     const resp = await fetch(postPath, {
                         method: 'post',
                         headers: {

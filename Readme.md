@@ -59,6 +59,8 @@ To use this requires:
     * [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server)
     * If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)
 
+If you want to test the email and webserver, delete an account's `<email>-cookies.json` from your config directory, as this usually forces a fresh login with a captcha. Then just restart the container.
+
 ### JSON Configuration
 
 The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value. For details on each property, see the [table below](#environment-variables).
@@ -107,7 +109,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 |-------------------------|--------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | EMAIL                   | `example@gmail.com`            |                         | Epic Games login email                                                                                                                             |
 | PASSWORD                | `abc123`                       |                         | Epic Games login password                                                                                                                          |
-| BASE_URL                | `https://example.com`          | `http://localhost:3000` | The URL you will access to solve Captchas when required                                                                                            |
+| BASE_URL                | `https://epic.example.com`     | `http://localhost:3000` | The URL you will access to solve Captchas when required. Extra path names are supported                                                            |
 | SMTP_HOST               | `smtp.gmail.com`               |                         | The outgoing SMTP host name                                                                                                                        |
 | SMTP_PORT               | `587`                          |                         | The outgoing SMTP port (SSL or TLS, see `secure`)                                                                                                  |
 | EMAIL_SENDER_ADDRESS    | `hello@gmail.com`              |                         | The sender of the email you will recieve (can be your email address)                                                                               |
@@ -117,6 +119,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 | SMTP_USERNAME           | `hello@gmail.com`              |                         | The SMTP username (if necessary)                                                                                                                   |
 | SMTP_PASSWORD           | `abc123`                       |                         | The SMTP password (if necessary)                                                                                                                   |
 | TOTP                    | `EMNCF83ULU39CYFO...YI69R39NE` |                         | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                              |
+| SERVER_PORT             | `3333`                         | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                   |
 | RUN_ON_STARTUP          | `true`                         | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
 | CRON_SCHEDULE           | `0 12 * * *`                   | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
 | RUN_ONCE                | `true`                         | `false`                 | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                         |
@@ -156,7 +159,7 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 
 #### Without JSON Config
 
-`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3001:3000 charlocharlie/epicgames-freegames:latest`
 
 ## Development
 
