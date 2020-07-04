@@ -11,9 +11,13 @@ WORKDIR /usr/app
 FROM base as build
 
 # Copy all source files
-COPY src package*.json tsconfig.json ./
-# Prod deps already installed, add dev deps
+COPY package*.json tsconfig.json ./
+
+# Add dev deps
 RUN npm ci
+
+# Copy source code
+COPY src src
 
 RUN npm run build
 
@@ -39,8 +43,10 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Steal compiled code from build image
-COPY --from=build /usr/app/dist ./dist/
+COPY --from=build /usr/app/dist ./dist
 
 COPY entrypoint.sh .
+
+EXPOSE 3000
 
 ENTRYPOINT [ "/usr/app/entrypoint.sh" ]

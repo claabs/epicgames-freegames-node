@@ -2,20 +2,23 @@
 import 'source-map-support/register';
 import { config } from './common/config';
 import L from './common/logger';
-import { fullLogin } from './login';
-import { getAllFreeGames } from './free-games';
-import { purchaseGames } from './purchase';
-import request from './common/request';
+import Login from './login';
+import FreeGames from './free-games';
+import Purchase from './purchase';
+import { newCookieJar } from './common/request';
+import './site/app';
 
 async function main(): Promise<void> {
-  // eslint-disable-next-line no-restricted-syntax
-  for (const account of config.accounts) {
+  const accountPromises = config.accounts.map(async account => {
     L.info(`Checking free games for ${account.email}`);
     try {
-      request.newCookieJar(account.email);
-      await fullLogin(account.email, account.password, account.totp); // Login
-      const offers = await getAllFreeGames(); // Get purchasable offers
-      await purchaseGames(offers); // Purchase games
+      const requestClient = newCookieJar(account.email);
+      const login = new Login(requestClient, account.email);
+      const freeGames = new FreeGames(requestClient, account.email);
+      const purchase = new Purchase(requestClient, account.email);
+      await login.fullLogin(account.email, account.password, account.totp); // Login
+      const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
+      await purchase.purchaseGames(offers); // Purchase games
     } catch (e) {
       if (e.response) {
         if (e.response.body) L.error(e.response.body);
@@ -23,7 +26,9 @@ async function main(): Promise<void> {
       }
       L.error(e);
     }
-  }
+  });
+  await Promise.all(accountPromises);
+  process.exit(); // necessary due to express server running
 }
 
 main();

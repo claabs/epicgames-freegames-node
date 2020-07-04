@@ -4,12 +4,13 @@ import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
 import { config } from 'dotenv';
 import { TOTP } from 'otpauth';
+import { Got } from 'got/dist/source';
 import L from '../../src/common/logger';
-import { refreshAndSid, sendVerify, fullLogin } from '../../src/login';
+import Login from '../../src/login';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
-import request from '../../src/common/request';
-import { getCaptchaSessionToken, EpicArkosePublicKey } from '../../src/captcha';
+import { newCookieJar } from '../../src/common/request';
+import { notifyManualCaptcha, EpicArkosePublicKey } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
 import {
   CSRF_ENDPOINT,
@@ -20,6 +21,7 @@ import {
   ACCOUNT_CSRF_ENDPOINT,
   ACCOUNT_SESSION_ENDPOINT,
 } from '../../src/common/constants';
+import '../../src/site/app';
 
 config();
 
@@ -91,6 +93,10 @@ export default class AccountManager {
 
   private accountId = '';
 
+  private request: Got;
+
+  private loginClient: Login;
+
   constructor(user?: string, pass?: string, totp?: string) {
     if (user) {
       this.username = user;
@@ -108,9 +114,10 @@ export default class AccountManager {
     this.tempMail = new TempMail({
       username: this.username,
     });
-    request.newCookieJar(this.username);
     this.permMail = new PermMail();
     this.permMailAddress = `${this.permMail.addressName}+${this.username}@${this.permMail.addressHost}`;
+    this.request = newCookieJar(this.permMailAddress);
+    this.loginClient = new Login(this.request, this.permMailAddress);
   }
 
   public async init(): Promise<void> {
@@ -128,8 +135,8 @@ export default class AccountManager {
     if (attempt > 5) {
       throw new Error('Too many creation attempts');
     }
-    const captchaToken = captcha || (await getCaptchaSessionToken(EpicArkosePublicKey.CREATE));
-    const csrfResp = await request.client.get(CSRF_ENDPOINT);
+    const captchaToken = captcha || (await notifyManualCaptcha(EpicArkosePublicKey.CREATE));
+    const csrfResp = await this.request.get(CSRF_ENDPOINT);
     const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
       map: true,
     }) as unknown) as CSRFSetCookies;
@@ -149,7 +156,7 @@ export default class AccountManager {
     };
     try {
       L.debug({ createBody }, 'account POST');
-      await request.client.post('https://www.epicgames.com/id/api/account', {
+      await this.request.post('https://www.epicgames.com/id/api/account', {
         json: createBody,
         headers: {
           'x-xsrf-token': csrfToken,
@@ -180,7 +187,7 @@ export default class AccountManager {
           await this.createAccount(email, password, attempt + 1, captchaToken);
         } else if (e.response.body.errorCode.includes('email_verification_required')) {
           const code = await this.getPermVerification();
-          await sendVerify(code);
+          await this.loginClient.sendVerify(code);
           await this.createAccount(email, password, attempt + 1, captchaToken);
         } else {
           L.error(e.response.body, 'Account creation failed');
@@ -193,7 +200,7 @@ export default class AccountManager {
   }
 
   private async accountCsrf(): Promise<string> {
-    const csrfResp = await request.client.post(ACCOUNT_CSRF_ENDPOINT);
+    const csrfResp = await this.request.post(ACCOUNT_CSRF_ENDPOINT);
     L.debug({ headers: csrfResp.headers });
     const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
       map: true,
@@ -202,7 +209,7 @@ export default class AccountManager {
   }
 
   private async startAccountSession(): Promise<void> {
-    await request.client.get(ACCOUNT_SESSION_ENDPOINT, {
+    await this.request.get(ACCOUNT_SESSION_ENDPOINT, {
       responseType: 'text',
       headers: {
         'content-type': 'text/html',
@@ -216,13 +223,13 @@ export default class AccountManager {
 
   private async enableMFA(): Promise<void> {
     L.info('Enabling MFA');
-    await fullLogin(this.permMailAddress, this.password);
+    await this.loginClient.fullLogin(this.permMailAddress, this.password);
     L.debug('Getting account client cookies');
     await this.startAccountSession();
     L.debug('Getting account CSRF');
     const csrfToken = await this.accountCsrf();
     L.debug('Requesting MFA setup');
-    const resp = await request.client.post<MFASetupResponse>(SETUP_MFA, {
+    const resp = await this.request.post<MFASetupResponse>(SETUP_MFA, {
       form: {
         type: 'authenticator',
         enabled: 'true',
@@ -235,7 +242,7 @@ export default class AccountManager {
     this.totp = resp.body.verify.secret;
     const totp = new TOTP({ secret: this.totp });
     L.debug('Verifying MFA setup');
-    await request.client.post<MFASetupResponse>(SETUP_MFA, {
+    await this.request.post<MFASetupResponse>(SETUP_MFA, {
       form: {
         type: 'authenticator',
         enabled: 'true',
@@ -257,7 +264,7 @@ export default class AccountManager {
     };
     L.debug('Calling initial change');
     try {
-      await request.client.post(CHANGE_EMAIL_ENDPOINT, {
+      await this.request.post(CHANGE_EMAIL_ENDPOINT, {
         form: initialChangeBody,
       });
       const otp = await this.getPermOTP();
@@ -275,7 +282,7 @@ export default class AccountManager {
         ),
       };
       L.debug('Calling verify change', verifyChangeBody);
-      await request.client.post(CHANGE_EMAIL_ENDPOINT, {
+      await this.request.post(CHANGE_EMAIL_ENDPOINT, {
         form: verifyChangeBody,
       });
       await this.getTempVerification();
@@ -287,7 +294,7 @@ export default class AccountManager {
   }
 
   public async login(): Promise<void> {
-    return fullLogin(this.permMailAddress, this.password, this.totp);
+    return this.loginClient.fullLogin(this.permMailAddress, this.password, this.totp);
   }
 
   private async getPermOTP(): Promise<string> {
@@ -309,7 +316,7 @@ export default class AccountManager {
     L.debug({ message }, 'Verify message');
     // TODO: Parse the email
     // const link = message;
-    // return request.client.get(link);
+    // return this.request.get(link);
   }
 
   private async getPermVerification(): Promise<string> {
@@ -325,8 +332,8 @@ export default class AccountManager {
   }
 
   private async getAccountId(): Promise<void> {
-    await refreshAndSid(true);
-    const userInfo = await request.client.get<UserInfoResponse>(USER_INFO_ENDPOINT);
+    await this.loginClient.refreshAndSid(true);
+    const userInfo = await this.request.get<UserInfoResponse>(USER_INFO_ENDPOINT);
     this.accountId = userInfo.body.userInfo.id.value;
   }
 }
