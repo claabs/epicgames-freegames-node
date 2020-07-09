@@ -132,7 +132,7 @@ export default class FreeGames {
       async (offer, index): Promise<Element> => {
         const productTypes = offer.categories.map(cat => cat.path);
         if (productTypes.includes('games')) {
-          const url = `${STORE_CONTENT}/products/${offer.productSlug}`;
+          const url = `${STORE_CONTENT}/products/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
           const productsResp = await this.request.get<ProductInfo>(url);
           // eslint-disable-next-line no-underscore-dangle
@@ -151,7 +151,7 @@ export default class FreeGames {
           };
         }
         if (productTypes.includes('bundles')) {
-          const url = `${STORE_CONTENT}/bundles/${offer.productSlug}`;
+          const url = `${STORE_CONTENT}/bundles/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
           const bundlesResp = await this.request.get<BundlesContent>(url);
           return {
