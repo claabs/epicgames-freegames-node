@@ -45,8 +45,10 @@ RUN npm ci --only=production
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist
 
-COPY entrypoint.sh .
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# backwards compat (from https://success.docker.com/article/use-a-script-to-initialize-stateful-container-data)
+RUN ln -s /usr/local/bin/docker-entrypoint.sh / 
 
 EXPOSE 3000
 
-ENTRYPOINT [ "/usr/app/entrypoint.sh" ]
+ENTRYPOINT ["docker-entrypoint.sh"]
