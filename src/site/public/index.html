@@ -26,6 +26,10 @@
 <body>
     <h2>Solve the Captcha below</h2>
     <div id="CAPTCHA"></div>
+    <div id="success-text" style="color: green" hidden>
+        <h3>Successfully fulfilled Captcha</h3>
+        <p>(Sometimes just opening this page is all you have to do)</p>
+    </div>
     <h3>After solving, you may receive more Captcha emails</h3>
     <script>
         const params = new URLSearchParams(document.location.search);
@@ -50,7 +54,10 @@
                             id
                         })
                     });
-                    if (resp.ok) console.log("Successfully sent Captcha token");
+                    if (resp.ok) {
+                        console.log("Successfully sent Captcha token");
+                        document.getElementById("success-text").hidden = false;
+                    }
                     else console.error("Failed sending Captcha token");
 
                 }

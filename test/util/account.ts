@@ -13,7 +13,6 @@ import { newCookieJar } from '../../src/common/request';
 import { notifyManualCaptcha, EpicArkosePublicKey } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
 import {
-  CSRF_ENDPOINT,
   EPIC_CLIENT_ID,
   CHANGE_EMAIL_ENDPOINT,
   USER_INFO_ENDPOINT,
@@ -32,9 +31,9 @@ interface CreateAccountRequest {
   displayName: string;
   email: string;
   password: string;
-  captcha: string;
-  createdForClientId: string; // 875a3b57d3a640a6b7f9b4e883463ab4
-  dateOfBirth: string; // '1990-01-01'
+  captcha?: string;
+  createdForClientId?: string; // 875a3b57d3a640a6b7f9b4e883463ab4
+  dateOfBirth?: string; // '1990-01-01'
 }
 
 interface ChangeEmailInitialRequest {
@@ -135,12 +134,7 @@ export default class AccountManager {
     if (attempt > 5) {
       throw new Error('Too many creation attempts');
     }
-    const captchaToken = captcha || (await notifyManualCaptcha(EpicArkosePublicKey.CREATE));
-    const csrfResp = await this.request.get(CSRF_ENDPOINT);
-    const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
-      map: true,
-    }) as unknown) as CSRFSetCookies;
-    const csrfToken = cookies['XSRF-TOKEN'].value;
+    const csrfToken = await this.loginClient.getCsrf();
 
     const randName = new RandExp(/[a-zA-Z]{3,12}/);
     const createBody: CreateAccountRequest = {
@@ -151,7 +145,7 @@ export default class AccountManager {
       createdForClientId: EPIC_CLIENT_ID,
       displayName: this.username,
       password: this.password,
-      captcha: captchaToken,
+      captcha,
       email,
     };
     try {
@@ -177,18 +171,19 @@ export default class AccountManager {
         L.debug({ body: e.response.body }, 'Error body');
         if (e.response.body.errorCode.includes('session_invalidated')) {
           L.debug('Session invalidated, retrying');
-          await this.createAccount(email, password, attempt + 1, captchaToken);
+          await this.createAccount(email, password, attempt + 1, captcha);
         } else if (
           e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid' ||
           (e.response.body.errorCode === 'errors.com.epicgames.accountportal.validation.required' &&
             e.response.body.message === 'captcha is required')
         ) {
           L.debug('Captcha required');
-          await this.createAccount(email, password, attempt + 1, captchaToken);
+          const newCaptcha = await notifyManualCaptcha(EpicArkosePublicKey.CREATE);
+          await this.createAccount(email, password, attempt + 1, newCaptcha);
         } else if (e.response.body.errorCode.includes('email_verification_required')) {
           const code = await this.getPermVerification();
           await this.loginClient.sendVerify(code);
-          await this.createAccount(email, password, attempt + 1, captchaToken);
+          await this.createAccount(email, password, attempt + 1, captcha);
         } else {
           L.error(e.response.body, 'Account creation failed');
           throw e;
