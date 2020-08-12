@@ -36,23 +36,28 @@ async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<v
   };
 
   L.trace('Sending email');
-  await emailTransporter.sendMail({
-    from: {
-      address: config.email.emailSenderAddress,
-      name: config.email.emailSenderName,
-    },
-    to: config.email.emailRecipientAddress,
-    subject: 'Epic Games free games needs a Captcha solved',
-    html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
-             <p>Open this page and solve the captcha: <a href=${url}>${url}</a></p>`,
-  });
-  L.debug(
-    {
-      from: config.email.emailSenderAddress,
+  try {
+    await emailTransporter.sendMail({
+      from: {
+        address: config.email.emailSenderAddress,
+        name: config.email.emailSenderName,
+      },
       to: config.email.emailRecipientAddress,
-    },
-    'Email sent.'
-  );
+      subject: 'Epic Games free games needs a Captcha solved',
+      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
+             <p>Open this page and solve the captcha: <a href=${url}>${url}</a></p>`,
+    });
+    L.debug(
+      {
+        from: config.email.emailSenderAddress,
+        to: config.email.emailRecipientAddress,
+      },
+      'Email sent.'
+    );
+  } catch (err) {
+    L.error({ emailConfig: config.email }, 'Error sending email. Please check your configuration');
+    throw err;
+  }
 }
 
 const solveLocally = async (url: string): Promise<void> => {
