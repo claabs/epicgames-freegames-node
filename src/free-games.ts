@@ -11,6 +11,7 @@ import {
 } from './common/constants';
 import { BundlesContent } from './interfaces/bundles-content';
 import Login from './login';
+import { config } from './common/config';
 
 export default class FreeGames {
   private request: Got;
@@ -27,8 +28,107 @@ export default class FreeGames {
     });
   }
 
-  async getFreeGames(): Promise<Element[]> {
-    this.L.debug('Getting current free games list');
+  async getCatalogFreeGames(): Promise<Element[]> {
+    this.L.debug('Getting global free games');
+    const query = `query searchStoreQuery($allowCountries: String, $category: String, $count: Int, $country: String!, $keywords: String, $locale: String, $namespace: String, $sortBy: String, $sortDir: String, $start: Int, $tag: String) {
+      Catalog {
+        searchStore(allowCountries: $allowCountries, category: $category, count: $count, country: $country, keywords: $keywords, locale: $locale, namespace: $namespace, sortBy: $sortBy, sortDir: $sortDir, start: $start, tag: $tag
+        ) {
+          elements {
+            title
+            id
+            namespace
+            description
+            productSlug
+            categories {
+              path	
+            }
+            items {
+              id
+              namespace
+            }
+            promotions(category: $category) {
+              promotionalOffers {
+                promotionalOffers {
+                  startDate
+                  endDate
+                  discountSetting {
+                    discountType
+                    discountPercentage
+                  }
+                }
+              }
+            }
+          }
+          paging {
+            count
+            total
+          }
+        }
+      }
+    }`;
+    const pageLimit = 1000;
+    const variables = {
+      category: 'games',
+      sortBy: 'effectiveDate',
+      sortDir: 'asc',
+      count: pageLimit,
+      country: 'US',
+      allowCountries: 'US',
+      locale: 'en-US',
+      start: 0,
+    };
+    const data = { query, variables };
+    this.L.trace({ data, url: GRAPHQL_ENDPOINT }, 'Posting for all games in catalog');
+    const items = await this.request.paginate.all<Element, PromotionsQueryResponse>(
+      GRAPHQL_ENDPOINT,
+      {
+        responseType: 'json',
+        method: 'post',
+        json: data,
+        pagination: {
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          transform: response => {
+            return response.body.data.Catalog.searchStore.elements;
+          },
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          paginate: (_response, _allItems, currentItems) => {
+            if (currentItems.length < pageLimit) {
+              return false;
+            }
+            const newBody = data;
+            newBody.variables.start = data.variables.start + pageLimit;
+            return {
+              json: newBody,
+            };
+          },
+        },
+      }
+    );
+    this.L.debug(`Retrieved catalog data for ${items.length} games`);
+    const freeGames = items.filter(game => {
+      return (
+        game.promotions?.promotionalOffers[0]?.promotionalOffers[0]?.discountSetting
+          ?.discountPercentage === 0
+      );
+    });
+    this.L.trace(`Found ${freeGames.length} free games in catalog`);
+    const uniqueFreeGames: Element[] = [];
+    const map = new Map();
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of freeGames) {
+      if (!map.has(item.productSlug)) {
+        map.set(item.productSlug, true); // set any value to Map
+        uniqueFreeGames.push(item);
+      }
+    }
+    this.L.debug(`Found ${uniqueFreeGames.length} unique free games in catalog`);
+    this.L.trace({ uniqueFreeGames }, 'Free games in catalog');
+    return uniqueFreeGames;
+  }
+
+  async getWeeklyFreeGames(): Promise<Element[]> {
+    this.L.debug('Getting current weekly free games list');
     const freeGamesSearchParams = {
       locale: 'en',
       country: 'US',
@@ -112,7 +212,7 @@ export default class FreeGames {
     });
     const ownsGames = await Promise.all(ownsGamePromises);
     const purchasableGames: OfferInfo[] = validOffers
-      .filter((offer, index) => {
+      .filter((_offer, index) => {
         return !ownsGames[index];
       })
       .map(offer => {
@@ -168,7 +268,12 @@ export default class FreeGames {
   }
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
-    const validFreeGames = await this.getFreeGames();
+    let validFreeGames: Element[];
+    if (config.onlyWeekly) {
+      validFreeGames = await this.getWeeklyFreeGames();
+    } else {
+      validFreeGames = await this.getCatalogFreeGames();
+    }
     this.L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
     const updatedOffers = await this.updateIds(validFreeGames);
     const purchasableGames = await this.getPurchasableFreeGames(updatedOffers);

@@ -39,6 +39,7 @@ export interface PartialEmailConfig {
 
 export interface PartialConfig {
   accounts?: Partial<Account>[];
+  onlyWeekly?: boolean;
   runOnStartup?: boolean;
   cronSchedule?: string;
   logLevel?: string;
@@ -49,6 +50,7 @@ export interface PartialConfig {
 
 export interface ConfigObject extends PartialConfig {
   accounts: Account[];
+  onlyWeekly: boolean;
   runOnStartup: boolean;
   cronSchedule: string;
   logLevel: string;
@@ -92,6 +94,7 @@ function validateConfig(config: PartialConfig): ConfigObject {
 
     const validConfig: ConfigObject = {
       accounts: (config.accounts as unknown) as Account[], // Native type checking doesn't work through arrays?
+      onlyWeekly: config.onlyWeekly || false,
       runOnStartup: config.runOnStartup || true,
       cronSchedule: config.cronSchedule || '0 12 * * *',
       logLevel: config.logLevel || 'info',
@@ -127,6 +130,7 @@ const envVarConfig: PartialConfig = {
       totp: process.env.TOTP,
     },
   ],
+  onlyWeekly: process.env.ONLY_WEEKLY ? Boolean(process.env.ONLY_WEEKLY) : undefined,
   runOnStartup: Boolean(process.env.RUN_ON_STARTUP),
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,

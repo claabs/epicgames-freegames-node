@@ -78,7 +78,7 @@ The config file is store in the mounted `./config` directory.
             "totp": "EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE"
         },
     ],
-    "gcpConfigName": "account-name-abcdef12345.json",
+    "onlyWeekly": false,
     "runOnStartup": true,
     "cronSchedule": "0 12 * * *",
     "runOnce": false,
@@ -119,6 +119,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 | SMTP_USERNAME           | `hello@gmail.com`              |                         | The SMTP username (if necessary)                                                                                                                   |
 | SMTP_PASSWORD           | `abc123`                       |                         | The SMTP password (if necessary)                                                                                                                   |
 | TOTP                    | `EMNCF83ULU39CYFO...YI69R39NE` |                         | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                              |
+| ONLY_WEEKLY             | `true`                         | `false`                 | (Optional) By default, the script will redeem all free games in the Epic Games catalog. To only redeem the weekly promotions, set to `true`        |
 | SERVER_PORT             | `3333`                         | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                   |
 | RUN_ON_STARTUP          | `true`                         | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
 | CRON_SCHEDULE           | `0 12 * * *`                   | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
@@ -167,12 +168,12 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 
 Place these variables in a `.env` file in the project root.
 
-| Variable      | Example  | Description                                                                                                      |
-|---------------|----------|------------------------------------------------------------------------------------------------------------------|
-| TEST_USER     | `abc123` | The default user to use when not provided in command options                                                     |
-| TEST_PASSWORD | `xyz789` | The default password to use when not provided in command options                                                 |
-| TEST_TOTP     | `xyz789` | The default password to use when not provided in command options                                                 |
-| ENV           | `local`  | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
+| Variable      | Example              | Description                                                                                                      |
+|---------------|----------------------|------------------------------------------------------------------------------------------------------------------|
+| TEST_USER     | `abc123@example.com` | The default user to use when not provided in command options                                                     |
+| TEST_PASSWORD | `xyz789`             | The default password to use when not provided in command options                                                 |
+| TEST_TOTP     | `xyz789`             | The default password to use when not provided in command options                                                 |
+| ENV           | `local`              | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
 
 ### Optional variables
 
