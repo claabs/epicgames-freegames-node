@@ -131,7 +131,7 @@ const envVarConfig: PartialConfig = {
     },
   ],
   onlyWeekly: process.env.ONLY_WEEKLY ? Boolean(process.env.ONLY_WEEKLY) : undefined,
-  runOnStartup: Boolean(process.env.RUN_ON_STARTUP),
+  runOnStartup: process.env.RUN_ON_STARTUP ? Boolean(process.env.RUN_ON_STARTUP) : undefined,
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,
   baseUrl: process.env.BASE_URL,
