@@ -231,12 +231,24 @@ export default class FreeGames {
     const promises = offers.map(
       async (offer, index): Promise<Element> => {
         const productTypes = offer.categories.map(cat => cat.path);
+        if (productTypes.includes('bundles')) {
+          const url = `${STORE_CONTENT}/bundles/${offer.productSlug.split('/')[0]}`;
+          this.L.trace({ url }, 'Fetching updated IDs');
+          const bundlesResp = await this.request.get<BundlesContent>(url);
+          return {
+            ...offers[index],
+            id: bundlesResp.body.offer.id,
+            namespace: bundlesResp.body.offer.namespace,
+          };
+        }
         if (productTypes.includes('games')) {
           const url = `${STORE_CONTENT}/products/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
           const productsResp = await this.request.get<ProductInfo>(url);
-          // eslint-disable-next-line no-underscore-dangle
-          let mainGamePage = productsResp.body.pages.find(page => page._slug === 'home');
+          let mainGamePage = productsResp.body.pages.find(page =>
+            // eslint-disable-next-line no-underscore-dangle
+            page._urlPattern.includes(offer.productSlug)
+          );
           if (!mainGamePage) {
             this.L.debug('No home page found, using first');
             [mainGamePage] = productsResp.body.pages;
@@ -248,16 +260,6 @@ export default class FreeGames {
             ...offers[index],
             id: mainGamePage.offer.id,
             namespace: mainGamePage.offer.namespace,
-          };
-        }
-        if (productTypes.includes('bundles')) {
-          const url = `${STORE_CONTENT}/bundles/${offer.productSlug.split('/')[0]}`;
-          this.L.trace({ url }, 'Fetching updated IDs');
-          const bundlesResp = await this.request.get<BundlesContent>(url);
-          return {
-            ...offers[index],
-            id: bundlesResp.body.offer.id,
-            namespace: bundlesResp.body.offer.namespace,
           };
         }
         throw new Error(`Unrecognized productType: ${productTypes}`);

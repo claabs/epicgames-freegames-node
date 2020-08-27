@@ -60,25 +60,38 @@ export default class Purchase {
       { body: confirmOrderRequest, url: ORDER_CONFIRM_ENDPOINT },
       'Confirm order request'
     );
-    const confirmOrderResp = await this.request.post<ConfirmPurcaseError>(ORDER_CONFIRM_ENDPOINT, {
-      json: confirmOrderRequest,
-      headers: {
-        'x-requested-with': purchaseToken,
-      },
-    });
-    this.L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
-    if (
-      confirmOrderResp.body.errorCode &&
-      confirmOrderResp.body.errorCode.includes('captcha.challenge')
-    ) {
-      this.L.debug('Captcha required');
-      const newPreview = orderPreview;
-      newPreview.syncToken = confirmOrderResp.body.syncToken;
-      const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.PURCHASE);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
-      await this.confirmOrder(newPreview, purchaseToken, captchaToken);
-    } else {
-      this.L.debug('Purchase successful');
+    try {
+      const confirmOrderResp = await this.request.post<ConfirmPurcaseError>(
+        ORDER_CONFIRM_ENDPOINT,
+        {
+          json: confirmOrderRequest,
+          headers: {
+            'x-requested-with': purchaseToken,
+          },
+        }
+      );
+      this.L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
+      if (
+        confirmOrderResp.body.errorCode &&
+        confirmOrderResp.body.errorCode.includes('captcha.challenge')
+      ) {
+        this.L.debug('Captcha required');
+        const newPreview = orderPreview;
+        newPreview.syncToken = confirmOrderResp.body.syncToken;
+        const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.PURCHASE);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
+        await this.confirmOrder(newPreview, purchaseToken, captchaToken);
+      } else {
+        this.L.debug('Purchase successful');
+      }
+    } catch (e) {
+      if (e.response?.body?.message?.includes('you already own this item')) {
+        // This still means that you may need to solve a captcha.
+        // TODO: Check ownership before purchasing?
+        this.L.debug('Item already owned');
+      } else {
+        throw e;
+      }
     }
   }
 
