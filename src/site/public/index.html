@@ -20,7 +20,6 @@
             background-color: rgb(32, 32, 32);
         }
     </style>
-    <script src="https://epic-games-api.arkoselabs.com/fc/api/?onload=loadChallenge" async defer></script>
 </head>
 
 <body>
@@ -37,11 +36,23 @@
         const id = params.get("id");
         console.info('pkey:', pkey);
         console.info('id:', id);
-        function loadChallenge() {
-            new FunCaptcha({
-                public_key: pkey,
-                target_html: "CAPTCHA",
-                callback: async (sessionData) => {
+
+        // Guide: https://arkoselabs.atlassian.net/wiki/spaces/DG/pages/497713605/Single+Page+Application+Guide
+        let Arkose;
+
+        function setupEnforcement(enforcement) {
+            console.log(enforcement);
+            Arkose = enforcement;
+            createCaptcha();
+        }
+        window.setupEnforcement = setupEnforcement;
+
+        let arkoseLoaded = false;
+        function createCaptcha() {
+            console.log('creating captcha');
+
+            Arkose.setConfig({
+                onCompleted: async function (t) {
                     console.log("Captcha sessionData:", sessionData);
                     const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
                     const resp = await fetch(postPath, {
@@ -59,10 +70,35 @@
                         document.getElementById("success-text").hidden = false;
                     }
                     else console.error("Failed sending Captcha token");
+                },
+                onReady: function () {
+                    console.log('ready');
 
+                    arkoseLoaded = true;
+                    Arkose.run();
                 }
             });
+
+            console.log('arkoseLoaded', arkoseLoaded);
+            arkoseLoaded && Arkose.run()
         }
+
+        function createArkoseScript() {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = `https://client-api.arkoselabs.com/v2/${pkey}/api.js`;
+            script.setAttribute('data-callback', 'setupEnforcement');
+            script.async = true;
+            script.defer = true;
+            script.id = 'arkosescript';
+
+            document.head.append(script);
+        }
+
+        window.addEventListener('load', () => {
+            console.log('loaded');
+            createArkoseScript();
+        });
     </script>
     <noscript>Javascript is required to use this application</noscript>
 </body>
