@@ -53,7 +53,7 @@
 
             Arkose.setConfig({
                 onCompleted: async function (t) {
-                    console.log("Captcha sessionData:", sessionData);
+                    console.log("Captcha sessionData:", t);
                     const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
                     const resp = await fetch(postPath, {
                         method: 'post',
@@ -61,7 +61,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            sessionData,
+                            sessionData: t.token,
                             id
                         })
                     });
