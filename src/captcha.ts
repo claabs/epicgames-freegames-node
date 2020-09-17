@@ -45,7 +45,7 @@ async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<v
       to: config.email.emailRecipientAddress,
       subject: 'Epic Games free games needs a Captcha solved',
       html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
-             <p>Open this page and solve the captcha: <a href=${url}>${url}</a></p>`,
+             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
     });
     L.debug(
       {
