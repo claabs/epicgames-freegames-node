@@ -64,13 +64,17 @@ const solveLocally = async (url: string): Promise<void> => {
   await open(url);
 };
 
-export async function notifyManualCaptcha(publicKey: EpicArkosePublicKey): Promise<string> {
+export async function notifyManualCaptcha(
+  publicKey: EpicArkosePublicKey,
+  blob?: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const id = uuid();
     pendingCaptchas.push(id);
     const qs = querystring.stringify({
       id,
       pkey: publicKey,
+      blob,
     });
     const url = `${config.baseUrl}?${qs}`;
     L.debug(`Go to ${url} and solve the captcha`);

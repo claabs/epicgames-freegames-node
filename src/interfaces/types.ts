@@ -111,3 +111,12 @@ export interface OfferInfo {
   productName: string;
   productSlug: string;
 }
+
+export interface ArkoseData {
+  blob: string;
+}
+
+export interface ReputationData {
+  verdict: string;
+  arkose_data: ArkoseData;
+}

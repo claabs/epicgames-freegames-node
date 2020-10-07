@@ -3,7 +3,13 @@ import { TOTP } from 'otpauth';
 import { Got } from 'got';
 import { Logger } from 'pino';
 import logger from './common/logger';
-import { CSRFSetCookies, LoginBody, RedirectResponse, MFABody } from './interfaces/types';
+import {
+  CSRFSetCookies,
+  LoginBody,
+  RedirectResponse,
+  MFABody,
+  ReputationData,
+} from './interfaces/types';
 import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
 import {
   CSRF_ENDPOINT,
@@ -40,9 +46,10 @@ export default class Login {
     return cookies['XSRF-TOKEN'].value;
   }
 
-  async getReputation(): Promise<void> {
+  async getReputation(): Promise<ReputationData> {
     this.L.trace({ url: REPUTATION_ENDPOINT }, 'Reputation request');
-    await this.request.get(REPUTATION_ENDPOINT);
+    const resp = await this.request.get<ReputationData>(REPUTATION_ENDPOINT);
+    return resp.body;
   }
 
   async loginMFA(totpSecret?: string): Promise<void> {
@@ -83,6 +90,7 @@ export default class Login {
     password: string,
     captcha = '',
     totp = '',
+    blob?: string,
     attempt = 0
   ): Promise<void> {
     this.L.debug({ email, captcha, attempt }, 'Attempting login');
@@ -109,13 +117,13 @@ export default class Login {
       if (e.response && e.response.body && e.response.body.errorCode) {
         if (e.response.body.errorCode.includes('session_invalidated')) {
           this.L.debug('Session invalidated, retrying');
-          await this.login(email, password, captcha, totp, attempt + 1);
+          await this.login(email, password, captcha, totp, blob, attempt + 1);
         } else if (
           e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
         ) {
           this.L.debug('Captcha required');
-          const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN);
-          await this.login(email, password, captchaToken, totp, attempt + 1);
+          const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN, blob);
+          await this.login(email, password, captchaToken, totp, blob, attempt + 1);
         } else if (
           e.response.body.errorCode ===
           'errors.com.epicgames.common.two_factor_authentication.required'
@@ -174,8 +182,8 @@ export default class Login {
       this.L.info('Successfully refreshed login');
     } else {
       this.L.debug('Could not refresh credentials. Logging in fresh.');
-      await this.getReputation();
-      await this.login(email, password, '', totp);
+      const reputation = await this.getReputation();
+      await this.login(email, password, '', totp, reputation.arkose_data.blob);
       await this.refreshAndSid(true);
       this.L.info('Successfully logged in fresh');
     }

@@ -201,6 +201,7 @@ export default class FreeGames {
       this.L.error(error);
       throw new Error(error.message);
     }
+    this.L.trace({ resp: entitlementResp.body.data }, 'Entitlement response');
     const items = entitlementResp.body.data.Launcher.entitledOfferItems;
     return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
   }
