@@ -23,7 +23,7 @@
 </head>
 
 <body>
-    <h2>Solve the Captcha below</h2>
+    <h2>Solve the Captcha</h2>
     <div id="CAPTCHA"></div>
     <div id="success-text" style="color: green" hidden>
         <h3>Successfully fulfilled Captcha</h3>
@@ -34,11 +34,14 @@
         const params = new URLSearchParams(document.location.search);
         const pkey = params.get("pkey") || '37D033EB-6489-3763-2AE1-A228C04103F5';
         const id = params.get("id");
+        const blob = params.get("blob");
         console.info('pkey:', pkey);
         console.info('id:', id);
+        console.info('blob:', blob);
 
         // Guide: https://arkoselabs.atlassian.net/wiki/spaces/DG/pages/497713605/Single+Page+Application+Guide
         let Arkose;
+        let success = false;
 
         function setupEnforcement(enforcement) {
             console.log(enforcement);
@@ -68,6 +71,7 @@
                     if (resp.ok) {
                         console.log("Successfully sent Captcha token");
                         document.getElementById("success-text").hidden = false;
+                        success = true;
                     }
                     else console.error("Failed sending Captcha token");
                 },
@@ -75,12 +79,13 @@
                     console.log('ready');
 
                     arkoseLoaded = true;
-                    Arkose.run();
-                }
+                    !success && Arkose.run();
+                },
+                data: { blob }
             });
 
             console.log('arkoseLoaded', arkoseLoaded);
-            arkoseLoaded && Arkose.run()
+            !success && arkoseLoaded && Arkose.run()
         }
 
         function createArkoseScript() {
