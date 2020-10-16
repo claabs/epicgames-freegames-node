@@ -21,6 +21,7 @@ import {
   STORE_HOMEPAGE,
   MFA_LOGIN_ENDPOINT,
   SET_SID_ENDPOINT,
+  CLIENT_REDIRECT_ENDPOINT,
 } from './common/constants';
 import { config } from './common/config';
 
@@ -152,6 +153,15 @@ export default class Login {
   async refreshAndSid(error: boolean): Promise<boolean> {
     this.L.debug('Setting SID');
     const csrfToken = await this.getCsrf();
+    const clientRedirectSearchParams = { redirectUrl: STORE_HOMEPAGE };
+    this.L.trace(
+      { params: clientRedirectSearchParams, url: CLIENT_REDIRECT_ENDPOINT },
+      'Client redirect request'
+    );
+    const clientRedirectResp = await this.request.get(CLIENT_REDIRECT_ENDPOINT, {
+      searchParams: clientRedirectSearchParams,
+    });
+    this.L.trace({ resp: clientRedirectResp.body }, 'Client redirect response');
     const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
     this.L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
     const redirectResp = await this.request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
