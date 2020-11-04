@@ -164,6 +164,21 @@ If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Au
 
 `$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3001:3000 charlocharlie/epicgames-freegames:latest`
 
+## Local Congifuration
+
+If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing [Node.js](https://nodejs.org/).
+
+1. Get this repo from Github
+    * Clone using git (recommended): `git clone https://github.com/claabs/epicgames-freegames-node.git`
+    * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
+1. Create `config` folder in the cloned/unpacked directory
+1. Create [JSON configuration](#json-configuration)
+1. Install Node.js
+1. Install Node.js dependecies
+    * Start terminal and navigate to cloned/unpacked directory
+    * Run `node ci`
+1. Start application: `./node_modules/.bin/ts-node src/index.ts`
+
 ## Development
 
 ### Recommended Dev Environment Variables
