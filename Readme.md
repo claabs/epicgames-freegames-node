@@ -152,6 +152,8 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 1. Activate 2FA by completing the form and clicking activate.
 1. Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.
 
+If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Authenticator App" in your Epic account settings.
+
 ### Docker Run
 
 #### With JSON Config
