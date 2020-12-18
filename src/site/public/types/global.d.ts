@@ -22,6 +22,4 @@ interface Performance {
   }
 }
 
-declare var draw: () => any;
-
 declare function hCaptchaLoaded(): void;

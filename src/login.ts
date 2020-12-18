@@ -123,7 +123,7 @@ export default class Login {
           e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
         ) {
           this.L.debug('Captcha required');
-          const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.LOGIN, blob);
+          const captchaToken = await notifyManualCaptcha();
           await this.login(email, password, captchaToken, totp, blob, attempt + 1);
         } else if (
           e.response.body.errorCode ===

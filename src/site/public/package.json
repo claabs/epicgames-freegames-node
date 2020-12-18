@@ -9,9 +9,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.21.0"
+    "axios": "^0.21.0",
+    "md5": "^2.3.0",
+    "tlsh": "^1.0.8"
   },
   "devDependencies": {
+    "@types/md5": "^2.2.1",
     "@types/webpack": "^4.41.25",
     "ts-loader": "^8.0.12",
     "ts-node": "^9.1.1",

@@ -1,38 +1,54 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import * as talon from './talon-sdk';
+import axios from 'axios';
+import { getInitData } from './talon-harness';
 
 const params = new URLSearchParams(document.location.search);
-const pkey = params.get('pkey') || '91e4137f-95af-4bc9-97af-cdcedce21c8c';
 const id = params.get('id');
-const blob = params.get('blob');
-console.info('pkey:', pkey);
 console.info('id:', id);
-console.info('blob:', blob);
 
-let success = false;
+const apiRoot = `${window.location.origin}`;
 
-async function sendCaptchaToken(token: string): Promise<void> {
-  const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
-  const resp = await fetch(postPath, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      sessionData: token,
-      id,
-    }),
-  });
-  if (resp.ok) {
-    console.log('Successfully sent Captcha token');
-    document.getElementById('success-text')!.hidden = false;
-    success = true;
-  } else console.error('Failed sending Captcha token');
+let gInitData: Record<string, any>;
+let gSession: SessionData;
+
+interface SessionData {
+  site_key: string;
+  timing: Record<string, any>[];
+  session: Record<string, any>;
 }
 
-function captchaSuccess(captchaResponse: string): void {
+async function sendInit(initData: Record<string, any>): Promise<SessionData> {
+  const postPath = `${apiRoot}/init`;
+  const resp = await axios.post<SessionData>(postPath, initData);
+  return resp.data;
+}
+
+async function sendExecute(session: SessionData): Promise<void> {
+  const postPath = `${apiRoot}/execute`;
+  await axios.post(postPath, session);
+}
+
+interface CompleteBody {
+  hCaptchaKey: string;
+  session: Record<string, any>;
+  initData: Record<string, any>;
+  id: string;
+}
+async function sendComplete(completeBody: CompleteBody): Promise<void> {
+  const postPath = `${apiRoot}/complete`;
+  await axios.post(postPath, completeBody);
+  console.log('Successfully sent Captcha token');
+  document.getElementById('success-text')!.hidden = false;
+}
+
+async function captchaSuccess(captchaResponse: string): Promise<void> {
   console.log('captchaResponse', captchaResponse);
-  sendCaptchaToken(captchaResponse);
+  await sendComplete({
+    hCaptchaKey: captchaResponse,
+    id: id || '',
+    initData: gInitData,
+    session: gSession.session,
+  });
 }
 
 function expiredCallback(): void {
@@ -55,13 +71,11 @@ async function openCallback(): Promise<void> {
 async function hCaptchaLoaded(): Promise<void> {
   console.log('hCaptcha is ready');
 
-  await talon.sdkInit();
-  const clientIp = await talon.initIp();
-  const session = await talon.initTalon(clientIp);
-  let timing = await talon.sdkInitComplete(session);
+  gInitData = getInitData();
+  gSession = await sendInit(gInitData);
 
   const widgetID = hcaptcha.render('hcaptcha', {
-    sitekey: session.session.plan.h_captcha.site_key,
+    sitekey: gSession.site_key,
     theme: 'dark',
     callback: captchaSuccess,
     'expire-callback': expiredCallback,
@@ -75,13 +89,8 @@ async function hCaptchaLoaded(): Promise<void> {
   });
   console.log('widgetID', widgetID);
 
-  timing = await talon.challengeReady(session, timing);
   hcaptcha.execute(widgetID);
-  await talon.challengeExecute(session, timing);
+  await sendExecute(gSession);
 }
 
 global.hCaptchaLoaded = hCaptchaLoaded;
-
-window.addEventListener('load', () => {
-  console.log('loaded');
-});

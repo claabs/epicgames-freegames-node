@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import axios from 'axios';
-import { getInitData } from './talon-harness';
+import got from 'got';
+import L from '../common/logger';
 
 export type EventType = 'sdk_init' | 'sdk_init_complete' | 'challenge_ready' | 'challenge_execute';
 
@@ -40,19 +40,36 @@ export interface PhaserEvent {
   errors: string[];
 }
 
-export interface InitBody {
-  flow_id: string;
-  client_ip: ClientIp;
+export interface InitData {
   v: number;
   xal: string;
   ewa: string;
   kid: string;
 }
 
+export interface InitBody extends InitData {
+  flow_id: string;
+  client_ip: ClientIp;
+}
+
 export interface ClientIp {
   timestamp: string; // Long timestamp
   ip_address: string;
   signature: string;
+}
+
+export interface FinalCaptchaJson extends InitData {
+  session_wrapper: PhaserSession;
+  plan_results: PlanResults;
+}
+
+export interface PlanResults {
+  h_captcha: PlanResultsHCaptcha;
+}
+
+export interface PlanResultsHCaptcha {
+  value: string;
+  resp_key: string;
 }
 
 const PHASER_F_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/phaser/f';
@@ -78,7 +95,8 @@ async function sendPhaserEvent(
     timing,
     errors: [],
   };
-  await axios.post(PHASER_F_ENDPOINT, body);
+  L.trace({ body, PHASER_F_ENDPOINT }, 'POST');
+  await got.post(PHASER_F_ENDPOINT, { json: body });
   return timing;
 }
 
@@ -105,16 +123,38 @@ export async function challengeExecute(
 }
 
 export async function initIp(): Promise<ClientIp> {
-  const resp = await axios.get<ClientIp>(TALON_IP_ENDPOINT);
-  return resp.data;
+  const resp = await got.get<ClientIp>(TALON_IP_ENDPOINT, { responseType: 'json' });
+  return resp.body;
 }
 
-export async function initTalon(clientIp: ClientIp): Promise<PhaserSession> {
+export async function initTalon(clientIp: ClientIp, initData: InitData): Promise<PhaserSession> {
   const body: InitBody = {
     flow_id: 'login_prod',
     client_ip: clientIp,
-    ...getInitData(),
+    ...initData,
   };
-  const resp = await axios.post<PhaserSession>(TALON_INIT_ENDPOINT, body);
-  return resp.data;
+  L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
+  const resp = await got.post<PhaserSession>(TALON_INIT_ENDPOINT, {
+    json: body,
+    responseType: 'json',
+  });
+  return resp.body;
+}
+
+export function assembleFinalCaptchaKey(
+  session: PhaserSession,
+  initData: InitData,
+  hCaptchaKey: string
+): string {
+  const captchaJson: FinalCaptchaJson = {
+    session_wrapper: session,
+    plan_results: {
+      h_captcha: {
+        value: hCaptchaKey,
+        resp_key: '',
+      },
+    },
+    ...initData,
+  };
+  return Buffer.from(JSON.stringify(captchaJson)).toString('base64');
 }

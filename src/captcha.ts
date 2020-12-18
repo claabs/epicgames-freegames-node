@@ -28,13 +28,7 @@ const emailTransporter = nodemailer.createTransport({
   auth: config.email.auth,
 });
 
-async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<void> {
-  const catpchaReason = {
-    [EpicArkosePublicKey.LOGIN]: 'login',
-    [EpicArkosePublicKey.CREATE]: 'create an account',
-    [EpicArkosePublicKey.PURCHASE]: 'make a purchase',
-  };
-
+async function sendEmail(url: string): Promise<void> {
   L.trace('Sending email');
   try {
     await emailTransporter.sendMail({
@@ -44,7 +38,7 @@ async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<v
       },
       to: config.email.emailRecipientAddress,
       subject: 'Epic Games free games needs a Captcha solved',
-      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
+      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
              <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
     });
     L.debug(
@@ -64,24 +58,17 @@ const solveLocally = async (url: string): Promise<void> => {
   await open(url);
 };
 
-export async function notifyManualCaptcha(
-  publicKey: EpicArkosePublicKey,
-  blob?: string
-): Promise<string> {
+export async function notifyManualCaptcha(): Promise<string> {
   return new Promise((resolve, reject) => {
     const id = uuid();
     pendingCaptchas.push(id);
-    const qs = querystring.stringify({
-      id,
-      pkey: publicKey,
-      blob,
-    });
+    const qs = querystring.stringify({ id });
     const url = `${config.baseUrl}?${qs}`;
     L.debug(`Go to ${url} and solve the captcha`);
 
     const solveStep = process.env.ENV === 'local' ? solveLocally : sendEmail;
 
-    solveStep(url, publicKey)
+    solveStep(url)
       .then(() => {
         L.info({ id }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
