@@ -22,6 +22,7 @@ import {
   MFA_LOGIN_ENDPOINT,
   SET_SID_ENDPOINT,
   AUTHENTICATE_ENDPOINT,
+  CLIENT_REDIRECT_ENDPOINT,
 } from './common/constants';
 import { config } from './common/config';
 
@@ -152,20 +153,24 @@ export default class Login {
 
   async refreshAndSid(error: boolean): Promise<boolean> {
     this.L.debug('Refreshing login session');
+    await this.getStoreToken();
+
+    await this.getReputation();
     // const csrfToken = await this.getCsrf();
+
+    const clientRedirectSearchParams = { redirectUrl: STORE_HOMEPAGE };
+    this.L.trace(
+      { params: clientRedirectSearchParams, url: CLIENT_REDIRECT_ENDPOINT },
+      'Client redirect request'
+    );
+    const clientRedirectResp = await this.request.get(CLIENT_REDIRECT_ENDPOINT, {
+      searchParams: clientRedirectSearchParams,
+    });
+    this.L.trace({ resp: clientRedirectResp.body }, 'Client redirect response');
+
     this.L.trace({ url: AUTHENTICATE_ENDPOINT }, 'Authenticate request');
     const authenticateResp = await this.request.get(AUTHENTICATE_ENDPOINT);
     this.L.trace({ resp: authenticateResp.body }, 'Authenticate response');
-
-    // const clientRedirectSearchParams = { redirectUrl: STORE_HOMEPAGE };
-    // this.L.trace(
-    //   { params: clientRedirectSearchParams, url: CLIENT_REDIRECT_ENDPOINT },
-    //   'Client redirect request'
-    // );
-    // const clientRedirectResp = await this.request.get(CLIENT_REDIRECT_ENDPOINT, {
-    //   searchParams: clientRedirectSearchParams,
-    // });
-    // this.L.trace({ resp: clientRedirectResp.body }, 'Client redirect response');
 
     const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
     this.L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
