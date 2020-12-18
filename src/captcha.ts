@@ -30,9 +30,21 @@ const emailTransporter = nodemailer.createTransport({
 
 async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<void> {
   const catpchaReason = {
-    [EpicArkosePublicKey.LOGIN]: 'login',
-    [EpicArkosePublicKey.CREATE]: 'create an account',
-    [EpicArkosePublicKey.PURCHASE]: 'make a purchase',
+    [EpicArkosePublicKey.LOGIN]: {
+      subject: 'Epic Games free games cannot login',
+      html:
+        '<p><b>epicgames-freegames-node</b> failed to login. You should re-import your cookies to fix this.',
+    },
+    [EpicArkosePublicKey.CREATE]: {
+      subject: 'Epic Games free games needs a Captcha solved',
+      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to create an account.</p>
+            <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
+    },
+    [EpicArkosePublicKey.PURCHASE]: {
+      subject: 'Epic Games free games needs a Captcha solved',
+      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to make a purchase.</p>
+             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
+    },
   };
 
   L.trace('Sending email');
@@ -43,9 +55,8 @@ async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<v
         name: config.email.emailSenderName,
       },
       to: config.email.emailRecipientAddress,
-      subject: 'Epic Games free games needs a Captcha solved',
-      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to ${catpchaReason[publicKey]}.</p>
-             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
+      subject: catpchaReason[publicKey].subject,
+      html: catpchaReason[publicKey].html,
     });
     L.debug(
       {
