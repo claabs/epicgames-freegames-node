@@ -57,7 +57,7 @@ This broke the automatic login procedure, however you can manually load your bro
 * If you get an email prompting you to solve a captcha to log in, you should repeat the above process.
 * Epic Games still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
 * Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
-
+* Try not to schedule the container for exactly every 8 hours. Some of the cookies expire exactly then which just breaks the login-less refresh.
 
 ### Captcha Emails
 
