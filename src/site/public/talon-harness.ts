@@ -73,48 +73,52 @@ const getBrowserFingerprint = () => {
 };
 
 const draw = () => {
-  const canvasDrawBG = document.createElement("canvas");
+  const canvasDrawBG = document.createElement('canvas');
   canvasDrawBG.width = 600;
   canvasDrawBG.height = 50;
-  const ctx = canvasDrawBG.getContext("2d") as CanvasRenderingContext2D;
-  const mass = "\ud83d\udc7e https://www.epicgames.com/site/en-US/careers \ud83d\udd12 https://hackerone.com/epicgames \ud83d\udd79\ufe0f";
+  const ctx = canvasDrawBG.getContext('2d') as CanvasRenderingContext2D;
+  const mass =
+    '\ud83d\udc7e https://www.epicgames.com/site/en-US/careers \ud83d\udd12 https://hackerone.com/epicgames \ud83d\udd79\ufe0f';
   ctx.font = "14px 'Arial'";
-  ctx.fillStyle = "#333";
+  ctx.fillStyle = '#333';
   ctx.fillRect(30, 0, 183, 90);
-  ctx.fillStyle = "#4287f5";
+  ctx.fillStyle = '#4287f5';
   ctx.fillRect(450, 1, 200, 90);
   const gradient = ctx.createLinearGradient(250, 0, 600, 50);
-  gradient.addColorStop(0, "black");
-  gradient.addColorStop(.5, "cyan");
-  gradient.addColorStop(1, "yellow");
+  gradient.addColorStop(0, 'black');
+  gradient.addColorStop(0.5, 'cyan');
+  gradient.addColorStop(1, 'yellow');
   ctx.fillStyle = gradient;
   ctx.fillRect(300, 7, 200, 100);
-  ctx.fillStyle = "#42f584";
+  ctx.fillStyle = '#42f584';
   ctx.fillText(mass, 0, 15);
-  ctx.strokeStyle = "rgba(255, 0, 50, 0.7)";
+  ctx.strokeStyle = 'rgba(255, 0, 50, 0.7)';
   ctx.strokeText(mass, 20, 20);
-  ctx.fillStyle = "rgba(245, 66, 66, 0.5)";
+  ctx.fillStyle = 'rgba(245, 66, 66, 0.5)';
   ctx.fillRect(100, 10, 50, 50);
   const word = canvasDrawBG.toDataURL();
   const $scope = ctx.getImageData(0, 0, 600, 50);
   const b: Record<string, any> = {};
   let i = 0;
-  for (; i < $scope.data.length; i = i + 4) {
-    const $orderCol = $scope.data[i].toString(16) + $scope.data[i + 1].toString(16) + $scope.data[i + 2].toString(16) + $scope.data[i + 3].toString(16);
+  for (; i < $scope.data.length; i += 4) {
+    const $orderCol =
+      $scope.data[i].toString(16) +
+      $scope.data[i + 1].toString(16) +
+      $scope.data[i + 2].toString(16) +
+      $scope.data[i + 3].toString(16);
     if (b[$orderCol]) {
-      b[$orderCol]++;
+      b[$orderCol] += 1;
     } else {
-
       b[$orderCol] = 1;
     }
   }
   let tic;
+  // eslint-disable-next-line no-restricted-syntax, guard-for-in
   for (tic in $scope.data) {
-    var $orderCol = $scope.data[tic];
+    const $orderCol = $scope.data[tic];
     if (b[$orderCol]) {
-      b[$orderCol]++;
+      b[$orderCol] += 1;
     } else {
-
       b[$orderCol] = 1;
     }
   }
@@ -122,7 +126,7 @@ const draw = () => {
     length: word.length,
     num_colors: Object.keys(b).length,
     md5: md5(word),
-    tlsh: tlsh(word)
+    tlsh: tlsh(word),
   };
 };
 

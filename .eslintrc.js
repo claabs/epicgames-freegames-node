@@ -19,6 +19,7 @@ module.exports = {
   rules: {
     'import/extensions': 0
   },
+  ignorePatterns: ['src/site/public/**/*'],
   settings: {
     'import/extensions': ['.js', '.ts',],
     'import/parsers': {
