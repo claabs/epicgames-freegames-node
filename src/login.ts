@@ -10,7 +10,7 @@ import {
   MFABody,
   ReputationData,
 } from './interfaces/types';
-import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
+import { notifyManualCaptcha } from './captcha';
 import {
   CSRF_ENDPOINT,
   LOGIN_ENDPOINT,
@@ -123,7 +123,7 @@ export default class Login {
           e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
         ) {
           this.L.debug('Captcha required');
-          const captchaToken = await notifyManualCaptcha();
+          const captchaToken = await notifyManualCaptcha(email);
           await this.login(email, password, captchaToken, totp, blob, attempt + 1);
         } else if (
           e.response.body.errorCode ===

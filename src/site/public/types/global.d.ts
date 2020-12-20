@@ -1,4 +1,4 @@
-declare var hcaptcha: {
+declare const hcaptcha: {
   render: (container: string, params: Record<string, any>) => string;
   reset: (widgetID?: string) => void;
   getResponse: (widgetID?: string) => string;
@@ -16,10 +16,10 @@ interface Document {
 
 interface Performance {
   memory: {
-    jsHeapSizeLimit: number,
-    totalJSHeapSize: number,
-    usedJSHeapSize: number,
-  }
+    jsHeapSizeLimit: number;
+    totalJSHeapSize: number;
+    usedJSHeapSize: number;
+  };
 }
 
 declare function hCaptchaLoaded(): void;

@@ -26,3 +26,7 @@ export const EPIC_PURCHASE_ENDPOINT = 'https://www.epicgames.com/store/purchase'
 export const MFA_LOGIN_ENDPOINT = 'https://www.epicgames.com/id/api/login/mfa';
 export const SET_SID_ENDPOINT = 'https://www.unrealengine.com/id/api/set-sid';
 export const CLIENT_REDIRECT_ENDPOINT = `https://www.epicgames.com/id/api/client/${EPIC_CLIENT_ID}`;
+
+export const PHASER_F_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/phaser/f';
+export const TALON_IP_ENDPOINT = 'https://talon-service-v4-prod.ak.epicgames.com/v1/init/ip';
+export const TALON_INIT_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/init';

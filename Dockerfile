@@ -12,9 +12,10 @@ FROM base as build
 
 # Copy all source files
 COPY package*.json tsconfig.json ./
+COPY src/site/public/package*.json src/site/public/tsconfig.json ./src/site/public/
 
 # Add dev deps
-RUN npm ci
+RUN npm ci && cd src/site/public && npm ci
 
 # Copy source code
 COPY src src
@@ -39,8 +40,9 @@ ENV NODE_ENV production
 
 # Copy package.json for version number
 COPY package*.json ./
+COPY src/site/public/package*.json src/site/public/tsconfig.json ./src/site/public/
 
-RUN npm ci --only=production
+RUN npm ci --only=production && cd src/site/public && npm ci --only=production
 
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist

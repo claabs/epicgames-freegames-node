@@ -1,13 +1,14 @@
 {
   "name": "epicgames-freegames-node",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
+    "install": "cd src/site/public && npm i",
     "start": "node dist/src/index.js",
     "start:ts": "ts-node src/index.ts",
-    "build": "rm -rf dist && tsc && (cd src/site/public && webpack) && copyfiles src/**/*.html src/**/*.bundle.js dist",
-    "lint": "tsc --noEmit && eslint **/*.ts",
+    "build": "rm -rf dist && tsc && cd src/site/public && npm run build && cd ../../.. && npx copyfiles -E src/**/public/*.html src/**/public/*.bundle.js dist",
+    "lint": "tsc --noEmit && eslint **/*.ts && (cd src/site/public && npm run lint)",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
@@ -17,9 +18,9 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-http-proxy": "^1.6.2",
     "filenamify": "^4.1.0",
     "got": "^11.1.3",
-    "hcaptcha-solver": "file:../hcaptcha-solver/hcaptcha-solver-1.0.3.tgz",
     "jsdom": "^16.2.0",
     "json5": "^2.1.3",
     "moment": "^2.24.0",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.6",
+    "@types/express-http-proxy": "^1.6.1",
     "@types/jest": "^26.0.14",
     "@types/jsdom": "^16.1.0",
     "@types/json5": "0.0.30",
@@ -48,7 +50,7 @@
     "@types/yargs": "^15.0.4",
     "@typescript-eslint/eslint-plugin": "^2.13.0",
     "@typescript-eslint/parser": "^2.13.0",
-    "copyfiles": "^2.3.0",
+    "copyfiles": "^2.4.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-config-prettier": "^6.7.0",
@@ -75,9 +77,10 @@
   "author": "Charlie Laabs",
   "eslintIgnore": [
     "**/*.config.js",
-    "node_modules/**",
+    "**/node_modules/**",
     "dist/**",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "src/site/public/*"
   ],
   "license": "MIT"
 }

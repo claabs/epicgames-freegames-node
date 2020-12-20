@@ -1,7 +1,7 @@
-import * as path from 'path';
-import * as webpack from 'webpack';
+const path = require('path');
+const webpack = require('webpack');
 
-const config: webpack.Configuration = {
+const config = {
   mode: 'development',
   module: {
     rules: [
@@ -26,4 +26,4 @@ const config: webpack.Configuration = {
   },
 };
 
-export default config;
+module.exports = config;

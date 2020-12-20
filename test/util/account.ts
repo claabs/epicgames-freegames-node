@@ -10,7 +10,7 @@ import Login from '../../src/login';
 import TempMail from './temp-mail';
 import PermMail from './perm-mail';
 import { newCookieJar } from '../../src/common/request';
-import { notifyManualCaptcha, EpicArkosePublicKey } from '../../src/captcha';
+import { notifyManualCaptcha } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
 import {
   EPIC_CLIENT_ID,
@@ -178,7 +178,7 @@ export default class AccountManager {
             e.response.body.message === 'captcha is required')
         ) {
           L.debug('Captcha required');
-          const newCaptcha = await notifyManualCaptcha(EpicArkosePublicKey.CREATE);
+          const newCaptcha = await notifyManualCaptcha(this.permMailAddress);
           await this.createAccount(email, password, attempt + 1, newCaptcha);
         } else if (e.response.body.errorCode.includes('email_verification_required')) {
           const code = await this.getPermVerification();

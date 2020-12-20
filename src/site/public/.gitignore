@@ -1,2 +1,3 @@
 *.js
 !.eslintrc.js
+!webpack.config.js

@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import got from 'got';
-import L from '../common/logger';
+import { Logger } from 'pino';
+import { PHASER_F_ENDPOINT, TALON_INIT_ENDPOINT, TALON_IP_ENDPOINT } from '../common/constants';
+import logger from '../common/logger';
 
-export type EventType = 'sdk_init' | 'sdk_init_complete' | 'challenge_ready' | 'challenge_execute';
+export type EventType =
+  | 'sdk_init'
+  | 'sdk_init_complete'
+  | 'challenge_ready'
+  | 'challenge_execute'
+  | 'challenge_complete';
 
 export interface Timing {
   event: EventType;
@@ -40,6 +47,10 @@ export interface PhaserEvent {
   errors: string[];
 }
 
+export interface BeginSessionReturn extends Pick<PhaserEvent, 'timing'> {
+  session: PhaserSession;
+}
+
 export interface InitData {
   v: number;
   xal: string;
@@ -72,73 +83,122 @@ export interface PlanResultsHCaptcha {
   resp_key: string;
 }
 
-const PHASER_F_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/phaser/f';
-const TALON_IP_ENDPOINT = 'https://talon-service-v4-prod.ak.epicgames.com/v1/init/ip';
-const TALON_INIT_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/init';
+export default class TalonSdk {
+  private L: Logger;
 
-async function sendPhaserEvent(
-  event: EventType,
-  session?: PhaserSession,
-  oldTiming?: Timing[]
-): Promise<Timing[]> {
-  const timing: Timing[] = [
-    ...(oldTiming || []),
-    {
+  private userAgent: string;
+
+  constructor(email: string, userAgent: string) {
+    this.L = logger.child({
+      user: email,
+    });
+    this.userAgent = userAgent;
+  }
+
+  private async sendPhaserEvent(
+    event: EventType,
+    referrerOrigin: string,
+    session?: PhaserSession,
+    oldTiming?: Timing[]
+  ): Promise<Timing[]> {
+    const timing: Timing[] = [
+      ...(oldTiming || []),
+      {
+        event,
+        timestamp: new Date().toISOString(),
+      },
+    ];
+
+    const body: PhaserEvent = {
       event,
-      timestamp: new Date().toISOString(),
-    },
-  ];
+      session,
+      timing,
+      errors: [],
+    };
+    this.L.trace({ body, PHASER_F_ENDPOINT }, 'POST');
+    await got.post(PHASER_F_ENDPOINT, {
+      json: body,
+      headers: this.getHeaders(referrerOrigin),
+    });
+    return timing;
+  }
 
-  const body: PhaserEvent = {
-    event,
-    session,
-    timing,
-    errors: [],
-  };
-  L.trace({ body, PHASER_F_ENDPOINT }, 'POST');
-  await got.post(PHASER_F_ENDPOINT, { json: body });
-  return timing;
-}
+  private getHeaders(referrerOrigin: string): Record<string, string> {
+    return {
+      pragma: 'no-cache',
+      'cache-control': 'no-cache',
+      'user-agent': this.userAgent,
+      origin: referrerOrigin,
+      name: 'sec-fetch-site',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-dest': 'empty',
+      referer: `${referrerOrigin}/`,
+    };
+  }
 
-export async function sdkInit(): Promise<void> {
-  await sendPhaserEvent('sdk_init');
-}
+  async sdkInit(): Promise<void> {
+    await this.sendPhaserEvent('sdk_init', 'https://www.epicgames.com');
+  }
 
-export async function sdkInitComplete(session: PhaserSession): Promise<Timing[]> {
-  return sendPhaserEvent('sdk_init_complete', session);
-}
+  async sdkInitComplete(session: PhaserSession): Promise<Timing[]> {
+    return this.sendPhaserEvent('sdk_init_complete', 'https://www.epicgames.com', session);
+  }
 
-export async function challengeReady(
-  session: PhaserSession,
-  oldTiming: Timing[]
-): Promise<Timing[]> {
-  return sendPhaserEvent('challenge_ready', session, oldTiming);
-}
+  async challengeReady(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent('challenge_ready', 'https://www.epicgames.com', session, oldTiming);
+  }
 
-export async function challengeExecute(
-  session: PhaserSession,
-  oldTiming: Timing[]
-): Promise<Timing[]> {
-  return sendPhaserEvent('challenge_execute', session, oldTiming);
-}
+  async challengeExecute(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent(
+      'challenge_execute',
+      'https://www.epicgames.com',
+      session,
+      oldTiming
+    );
+  }
 
-export async function initIp(): Promise<ClientIp> {
-  const resp = await got.get<ClientIp>(TALON_IP_ENDPOINT, { responseType: 'json' });
-  return resp.body;
-}
+  async challengeComplete(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent(
+      'challenge_complete',
+      'https://www.epicgames.com',
+      session,
+      oldTiming
+    );
+  }
 
-export async function initTalon(clientIp: ClientIp, initData: InitData): Promise<PhaserSession> {
-  const body: InitBody = {
-    flow_id: 'login_prod',
-    client_ip: clientIp,
-    ...initData,
-  };
-  L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
-  const resp = await got.post<PhaserSession>(TALON_INIT_ENDPOINT, {
-    json: body,
-    responseType: 'json',
-  });
-  return resp.body;
+  async initIp(): Promise<ClientIp> {
+    this.L.trace({ TALON_IP_ENDPOINT }, 'GET');
+    const resp = await got.get<ClientIp>(TALON_IP_ENDPOINT, {
+      responseType: 'json',
+      headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
+    });
+    return resp.body;
+  }
+
+  async initTalon(clientIp: ClientIp, initData: InitData): Promise<PhaserSession> {
+    const body: InitBody = {
+      flow_id: 'login_prod',
+      client_ip: clientIp,
+      ...initData,
+    };
+    this.L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
+    const resp = await got.post<PhaserSession>(TALON_INIT_ENDPOINT, {
+      json: body,
+      responseType: 'json',
+      headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
+    });
+    return resp.body;
+  }
+
+  async beingTalonSession(initData: InitData): Promise<BeginSessionReturn> {
+    await this.sdkInit();
+    const clientIp = await this.initIp();
+    const session = await this.initTalon(clientIp, initData); // Send fingerprint
+    let timing = await this.sdkInitComplete(session);
+    timing = await this.challengeReady(session, timing);
+    timing = await this.challengeExecute(session, timing);
+    return { session, timing };
+  }
 }
 
 export function assembleFinalCaptchaKey(
@@ -157,14 +217,4 @@ export function assembleFinalCaptchaKey(
     ...initData,
   };
   return Buffer.from(JSON.stringify(captchaJson)).toString('base64');
-}
-
-export async function completeTalonSession(initData: InitData): Promise<PhaserSession> {
-  await sdkInit();
-  const clientIp = await initIp();
-  const session = await initTalon(clientIp, initData); // Send fingerprint
-  let timing = await sdkInitComplete(session);
-  timing = await challengeReady(session, timing);
-  await challengeExecute(session, timing);
-  return session;
 }

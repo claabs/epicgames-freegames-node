@@ -8,7 +8,7 @@ import {
   ConfirmPurcaseError,
   OrderConfirmRequest,
 } from './interfaces/types';
-import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
+import { notifyManualCaptcha } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
@@ -20,11 +20,14 @@ export default class Purchase {
 
   private L: Logger;
 
+  private email: string;
+
   constructor(requestClient: Got, email: string) {
     this.request = requestClient;
     this.L = logger.child({
       user: email,
     });
+    this.email = email;
   }
 
   async confirmOrder(
@@ -78,7 +81,7 @@ export default class Purchase {
         this.L.debug('Captcha required');
         const newPreview = orderPreview;
         newPreview.syncToken = confirmOrderResp.body.syncToken;
-        const captchaToken = await notifyManualCaptcha();
+        const captchaToken = await notifyManualCaptcha(this.email);
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
         await this.confirmOrder(newPreview, purchaseToken, captchaToken);
       } else {
