@@ -31,4 +31,4 @@ async function main(): Promise<void> {
   process.exit(); // necessary due to express server running
 }
 
-main();
+// main();

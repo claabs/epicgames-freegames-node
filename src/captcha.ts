@@ -3,8 +3,10 @@ import { v4 as uuid } from 'uuid';
 import querystring from 'querystring';
 import EventEmitter from 'events';
 import nodemailer from 'nodemailer';
+import hcaptchaSolver from 'hcaptcha-solver';
 import L from './common/logger';
 import { config } from './common/config';
+import { assembleFinalCaptchaKey, InitData, PhaserSession } from './site/talon-sdk';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -88,5 +90,39 @@ export async function responseManualCaptcha(captchaSolution: CaptchaSolution): P
     captchaEmitter.emit('solved', captchaSolution);
   } else {
     L.error(`Could not find captcha id: ${captchaSolution.id}`);
+  }
+}
+
+export interface TalonData {
+  session: PhaserSession;
+  initData: InitData;
+  id: string;
+}
+
+export async function receiveTalonData(talon: TalonData): Promise<void> {
+  try {
+    L.debug('Solving hCaptcha');
+    let hCaptchaKey = '';
+    while (!hCaptchaKey) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        hCaptchaKey = await hcaptchaSolver('https://talon-website-prod.ak.epicgames.com', {
+          siteKey: talon.session.session.plan.h_captcha.site_key,
+        });
+      } catch (e) {
+        L.warn(e);
+        if (e.statusCode !== 403) {
+          throw e;
+        }
+      }
+    }
+    L.trace({ hCaptchaKey }, 'hCaptcha Solved');
+    const sessionData = assembleFinalCaptchaKey(talon.session, talon.initData, hCaptchaKey);
+    await responseManualCaptcha({
+      id: talon.id,
+      sessionData,
+    });
+  } catch (err) {
+    L.error(err);
   }
 }

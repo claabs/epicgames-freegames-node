@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as webpack from 'webpack';
 
 const config: webpack.Configuration = {
-  mode: 'production',
+  mode: 'development',
   module: {
     rules: [
       {
@@ -22,7 +22,7 @@ const config: webpack.Configuration = {
   },
   devtool: 'inline-source-map',
   optimization: {
-    minimize: false,
+    // minimize: false,
   },
 };
 

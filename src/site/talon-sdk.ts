@@ -158,3 +158,13 @@ export function assembleFinalCaptchaKey(
   };
   return Buffer.from(JSON.stringify(captchaJson)).toString('base64');
 }
+
+export async function completeTalonSession(initData: InitData): Promise<PhaserSession> {
+  await sdkInit();
+  const clientIp = await initIp();
+  const session = await initTalon(clientIp, initData); // Send fingerprint
+  let timing = await sdkInitComplete(session);
+  timing = await challengeReady(session, timing);
+  await challengeExecute(session, timing);
+  return session;
+}

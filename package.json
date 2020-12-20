@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/src/index.js",
     "start:ts": "ts-node src/index.ts",
-    "build": "rm -rf dist && tsc && copyfiles src/**/*.html dist",
+    "build": "rm -rf dist && tsc && (cd src/site/public && webpack) && copyfiles src/**/*.html src/**/*.bundle.js dist",
     "lint": "tsc --noEmit && eslint **/*.ts",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
@@ -19,6 +19,7 @@
     "express": "^4.17.1",
     "filenamify": "^4.1.0",
     "got": "^11.1.3",
+    "hcaptcha-solver": "file:../hcaptcha-solver/hcaptcha-solver-1.0.3.tgz",
     "jsdom": "^16.2.0",
     "json5": "^2.1.3",
     "moment": "^2.24.0",
