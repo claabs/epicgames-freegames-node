@@ -7,8 +7,9 @@ import {
   OfferInfo,
   ConfirmPurcaseError,
   OrderConfirmRequest,
+  ConfirmLineOffer,
 } from './interfaces/types';
-import { notifyManualCaptcha, EpicArkosePublicKey } from './captcha';
+import { EpicArkosePublicKey, notifyManualCaptcha } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
@@ -20,11 +21,14 @@ export default class Purchase {
 
   private L: Logger;
 
+  private email: string;
+
   constructor(requestClient: Got, email: string) {
     this.request = requestClient;
     this.L = logger.child({
       user: email,
     });
+    this.email = email;
   }
 
   async confirmOrder(
@@ -32,6 +36,13 @@ export default class Purchase {
     purchaseToken: string,
     captcha?: string
   ): Promise<void> {
+    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map(l => ({
+      offerId: l.offerId,
+      title: l.title,
+      namespace: l.namespace,
+      upgradePathId: null,
+    }));
+
     // TODO: Can probably just use a spread operator here?
     const confirmOrderRequest: OrderConfirmRequest = {
       captchaToken: captcha,
@@ -53,6 +64,7 @@ export default class Purchase {
       voucherCode: null,
       syncToken: orderPreview.syncToken,
       eulaId: null,
+      lineOffers,
       useDefaultBillingAccount: true,
       canQuickPurchase: true,
     };
@@ -78,7 +90,7 @@ export default class Purchase {
         this.L.debug('Captcha required');
         const newPreview = orderPreview;
         newPreview.syncToken = confirmOrderResp.body.syncToken;
-        const captchaToken = await notifyManualCaptcha(EpicArkosePublicKey.PURCHASE);
+        const captchaToken = await notifyManualCaptcha(this.email, EpicArkosePublicKey.PURCHASE);
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
         await this.confirmOrder(newPreview, purchaseToken, captchaToken);
       } else {
@@ -140,8 +152,11 @@ export default class Purchase {
         'x-requested-with': purchaseToken,
       },
     });
-    this.L.debug({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
-    if (orderPreviewResp.body.orderResponse && orderPreviewResp.body.orderResponse.error) {
+    this.L.trace({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
+    if (
+      orderPreviewResp.body.orderResponse?.error &&
+      orderPreviewResp.body.orderResponse?.message
+    ) {
       this.L.error(orderPreviewResp.body.orderResponse.message);
     }
     await this.confirmOrder(orderPreviewResp.body, purchaseToken);

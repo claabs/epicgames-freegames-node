@@ -24,87 +24,16 @@
 
 <body>
     <h2>Solve the Captcha</h2>
-    <div id="CAPTCHA"></div>
+    <div id="hcaptcha"></div>
+    <div id="challenge_container_hcaptcha"></div>
     <div id="success-text" style="color: green" hidden>
         <h3>Successfully fulfilled Captcha</h3>
         <p>(Sometimes just opening this page is all you have to do)</p>
     </div>
     <h3>After solving, you may receive more Captcha emails</h3>
-    <script>
-        const params = new URLSearchParams(document.location.search);
-        const pkey = params.get("pkey") || '37D033EB-6489-3763-2AE1-A228C04103F5';
-        const id = params.get("id");
-        const blob = params.get("blob");
-        console.info('pkey:', pkey);
-        console.info('id:', id);
-        console.info('blob:', blob);
-
-        // Guide: https://arkoselabs.atlassian.net/wiki/spaces/DG/pages/497713605/Single+Page+Application+Guide
-        let Arkose;
-        let success = false;
-
-        function setupEnforcement(enforcement) {
-            console.log(enforcement);
-            Arkose = enforcement;
-            createCaptcha();
-        }
-        window.setupEnforcement = setupEnforcement;
-
-        let arkoseLoaded = false;
-        function createCaptcha() {
-            console.log('creating captcha');
-
-            Arkose.setConfig({
-                onCompleted: async function (t) {
-                    console.log("Captcha sessionData:", t);
-                    const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
-                    const resp = await fetch(postPath, {
-                        method: 'post',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            sessionData: t.token,
-                            id
-                        })
-                    });
-                    if (resp.ok) {
-                        console.log("Successfully sent Captcha token");
-                        document.getElementById("success-text").hidden = false;
-                        success = true;
-                    }
-                    else console.error("Failed sending Captcha token");
-                },
-                onReady: function () {
-                    console.log('ready');
-
-                    arkoseLoaded = true;
-                    !success && Arkose.run();
-                },
-                data: { blob }
-            });
-
-            console.log('arkoseLoaded', arkoseLoaded);
-            !success && arkoseLoaded && Arkose.run()
-        }
-
-        function createArkoseScript() {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = `https://client-api.arkoselabs.com/v2/${pkey}/api.js`;
-            script.setAttribute('data-callback', 'setupEnforcement');
-            script.async = true;
-            script.defer = true;
-            script.id = 'arkosescript';
-
-            document.head.append(script);
-        }
-
-        window.addEventListener('load', () => {
-            console.log('loaded');
-            createArkoseScript();
-        });
-    </script>
+    <script src='./index.bundle.js'></script>
+    <script src="/proxy/1/api.js?onload=hCaptchaLoaded&render=explicit" async defer></script>
+    <script src="https://epic-games-api.arkoselabs.com/fc/api/?onload=loadChallenge" async defer></script>
     <noscript>Javascript is required to use this application</noscript>
 </body>
 

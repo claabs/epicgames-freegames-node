@@ -4,3 +4,5 @@
 !package*.json
 !tsconfig.json
 !entrypoint.sh
+
+src/site/public/node_modules

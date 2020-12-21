@@ -1,0 +1,30 @@
+{
+  "name": "public",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "webpack",
+    "lint": "tsc --noEmit"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "md5": "^2.3.0",
+    "tlsh": "^1.0.8",
+    "ts-loader": "^8.0.12"
+  },
+  "devDependencies": {
+    "@types/md5": "^2.2.1",
+    "typescript": "^4.1.3",
+    "webpack": "^5.10.3",
+    "webpack-cli": "^4.2.0"
+  },
+  "eslintIgnore": [
+    "**/*.config.js",
+    "**/cd appnode_modules/**",
+    "index.bundle.js",
+    "dist/**"
+  ]
+}

@@ -1,6 +1,6 @@
 import open from 'open';
 import { v4 as uuid } from 'uuid';
-import querystring from 'querystring';
+import querystring from 'qs';
 import EventEmitter from 'events';
 import nodemailer from 'nodemailer';
 import L from './common/logger';
@@ -17,7 +17,12 @@ export interface CaptchaSolution {
   sessionData: string;
 }
 
-let pendingCaptchas: string[] = [];
+export interface PendingCaptcha {
+  id: string;
+  email: string;
+}
+
+let pendingCaptchas: PendingCaptcha[] = [];
 
 const captchaEmitter = new EventEmitter();
 
@@ -28,25 +33,7 @@ const emailTransporter = nodemailer.createTransport({
   auth: config.email.auth,
 });
 
-async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<void> {
-  const catpchaReason = {
-    [EpicArkosePublicKey.LOGIN]: {
-      subject: 'Epic Games free games cannot login',
-      html:
-        '<p><b>epicgames-freegames-node</b> failed to login. You should re-import your cookies to fix this.',
-    },
-    [EpicArkosePublicKey.CREATE]: {
-      subject: 'Epic Games free games needs a Captcha solved',
-      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to create an account.</p>
-            <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
-    },
-    [EpicArkosePublicKey.PURCHASE]: {
-      subject: 'Epic Games free games needs a Captcha solved',
-      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved in order to make a purchase.</p>
-             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
-    },
-  };
-
+async function sendEmail(url: string): Promise<void> {
   L.trace('Sending email');
   try {
     await emailTransporter.sendMail({
@@ -55,8 +42,9 @@ async function sendEmail(url: string, publicKey: EpicArkosePublicKey): Promise<v
         name: config.email.emailSenderName,
       },
       to: config.email.emailRecipientAddress,
-      subject: catpchaReason[publicKey].subject,
-      html: catpchaReason[publicKey].html,
+      subject: 'Epic Games free games needs a Captcha solved',
+      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
+             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
     });
     L.debug(
       {
@@ -76,23 +64,21 @@ const solveLocally = async (url: string): Promise<void> => {
 };
 
 export async function notifyManualCaptcha(
-  publicKey: EpicArkosePublicKey,
+  email: string,
+  publicKey?: EpicArkosePublicKey,
   blob?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const id = uuid();
-    pendingCaptchas.push(id);
-    const qs = querystring.stringify({
-      id,
-      pkey: publicKey,
-      blob,
-    });
+    const pending: PendingCaptcha = { id, email };
+    pendingCaptchas.push(pending);
+    const qs = querystring.stringify({ id, pkey: publicKey, blob });
     const url = `${config.baseUrl}?${qs}`;
     L.debug(`Go to ${url} and solve the captcha`);
 
     const solveStep = process.env.ENV === 'local' ? solveLocally : sendEmail;
 
-    solveStep(url, publicKey)
+    solveStep(url)
       .then(() => {
         L.info({ id }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
@@ -107,10 +93,16 @@ export async function notifyManualCaptcha(
 }
 
 export async function responseManualCaptcha(captchaSolution: CaptchaSolution): Promise<void> {
-  if (pendingCaptchas.includes(captchaSolution.id)) {
-    pendingCaptchas = pendingCaptchas.filter(e => e !== captchaSolution.id);
+  if (pendingCaptchas.find(pending => pending.id === captchaSolution.id)) {
+    pendingCaptchas = pendingCaptchas.filter(pending => pending.id !== captchaSolution.id);
     captchaEmitter.emit('solved', captchaSolution);
   } else {
     L.error(`Could not find captcha id: ${captchaSolution.id}`);
   }
+}
+
+export function getPendingCaptcha(id: string): PendingCaptcha {
+  const retCaptcha = pendingCaptchas.find(pending => pending.id === id);
+  if (!retCaptcha) throw new Error(`Could not find captcha id: ${id}`);
+  return retCaptcha;
 }

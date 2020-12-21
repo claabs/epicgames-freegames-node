@@ -248,10 +248,17 @@ export default class FreeGames {
           const productsResp = await this.request.get<ProductInfo>(url);
           let mainGamePage = productsResp.body.pages.find(page =>
             // eslint-disable-next-line no-underscore-dangle
-            page._urlPattern.includes(offer.productSlug)
+            page._urlPattern.includes('home')
           );
           if (!mainGamePage) {
-            this.L.debug('No home page found, using first');
+            this.L.trace('No home page found, product slug');
+            mainGamePage = productsResp.body.pages.find(page =>
+              // eslint-disable-next-line no-underscore-dangle
+              page._urlPattern.includes(offer.productSlug)
+            );
+          }
+          if (!mainGamePage) {
+            this.L.trace('No home page found, using first');
             [mainGamePage] = productsResp.body.pages;
           }
           if (!mainGamePage) {
