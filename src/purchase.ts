@@ -7,6 +7,7 @@ import {
   OfferInfo,
   ConfirmPurcaseError,
   OrderConfirmRequest,
+  ConfirmLineOffer,
 } from './interfaces/types';
 import { EpicArkosePublicKey, notifyManualCaptcha } from './captcha';
 import {
@@ -35,6 +36,13 @@ export default class Purchase {
     purchaseToken: string,
     captcha?: string
   ): Promise<void> {
+    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map(l => ({
+      offerId: l.offerId,
+      title: l.title,
+      namespace: l.namespace,
+      upgradePathId: null,
+    }));
+
     // TODO: Can probably just use a spread operator here?
     const confirmOrderRequest: OrderConfirmRequest = {
       captchaToken: captcha,
@@ -56,6 +64,7 @@ export default class Purchase {
       voucherCode: null,
       syncToken: orderPreview.syncToken,
       eulaId: null,
+      lineOffers,
       useDefaultBillingAccount: true,
       canQuickPurchase: true,
     };
@@ -143,8 +152,11 @@ export default class Purchase {
         'x-requested-with': purchaseToken,
       },
     });
-    this.L.debug({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
-    if (orderPreviewResp.body.orderResponse && orderPreviewResp.body.orderResponse.error) {
+    this.L.trace({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
+    if (
+      orderPreviewResp.body.orderResponse?.error &&
+      orderPreviewResp.body.orderResponse?.message
+    ) {
       this.L.error(orderPreviewResp.body.orderResponse.message);
     }
     await this.confirmOrder(orderPreviewResp.body, purchaseToken);

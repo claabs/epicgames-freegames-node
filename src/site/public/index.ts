@@ -106,7 +106,7 @@ let Arkose: Arkose;
 let success = false;
 let arkoseLoaded = false;
 
-function setupArkoseEnforcement(enforcement: any): void {
+function setupArkoseEnforcement(enforcement: Arkose): void {
   console.log(enforcement);
   Arkose = enforcement;
   console.log('Creating Arkose captcha');
