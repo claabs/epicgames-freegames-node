@@ -29,6 +29,7 @@
     "otpauth": "^5.0.6",
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
+    "qs": "^6.9.4",
     "set-cookie-parser": "^2.4.3",
     "source-map-support": "^0.5.19",
     "tough-cookie": "^4.0.0",

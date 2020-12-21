@@ -4,9 +4,18 @@ import { getInitData } from './talon-harness';
 
 const params = new URLSearchParams(document.location.search);
 const id = params.get('id');
+const pkey = params.get('pkey');
+const blob = params.get('blob') || undefined;
+
 console.info('id:', id);
+console.info('pkey:', pkey);
+console.info('blob:', blob);
 
 const apiRoot = `${window.location.origin}`;
+
+// =========
+// hCaptcha
+// =========
 
 let gSession: Record<string, any> = {};
 let gInitData: Record<string, any> = {};
@@ -50,23 +59,107 @@ async function captchaSuccess(captchaResult: string): Promise<void> {
 }
 
 async function hCaptchaLoaded(): Promise<void> {
-  console.log('hCaptcha is ready');
+  if (!pkey) {
+    console.log('loading hCaptcha');
 
-  gInitData = getInitData();
-  const initResp = await sendInit(gInitData);
-  const { sitekey } = initResp;
-  gSession = initResp.session;
-  gTiming = initResp.timing;
+    gInitData = getInitData();
+    const initResp = await sendInit(gInitData);
+    const { sitekey } = initResp;
+    gSession = initResp.session;
+    gTiming = initResp.timing;
 
-  const widgetID = hcaptcha.render('hcaptcha', {
-    endpoint: `${apiRoot}/proxy`,
-    sitekey,
-    theme: 'dark',
-    size: 'invisible',
-    callback: captchaSuccess,
-    'challenge-container': 'challenge_container_hcaptcha',
-  });
-  hcaptcha.execute(widgetID);
+    const widgetID = hcaptcha.render('hcaptcha', {
+      endpoint: `${apiRoot}/proxy`,
+      sitekey,
+      theme: 'dark',
+      size: 'invisible',
+      callback: captchaSuccess,
+      'challenge-container': 'challenge_container_hcaptcha',
+    });
+    hcaptcha.execute(widgetID);
+  }
 }
 
 global.hCaptchaLoaded = hCaptchaLoaded;
+
+// =========
+// Arkose
+// =========
+
+// Guide: https://arkoselabs.atlassian.net/wiki/spaces/DG/pages/497713605/Single+Page+Application+Guide
+interface ArkoseCompleteEvent {
+  token: string;
+}
+
+interface ArkoseConfig {
+  onCompleted(t: ArkoseCompleteEvent): void;
+  onReady(): void;
+  data: { blob?: string };
+}
+
+interface Arkose {
+  run: () => void;
+  setConfig: (config: ArkoseConfig) => void;
+}
+
+let Arkose: Arkose;
+let success = false;
+let arkoseLoaded = false;
+
+function setupArkoseEnforcement(enforcement: any): void {
+  console.log(enforcement);
+  Arkose = enforcement;
+  console.log('Creating Arkose captcha');
+
+  Arkose.setConfig({
+    async onCompleted(t: ArkoseCompleteEvent) {
+      console.log('Captcha sessionData:', t);
+      const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
+      const resp = await fetch(postPath, {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionData: t.token,
+          id,
+        }),
+      });
+      if (resp.ok) {
+        console.log('Successfully sent Captcha token');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        document.getElementById('success-text')!.hidden = false;
+        success = true;
+      } else console.error('Failed sending Captcha token');
+    },
+    onReady() {
+      console.log('ready');
+      arkoseLoaded = true;
+      if (!success) Arkose.run();
+    },
+    data: { blob },
+  });
+
+  console.log('arkoseLoaded', arkoseLoaded);
+  if (!success && arkoseLoaded) Arkose.run();
+}
+
+function createArkoseScript(): void {
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = `https://client-api.arkoselabs.com/v2/${pkey}/api.js`;
+  script.setAttribute('data-callback', 'setupEnforcement');
+  script.async = true;
+  script.defer = true;
+  script.id = 'arkosescript';
+
+  document.head.append(script);
+}
+
+window.addEventListener('load', () => {
+  if (pkey) {
+    console.log('loading Arkose Captcha');
+    global.setupArkoseEnforcement = setupArkoseEnforcement;
+    createArkoseScript();
+  }
+});

@@ -1,6 +1,6 @@
 import open from 'open';
 import { v4 as uuid } from 'uuid';
-import querystring from 'querystring';
+import querystring from 'qs';
 import EventEmitter from 'events';
 import nodemailer from 'nodemailer';
 import L from './common/logger';
@@ -63,12 +63,16 @@ const solveLocally = async (url: string): Promise<void> => {
   await open(url);
 };
 
-export async function notifyManualCaptcha(email: string): Promise<string> {
+export async function notifyManualCaptcha(
+  email: string,
+  publicKey?: EpicArkosePublicKey,
+  blob?: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const id = uuid();
     const pending: PendingCaptcha = { id, email };
     pendingCaptchas.push(pending);
-    const qs = querystring.stringify({ id });
+    const qs = querystring.stringify({ id, pkey: publicKey, blob });
     const url = `${config.baseUrl}?${qs}`;
     L.debug(`Go to ${url} and solve the captcha`);
 

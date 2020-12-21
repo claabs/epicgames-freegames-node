@@ -23,3 +23,4 @@ interface Performance {
 }
 
 declare function hCaptchaLoaded(): void;
+declare function setupArkoseEnforcement(enforcement: any): void;
