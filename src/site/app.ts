@@ -3,6 +3,7 @@ import express from 'express';
 import path from 'path';
 import { URL } from 'url';
 import proxy from 'express-http-proxy';
+import got from 'got';
 import L from '../common/logger';
 import { config } from '../common/config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
@@ -25,7 +26,6 @@ router.use(
         url = url.replace(new RegExp(baseUrl.hostname, 'g'), 'talon-website-prod.ak.epicgames.com');
         L.trace({ url }, 'updated url');
       }
-
       return url;
     },
   })
@@ -33,6 +33,23 @@ router.use(
 router.use('/assets', proxy('https://assets.hcaptcha.com'));
 router.use(express.static(path.join(__dirname, 'public')));
 router.use(express.json());
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+router.get('/hcaptcha-api.js', async (req, res) => {
+  L.trace('incoming /hcaptcha-api request');
+  const resp = await got.get(
+    `https://hcaptcha.com/1/api.js?onload=hCaptchaLoaded&render=explicit`,
+    {
+      followRedirect: true,
+      responseType: 'text',
+    }
+  );
+  const body = resp.body
+    .replace(new RegExp('https://assets.hcaptcha.com', 'g'), `${baseUrl.origin}/assets`)
+    .replace('(hcaptcha|1\\/api)', 'hcaptcha-api');
+  res.header('content-type', resp.headers['content-type']);
+  res.status(200).send(body);
+});
 
 interface InitResp {
   initData: InitData;
@@ -45,7 +62,7 @@ router.post<any, any, InitResp, any>('/init', async (req, res) => {
     res.status(200).send('user-agent header required');
     return;
   }
-  L.debug({ body: req.body }, 'incoming /init POST body');
+  L.trace({ body: req.body }, 'incoming /init POST body');
   const { initData, id } = req.body;
   const { email } = getPendingCaptcha(id);
   const talon = new TalonSdk(email, req.headers['user-agent']);
@@ -74,7 +91,7 @@ router.post<any, any, CompleteBody, any>('/complete', async (req, res) => {
     res.status(200).send('user-agent header required');
     return;
   }
-  L.debug({ body: req.body }, 'incoming /complete POST body');
+  L.trace({ body: req.body }, 'incoming /complete POST body');
   const { id, captchaResult, initData, session, timing } = req.body;
   const { email } = getPendingCaptcha(id);
   const talon = new TalonSdk(email, req.headers['user-agent']);
@@ -91,7 +108,7 @@ interface ArkoseBody {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 router.post<any, any, ArkoseBody, any>('/arkose', async (req, res) => {
-  L.debug({ body: req.body }, 'incoming /arkose POST body');
+  L.trace({ body: req.body }, 'incoming /arkose POST body');
   const { id, sessionData } = req.body;
   await responseManualCaptcha({ id, sessionData });
   res.status(200).send();

@@ -79,7 +79,6 @@ async function hCaptchaLoaded(): Promise<void> {
     hcaptcha.execute(widgetID);
   }
 }
-
 global.hCaptchaLoaded = hCaptchaLoaded;
 
 // =========
@@ -136,6 +135,7 @@ function setupArkoseEnforcement(enforcement: Arkose): void {
   console.log('arkoseLoaded', arkoseLoaded);
   if (!success && arkoseLoaded) Arkose.run();
 }
+global.setupArkoseEnforcement = setupArkoseEnforcement;
 
 function createArkoseScript(): void {
   const script = document.createElement('script');
@@ -152,7 +152,6 @@ function createArkoseScript(): void {
 window.addEventListener('load', () => {
   if (pkey) {
     console.log('loading Arkose Captcha');
-    global.setupArkoseEnforcement = setupArkoseEnforcement;
     createArkoseScript();
   }
 });
