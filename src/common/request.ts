@@ -44,11 +44,14 @@ export default got.extend({
 export function newCookieJar(username: string): Got {
   const fileSafeUsername = filenamify(username);
   const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
-  const cookieTest = JSON.parse(fs.readFileSync(cookieFilename, 'utf8'));
-  if (Array.isArray(cookieTest)) {
-    L.info(`Converting ${cookieFilename} cookie format`);
-    const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
-    fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+  const fileExists = fs.existsSync(cookieFilename);
+  if (fileExists) {
+    const cookieTest = JSON.parse(fs.readFileSync(cookieFilename, 'utf8'));
+    if (Array.isArray(cookieTest)) {
+      L.info(`Converting ${cookieFilename} cookie format`);
+      const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
+      fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+    }
   }
 
   return got.extend({
