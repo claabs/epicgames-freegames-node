@@ -21,6 +21,7 @@ import {
   STORE_HOMEPAGE,
   MFA_LOGIN_ENDPOINT,
   SET_SID_ENDPOINT,
+  AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
 } from './common/constants';
 import { config } from './common/config';
@@ -96,7 +97,7 @@ export default class Login {
   ): Promise<void> {
     this.L.debug({ email, captcha, attempt }, 'Attempting login');
     const csrfToken = await this.getCsrf();
-    if (attempt > 5) {
+    if (attempt > 2) {
       throw new Error('Too many login attempts');
     }
     const loginBody: LoginBody = {
@@ -151,8 +152,12 @@ export default class Login {
   }
 
   async refreshAndSid(error: boolean): Promise<boolean> {
-    this.L.debug('Setting SID');
-    const csrfToken = await this.getCsrf();
+    this.L.debug('Refreshing login session');
+    await this.getStoreToken();
+
+    await this.getReputation();
+    // const csrfToken = await this.getCsrf();
+
     const clientRedirectSearchParams = { redirectUrl: STORE_HOMEPAGE };
     this.L.trace(
       { params: clientRedirectSearchParams, url: CLIENT_REDIRECT_ENDPOINT },
@@ -162,14 +167,17 @@ export default class Login {
       searchParams: clientRedirectSearchParams,
     });
     this.L.trace({ resp: clientRedirectResp.body }, 'Client redirect response');
+
+    this.L.trace({ url: AUTHENTICATE_ENDPOINT }, 'Authenticate request');
+    const authenticateResp = await this.request.get(AUTHENTICATE_ENDPOINT);
+    this.L.trace({ resp: authenticateResp.body }, 'Authenticate response');
+
     const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
     this.L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
     const redirectResp = await this.request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
-      headers: {
-        'x-xsrf-token': csrfToken,
-      },
       searchParams: redirectSearchParams,
     });
+    this.L.trace({ resp: redirectResp.body }, 'Redirect response');
     const { sid } = redirectResp.body;
     if (!sid) {
       if (error) throw new Error('Sid returned null');
@@ -179,6 +187,7 @@ export default class Login {
     this.L.trace({ params: sidSearchParams, url: SET_SID_ENDPOINT }, 'Set SID request');
     const sidResp = await this.request.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
     this.L.trace({ headers: sidResp.headers }, 'Set SID response headers');
+    // const csrfToken = await this.getCsrf();
     await this.getStoreToken();
     return true;
   }

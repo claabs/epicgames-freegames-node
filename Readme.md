@@ -14,10 +14,9 @@ I decided to take a different approach by only using the APIs that the Epic Game
 
 ## Scope
 
-* Login
+* ~~Login~~
   * CSRF/XSRF
   * Captcha
-    * ~~Automation via Google Cloud speech-to-text~~
     * Emails you when a link to solve a Captcha when required
   * 2FA handing via TOTP token
   * Session ID
@@ -29,6 +28,7 @@ I decided to take a different approach by only using the APIs that the Epic Game
   * Order confirmation
 * Cookie management
   * Save to file in case of shutdown
+  * Import cookies from browser
 * Schedule check/purchase via cron string
 * Authentication refresh to reduce login count
 * Support for multiple accounts
@@ -37,9 +37,27 @@ I decided to take a different approach by only using the APIs that the Epic Game
 
 ## Setup
 
-### Google Speech-to-text
+### Cookie Import
 
-**Heads up: Epic Games/Arkose Labs broke the audio Captcha method this project used to automate Captchas. See [below](#captcha-emails) for the workaround.**
+In December 2020, Epic Games introduced [hcaptcha](https://www.hcaptcha.com/) as their new login captcha provider.
+This broke the automatic login procedure, however you can manually load your browser's cookie data and let the container remember your login.
+
+1. Setup the container per the below instructions
+1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
+1. Install the [Cookie Editor](https://cookie-editor.cgagnier.ca/) or [EditThisCookie](http://www.editthiscookie.com/) browser extension.
+1. While viewing the Epic Games Store page, copy your cookies to clipboard by clicking the "Export" button on the extension:
+![Cookie Editor export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/cookie-editor.png?raw=true)
+1. In your mounted `./config` folder, create `<email_address>-cookies.json` (e.g. `me@example.com-cookies.json`), and paste in your cookies.
+1. Start the epicgames-freegames-node container and the cookies will automatically be converted to a new format.
+
+**Notes:**
+
+* If you log out of the browser session you copied the cookies from, the container will break
+* If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.
+* If you get an email prompting you to solve a captcha to log in, you should repeat the above process.
+* Epic Games still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
+* Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
+* Try not to schedule the container for exactly every 8 hours. Some of the cookies expire exactly then which just breaks the login-less refresh.
 
 ### Captcha Emails
 
