@@ -114,23 +114,16 @@ function setupArkoseEnforcement(enforcement: Arkose): void {
   Arkose.setConfig({
     async onCompleted(t: ArkoseCompleteEvent) {
       console.log('Captcha sessionData:', t);
-      const postPath = `${window.location.pathname}/solve`.replace(/\/+/g, '/');
-      const resp = await fetch(postPath, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionData: t.token,
-          id,
-        }),
-      });
-      if (resp.ok) {
-        console.log('Successfully sent Captcha token');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        document.getElementById('success-text')!.hidden = false;
-        success = true;
-      } else console.error('Failed sending Captcha token');
+      const postPath = `${apiRoot}/arkose`;
+      const body = {
+        sessionData: t.token,
+        id,
+      };
+      await axios.post(postPath, body);
+      console.log('Successfully sent Captcha token');
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      document.getElementById('success-text')!.hidden = false;
+      success = true;
     },
     onReady() {
       console.log('ready');
@@ -148,7 +141,7 @@ function createArkoseScript(): void {
   const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src = `https://client-api.arkoselabs.com/v2/${pkey}/api.js`;
-  script.setAttribute('data-callback', 'setupEnforcement');
+  script.setAttribute('data-callback', 'setupArkoseEnforcement');
   script.async = true;
   script.defer = true;
   script.id = 'arkosescript';

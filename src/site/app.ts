@@ -84,6 +84,19 @@ router.post<any, any, CompleteBody, any>('/complete', async (req, res) => {
   res.status(200).send();
 });
 
+interface ArkoseBody {
+  sessionData: string;
+  id: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+router.post<any, any, ArkoseBody, any>('/arkose', async (req, res) => {
+  L.debug({ body: req.body }, 'incoming /arkose POST body');
+  const { id, sessionData } = req.body;
+  await responseManualCaptcha({ id, sessionData });
+  res.status(200).send();
+});
+
 app.use(basePath, router);
 
 app.listen(config.serverPort);
