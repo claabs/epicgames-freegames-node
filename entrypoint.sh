@@ -22,8 +22,8 @@ if [ -z ${CONFIG_JSON} ]; then
     C_RUN_ONCE=null
 else
     echo "Getting settings from JSON: ${CONFIG_JSON}"
-    # Luckily JSON5 is a subset of hjson, so we can use that to convert to raw JSON
-    hjson -j $CONFIG_JSON > /tmp/config.json
+    # Use JSON5 CLI to convert config to standard JSON
+    npx json5 -o /tmp/config.json $CONFIG_JSON
     C_RUN_ON_STARTUP=$(cat /tmp/config.json | jq -r ".runOnStartup")
     C_CRON_SCHEDULE=$(cat /tmp/config.json | jq -r ".cronSchedule")
     C_RUN_ONCE=$(cat /tmp/config.json | jq -r ".runOnce")
