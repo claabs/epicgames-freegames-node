@@ -45,6 +45,7 @@ async function sendEmail(url: string): Promise<void> {
       subject: 'Epic Games free games needs a Captcha solved',
       html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
              <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
+      textEncoding: 'base64', // Some email clients don't like the '=' in the URL when using quoted-printable?
     });
     L.debug(
       {
