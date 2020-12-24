@@ -1,9 +1,9 @@
 name: MultiArchDockerBuild
 
 on:
-  create:
-    tags:
-      - '*'
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -34,7 +34,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/epicgames-freegames-node:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/epicgames-freegames-node:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/epicgames-freegames-node:latest
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
 
       - name: Image digest
