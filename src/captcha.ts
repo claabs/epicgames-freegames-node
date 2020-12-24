@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import querystring from 'qs';
 import EventEmitter from 'events';
 import nodemailer from 'nodemailer';
-import L from './common/logger';
+import logger from './common/logger';
 import { config } from './common/config';
 
 export enum EpicArkosePublicKey {
@@ -33,7 +33,8 @@ const emailTransporter = nodemailer.createTransport({
   auth: config.email.auth,
 });
 
-async function sendEmail(url: string): Promise<void> {
+async function sendEmail(url: string, email: string): Promise<void> {
+  const L = logger.child({ user: email });
   L.trace('Sending email');
   try {
     await emailTransporter.sendMail({
@@ -70,6 +71,7 @@ export async function notifyManualCaptcha(
   blob?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
+    const L = logger.child({ user: email });
     const id = uuid();
     const pending: PendingCaptcha = { id, email };
     pendingCaptchas.push(pending);
@@ -79,7 +81,7 @@ export async function notifyManualCaptcha(
 
     const solveStep = process.env.ENV === 'local' ? solveLocally : sendEmail;
 
-    solveStep(url)
+    solveStep(url, email)
       .then(() => {
         L.info({ id }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
@@ -98,7 +100,7 @@ export async function responseManualCaptcha(captchaSolution: CaptchaSolution): P
     pendingCaptchas = pendingCaptchas.filter(pending => pending.id !== captchaSolution.id);
     captchaEmitter.emit('solved', captchaSolution);
   } else {
-    L.error(`Could not find captcha id: ${captchaSolution.id}`);
+    logger.error(`Could not find captcha id: ${captchaSolution.id}`);
   }
 }
 
