@@ -9,8 +9,9 @@ import { newCookieJar } from './common/request';
 import './site/app';
 
 async function main(): Promise<void> {
-  const accountPromises = config.accounts.map(async account => {
-    L.info(`Checking free games for ${account.email}`);
+  const accountPromises = config.accounts.map(async (account, index) => {
+    await new Promise(resolve => setTimeout(resolve, index * (config.intervalTime || 60) * 1000));
+    L.info(`Checking free games for ${account.email} `);
     try {
       const requestClient = newCookieJar(account.email);
       const login = new Login(requestClient, account.email);
