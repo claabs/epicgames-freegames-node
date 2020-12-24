@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getInitData } from './talon-harness';
 
 const params = new URLSearchParams(document.location.search);
@@ -44,39 +44,55 @@ async function sendComplete(completeBody: CompleteBody): Promise<void> {
   await axios.post(postPath, completeBody);
 }
 
+function errorMessage(err: any): void {
+  console.error(err);
+  const e: AxiosError<string> = err;
+  const message: string = e.response?.data || err.message || 'Unknown error occured';
+  const errorDiv = document.getElementById('error-text') as HTMLDivElement;
+  errorDiv.innerText = message;
+  errorDiv.hidden = false;
+}
+
 async function captchaSuccess(captchaResult: string): Promise<void> {
   console.log('captchaResponse', captchaResult);
-  await sendComplete({
-    id: id as string,
-    captchaResult,
-    session: gSession,
-    initData: gInitData,
-    timing: gTiming,
-  });
+  try {
+    await sendComplete({
+      id: id as string,
+      captchaResult,
+      session: gSession,
+      initData: gInitData,
+      timing: gTiming,
+    });
+  } catch (err) {
+    errorMessage(err);
+  }
   console.log('Successfully sent Captcha token');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   document.getElementById('success-text')!.hidden = false;
 }
 
 async function hCaptchaLoaded(): Promise<void> {
-  if (!pkey) {
-    console.log('loading hCaptcha');
+  try {
+    if (!pkey) {
+      console.log('loading hCaptcha');
+      gInitData = getInitData();
+      const initResp = await sendInit(gInitData);
+      const { sitekey } = initResp;
+      gSession = initResp.session;
+      gTiming = initResp.timing;
 
-    gInitData = getInitData();
-    const initResp = await sendInit(gInitData);
-    const { sitekey } = initResp;
-    gSession = initResp.session;
-    gTiming = initResp.timing;
-
-    const widgetID = hcaptcha.render('hcaptcha', {
-      endpoint: `${apiRoot}/proxy`,
-      sitekey,
-      theme: 'dark',
-      size: 'invisible',
-      callback: captchaSuccess,
-      'challenge-container': 'challenge_container_hcaptcha',
-    });
-    hcaptcha.execute(widgetID);
+      const widgetID = hcaptcha.render('hcaptcha', {
+        endpoint: `${apiRoot}/proxy`,
+        sitekey,
+        theme: 'dark',
+        size: 'invisible',
+        callback: captchaSuccess,
+        'challenge-container': 'challenge_container_hcaptcha',
+      });
+      hcaptcha.execute(widgetID);
+    }
+  } catch (err) {
+    errorMessage(err);
   }
 }
 global.hCaptchaLoaded = hCaptchaLoaded;
