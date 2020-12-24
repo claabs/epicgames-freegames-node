@@ -75,6 +75,7 @@ The config file is store in the mounted `./config` directory.
     ],
     "onlyWeekly": false,
     "runOnStartup": true,
+    "intervalTime": 60,
     "cronSchedule": "0 12 * * *",
     "runOnce": false,
     "logLevel": "info",
@@ -117,6 +118,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 | ONLY_WEEKLY             | `true`                         | `false`                 | (Optional) By default, the script will redeem all free games in the Epic Games catalog. To only redeem the weekly promotions, set to `true`        |
 | SERVER_PORT             | `3333`                         | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                   |
 | RUN_ON_STARTUP          | `true`                         | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
+| INTERVAL_TIME           | `60`                           | `60`                    | (Optional) intervalTime controls the script execution interval of multiple accounts in seconds. (Only effective when multiple accounts are configured using config.json)                  |
 | CRON_SCHEDULE           | `0 12 * * *`                   | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
 | RUN_ONCE                | `true`                         | `false`                 | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                         |
 | LOG_LEVEL               | `info`                         | `info`                  | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                               |
