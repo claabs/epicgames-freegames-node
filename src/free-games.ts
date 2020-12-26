@@ -12,6 +12,7 @@ import {
 import { BundlesContent } from './interfaces/bundles-content';
 import Login from './login';
 import { config } from './common/config';
+import { OffersQueryResponse } from './interfaces/offer-response';
 
 export default class FreeGames {
   private request: Got;
@@ -168,7 +169,7 @@ export default class FreeGames {
         linkedOfferNs,
         linkedOfferId,
       },
-      'Getting product info'
+      'Getting product ownership info'
     );
     const query = `query launcherQuery($namespace:String!, $offerId:String!) {
     Launcher {
@@ -229,52 +230,110 @@ export default class FreeGames {
 
   async updateIds(offers: Element[]): Promise<Element[]> {
     this.L.debug('Mapping IDs to offer');
-    const promises = offers.map(
-      async (offer, index): Promise<Element> => {
+    const promises = offers
+      .map(async (offer, index) => {
         const productTypes = offer.categories.map(cat => cat.path);
         if (productTypes.includes('bundles')) {
           const url = `${STORE_CONTENT}/bundles/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
           const bundlesResp = await this.request.get<BundlesContent>(url);
-          return {
-            ...offers[index],
-            id: bundlesResp.body.offer.id,
-            namespace: bundlesResp.body.offer.namespace,
-          };
+          return [
+            {
+              ...offers[index],
+              id: bundlesResp.body.offer.id,
+              namespace: bundlesResp.body.offer.namespace,
+            },
+          ];
         }
         if (productTypes.includes('games')) {
+          // Call store content game page URL to get updated IDs for everything on the game page
           const url = `${STORE_CONTENT}/products/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
           const productsResp = await this.request.get<ProductInfo>(url);
-          let mainGamePage = productsResp.body.pages.find(page =>
-            // eslint-disable-next-line no-underscore-dangle
-            page._urlPattern.includes('home')
+
+          // Call the catalog with the updated IDs to get price and discounts for all page items
+          const offerRequest: GraphQLBody[] = productsResp.body.pages.map(page => {
+            const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) { 
+              Catalog { 
+                catalogOffer(namespace: $productNamespace, id: $offerId, locale: $locale) { 
+                  title 
+                  id 
+                  namespace 
+                  description 
+                  effectiveDate 
+                  expiryDate 
+                  isCodeRedemptionOnly 
+                  productSlug 
+                  urlSlug 
+                  url 
+                  items { 
+                    id 
+                    namespace 
+                  } 
+                  categories { 
+                    path 
+                  } 
+                  price(country: $country) { 
+                    totalPrice { 
+                      discountPrice 
+                      originalPrice 
+                      voucherDiscount 
+                      discount 
+                      currencyCode 
+                    } 
+                  } 
+                } 
+              }
+            }`;
+            const variables = {
+              productNamespace: page.offer.namespace,
+              offerId: page.offer.id,
+              locale: 'en-US',
+              country: 'US',
+            };
+            const data: GraphQLBody = { query, variables };
+            return data;
+          });
+          this.L.trace({ offerRequest, url: GRAPHQL_ENDPOINT }, 'Posting for offer promotions');
+          const offersResp = await this.request.post<OffersQueryResponse[]>(GRAPHQL_ENDPOINT, {
+            json: offerRequest,
+          });
+          this.L.trace({ body: JSON.stringify(offersResp.body) }, 'Offers response');
+
+          // Select the items with a 100% discount
+          const freePromoOffers = offersResp.body.filter(
+            promoOffer =>
+              promoOffer.data.Catalog.catalogOffer.price.totalPrice.originalPrice ===
+              promoOffer.data.Catalog.catalogOffer.price.totalPrice.discount
           );
-          if (!mainGamePage) {
-            this.L.trace('No home page found, product slug');
-            mainGamePage = productsResp.body.pages.find(page =>
-              // eslint-disable-next-line no-underscore-dangle
-              page._urlPattern.includes(offer.productSlug)
-            );
+
+          if (freePromoOffers.length === 0) {
+            this.L.error(`Could not find free offer for ${offer.productSlug}`);
+            return null;
           }
-          if (!mainGamePage) {
-            this.L.trace('No home page found, using first');
-            [mainGamePage] = productsResp.body.pages;
-          }
-          if (!mainGamePage) {
-            throw new Error('No product pages available');
-          }
-          return {
+
+          return freePromoOffers.map(promoOffer => ({
             ...offers[index],
-            id: mainGamePage.offer.id,
-            namespace: mainGamePage.offer.namespace,
-          };
+            id: promoOffer.data.Catalog.catalogOffer.id,
+            namespace: promoOffer.data.Catalog.catalogOffer.namespace,
+          }));
         }
-        throw new Error(`Unrecognized productType: ${productTypes}`);
+
+        this.L.error(`Unrecognized productType: ${productTypes}`);
+        return null;
+      })
+      .filter((elem): elem is Promise<Element[]> => elem !== null);
+    const responses = (await Promise.all(promises)).flat();
+    const uniqueResponses: Element[] = [];
+    const map = new Map();
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of responses) {
+      if (!map.has(item.id)) {
+        map.set(item.id, true); // set any value to Map
+        uniqueResponses.push(item);
       }
-    );
-    const responses = await Promise.all(promises);
-    return responses;
+    }
+    return uniqueResponses;
   }
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
@@ -286,6 +345,7 @@ export default class FreeGames {
     }
     this.L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
     const updatedOffers = await this.updateIds(validFreeGames);
+    this.L.debug({ updatedOffers }, 'Offers with updated IDs');
     const purchasableGames = await this.getPurchasableFreeGames(updatedOffers);
     this.L.info(
       { purchasableGames: purchasableGames.map(game => game.productName) },
