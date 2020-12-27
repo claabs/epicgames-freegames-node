@@ -3,6 +3,7 @@ import express, { ErrorRequestHandler } from 'express';
 import path from 'path';
 import { URL } from 'url';
 import proxy from 'express-http-proxy';
+import nocache from 'nocache';
 import got from 'got';
 import asyncHandler from 'express-async-handler';
 import L from '../common/logger';
@@ -134,6 +135,9 @@ const errorHandler: ErrorRequestHandler = (err: Error, req, res, next) => {
 };
 
 router.use(errorHandler);
+
+app.use(nocache());
+app.disable('etag');
 
 app.use(basePath, router);
 
