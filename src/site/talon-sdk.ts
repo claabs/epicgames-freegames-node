@@ -1,14 +1,22 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import got from 'got';
 import { Logger } from 'pino';
-import { PHASER_F_ENDPOINT, TALON_INIT_ENDPOINT, TALON_IP_ENDPOINT } from '../common/constants';
+import {
+  PHASER_F_ENDPOINT,
+  TALON_INIT_ENDPOINT,
+  TALON_IP_ENDPOINT,
+  TALON_EXECUTE_ENDPOINT,
+} from '../common/constants';
 import logger from '../common/logger';
 
 export type EventType =
+  | 'sdk_load'
   | 'sdk_init'
   | 'sdk_init_complete'
   | 'challenge_ready'
+  | 'sdk_execute'
   | 'challenge_execute'
+  | 'challenge_opened'
   | 'challenge_complete';
 
 export interface Timing {
@@ -60,7 +68,10 @@ export interface InitData {
 
 export interface InitBody extends InitData {
   flow_id: string;
-  client_ip: ClientIp;
+}
+
+export interface ExecuteBody extends InitData {
+  session: PhaserSession;
 }
 
 export interface ClientIp {
@@ -136,12 +147,21 @@ export default class TalonSdk {
     };
   }
 
-  async sdkInit(): Promise<void> {
-    await this.sendPhaserEvent('sdk_init', 'https://www.epicgames.com');
+  async sdkLoad(): Promise<void> {
+    await this.sendPhaserEvent('sdk_load', 'https://www.epicgames.com');
   }
 
-  async sdkInitComplete(session: PhaserSession): Promise<Timing[]> {
-    return this.sendPhaserEvent('sdk_init_complete', 'https://www.epicgames.com', session);
+  async sdkInit(): Promise<Timing[]> {
+    return this.sendPhaserEvent('sdk_init', 'https://www.epicgames.com');
+  }
+
+  async sdkInitComplete(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent(
+      'sdk_init_complete',
+      'https://www.epicgames.com',
+      session,
+      oldTiming
+    );
   }
 
   async challengeReady(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
@@ -152,6 +172,15 @@ export default class TalonSdk {
     return this.sendPhaserEvent(
       'challenge_execute',
       'https://www.epicgames.com',
+      session,
+      oldTiming
+    );
+  }
+
+  async sdkExecute(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent(
+      'sdk_execute',
+      'https://talon-website-prod.ak.epicgames.com',
       session,
       oldTiming
     );
@@ -175,10 +204,9 @@ export default class TalonSdk {
     return resp.body;
   }
 
-  async initTalon(clientIp: ClientIp, initData: InitData): Promise<PhaserSession> {
+  async initTalon(initData: InitData): Promise<PhaserSession> {
     const body: InitBody = {
       flow_id: 'login_prod',
-      client_ip: clientIp,
       ...initData,
     };
     this.L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
@@ -190,12 +218,28 @@ export default class TalonSdk {
     return resp.body;
   }
 
+  async executeTalon(initData: InitData, session: PhaserSession): Promise<PhaserSession> {
+    const body: ExecuteBody = {
+      session,
+      ...initData,
+    };
+    this.L.trace({ body, TALON_EXECUTE_ENDPOINT }, 'POST');
+    const resp = await got.post<PhaserSession>(TALON_EXECUTE_ENDPOINT, {
+      json: body,
+      responseType: 'json',
+      headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
+    });
+    return resp.body;
+  }
+
   async beingTalonSession(initData: InitData): Promise<BeginSessionReturn> {
-    await this.sdkInit();
-    const clientIp = await this.initIp();
-    const session = await this.initTalon(clientIp, initData); // Send fingerprint
-    let timing = await this.sdkInitComplete(session);
+    await this.sdkLoad();
+    let timing = await this.sdkInit();
+    const session = await this.initTalon(initData); // Send fingerprint
+    timing = await this.sdkInitComplete(session, timing);
     timing = await this.challengeReady(session, timing);
+    timing = await this.sdkExecute(session, timing);
+    await this.executeTalon(initData, session);
     timing = await this.challengeExecute(session, timing);
     return { session, timing };
   }
