@@ -67,10 +67,15 @@ The config file is store in the mounted `./config` directory.
 ```json5
 {
     "accounts": [
+        // Multiple accounts can be configured here
         {
             "email": "example@gmail.com",
             "password": "abc123",
             "totp": "EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE"
+        },
+        {
+            "email": "example2@gmail.com",
+            "password": "abc123",
         },
     ],
     "onlyWeekly": false,
@@ -101,28 +106,28 @@ If you are using full JSON configuration, the only remaining Docker configurable
 
 #### Environment Variables
 
-| Variable                | Example                        | Default                 | Description                                                                                                                                        |
-|-------------------------|--------------------------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| EMAIL                   | `example@gmail.com`            |                         | Epic Games login email                                                                                                                             |
-| PASSWORD                | `abc123`                       |                         | Epic Games login password                                                                                                                          |
-| BASE_URL                | `https://epic.example.com`     | `http://localhost:3000` | The URL you will access to solve Captchas when required. Extra path names are supported                                                            |
-| SMTP_HOST               | `smtp.gmail.com`               |                         | The outgoing SMTP host name                                                                                                                        |
-| SMTP_PORT               | `587`                          |                         | The outgoing SMTP port (SSL or TLS, see `secure`)                                                                                                  |
-| EMAIL_SENDER_ADDRESS    | `hello@gmail.com`              |                         | The sender of the email you will recieve (can be your email address)                                                                               |
-| EMAIL_SENDER_NAME       | `Epic Games Captchas`          |                         | The name of the email sender                                                                                                                       |
-| EMAIL_RECIPIENT_ADDRESS | `hello@gmail.com`              |                         | The recipient of the email (can be your email address)                                                                                             |
-| SMTP_SECURE             | `true`                         |                         | `true` for SSL (port 465), `false` for TLS                                                                                                         |
-| SMTP_USERNAME           | `hello@gmail.com`              |                         | The SMTP username (if necessary)                                                                                                                   |
-| SMTP_PASSWORD           | `abc123`                       |                         | The SMTP password (if necessary)                                                                                                                   |
-| TOTP                    | `EMNCF83ULU39CYFO...YI69R39NE` |                         | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                              |
-| ONLY_WEEKLY             | `true`                         | `false`                 | (Optional) By default, the script will redeem all free games in the Epic Games catalog. To only redeem the weekly promotions, set to `true`        |
-| SERVER_PORT             | `3333`                         | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                   |
-| RUN_ON_STARTUP          | `true`                         | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                              |
-| INTERVAL_TIME           | `60`                           | `60`                    | (Optional) intervalTime controls the script execution interval of multiple accounts in seconds. (Only effective when multiple accounts are configured using config.json)                  |
-| CRON_SCHEDULE           | `0 12 * * *`                   | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available |
-| RUN_ONCE                | `true`                         | `false`                 | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                         |
-| LOG_LEVEL               | `info`                         | `info`                  | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                               |
-| TZ                      | `America/Chicago`              | `UTC`                   | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                 |
+| Variable                | Example                    | Default                 | Description                                                                                                                                                              |
+|-------------------------|----------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| EMAIL                   | `example@gmail.com`        |                         | Epic Games login email. For multiple accounts, use [JSON Configuration](#json-configuration)                                                                             |
+| PASSWORD                | `abc123`                   |                         | Epic Games login password                                                                                                                                                |
+| BASE_URL                | `https://epic.example.com` | `http://localhost:3000` | The URL you will access to solve Captchas when required. Extra path names are supported                                                                                  |
+| SMTP_HOST               | `smtp.gmail.com`           |                         | The outgoing SMTP host name                                                                                                                                              |
+| SMTP_PORT               | `587`                      |                         | The outgoing SMTP port (SSL or TLS, see `secure`)                                                                                                                        |
+| EMAIL_SENDER_ADDRESS    | `hello@gmail.com`          |                         | The sender of the email you will recieve (can be your email address)                                                                                                     |
+| EMAIL_SENDER_NAME       | `Epic Games Captchas`      |                         | The name of the email sender                                                                                                                                             |
+| EMAIL_RECIPIENT_ADDRESS | `hello@gmail.com`          |                         | The recipient of the email (can be your email address)                                                                                                                   |
+| SMTP_SECURE             | `true`                     |                         | `true` for SSL (port 465), `false` for TLS or unsecure                                                                                                                   |
+| SMTP_USERNAME           | `hello@gmail.com`          |                         | The SMTP username (if necessary)                                                                                                                                         |
+| SMTP_PASSWORD           | `abc123`                   |                         | The SMTP password (if necessary)                                                                                                                                         |
+| TOTP                    | `EMNCF83ULU3...YI69R39NE`  |                         | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                                                    |
+| ONLY_WEEKLY             | `true`                     | `false`                 | (Optional) By default, the script will redeem all free games in the Epic Games catalog. To only redeem the weekly promotions, set to `true`                              |
+| SERVER_PORT             | `3333`                     | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                                         |
+| RUN_ON_STARTUP          | `true`                     | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                                                    |
+| INTERVAL_TIME           | `60`                       | `60`                    | (Optional) intervalTime controls the script execution interval of multiple accounts in seconds. (Only effective when multiple accounts are configured using config.json) |
+| CRON_SCHEDULE           | `0 12 * * *`               | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available                       |
+| RUN_ONCE                | `true`                     | `false`                 | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                                               |
+| LOG_LEVEL               | `info`                     | `info`                  | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                                                     |
+| TZ                      | `America/Chicago`          | `UTC`                   | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                                       |
 
 #### Ports
 
