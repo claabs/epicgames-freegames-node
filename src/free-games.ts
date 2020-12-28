@@ -252,8 +252,9 @@ export default class FreeGames {
           const productsResp = await this.request.get<ProductInfo>(url);
 
           // Call the catalog with the updated IDs to get price and discounts for all page items
-          const offerRequest: GraphQLBody[] = productsResp.body.pages.map(page => {
-            const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) { 
+          const offerRequest: (GraphQLBody | null)[] = productsResp.body.pages
+            .map(page => {
+              const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) { 
               Catalog { 
                 catalogOffer(namespace: $productNamespace, id: $offerId, locale: $locale) { 
                   title 
@@ -285,15 +286,17 @@ export default class FreeGames {
                 } 
               }
             }`;
-            const variables = {
-              productNamespace: page.offer.namespace,
-              offerId: page.offer.id,
-              locale: 'en-US',
-              country: 'US',
-            };
-            const data: GraphQLBody = { query, variables };
-            return data;
-          });
+              if (!(page.offer.hasOffer && page.offer.namespace && page.offer.id)) return null;
+              const variables = {
+                productNamespace: page.offer.namespace,
+                offerId: page.offer.id,
+                locale: 'en-US',
+                country: 'US',
+              };
+              const data: GraphQLBody = { query, variables };
+              return data;
+            })
+            .filter((elem): elem is GraphQLBody => elem !== null);
           this.L.trace({ offerRequest, url: GRAPHQL_ENDPOINT }, 'Posting for offer promotions');
           const offersResp = await this.request.post<OffersQueryResponse[]>(GRAPHQL_ENDPOINT, {
             json: offerRequest,
