@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import got from 'got';
+import { Got } from 'got';
 import { Logger } from 'pino';
 import {
   PHASER_F_ENDPOINT,
@@ -8,6 +8,7 @@ import {
   TALON_EXECUTE_ENDPOINT,
 } from '../common/constants';
 import logger from '../common/logger';
+import { newCookieJar } from '../common/request';
 
 export type EventType =
   | 'sdk_load'
@@ -99,11 +100,14 @@ export default class TalonSdk {
 
   private userAgent: string;
 
+  private request: Got;
+
   constructor(email: string, userAgent: string) {
     this.L = logger.child({
       user: email,
     });
     this.userAgent = userAgent;
+    this.request = newCookieJar(email);
   }
 
   private async sendPhaserEvent(
@@ -127,7 +131,7 @@ export default class TalonSdk {
       errors: [],
     };
     this.L.trace({ body, PHASER_F_ENDPOINT }, 'POST');
-    await got.post(PHASER_F_ENDPOINT, {
+    await this.request.post(PHASER_F_ENDPOINT, {
       json: body,
       headers: this.getHeaders(referrerOrigin),
     });
@@ -197,7 +201,7 @@ export default class TalonSdk {
 
   async initIp(): Promise<ClientIp> {
     this.L.trace({ TALON_IP_ENDPOINT }, 'GET');
-    const resp = await got.get<ClientIp>(TALON_IP_ENDPOINT, {
+    const resp = await this.request.get<ClientIp>(TALON_IP_ENDPOINT, {
       responseType: 'json',
       headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
     });
@@ -210,7 +214,7 @@ export default class TalonSdk {
       ...initData,
     };
     this.L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
-    const resp = await got.post<PhaserSession>(TALON_INIT_ENDPOINT, {
+    const resp = await this.request.post<PhaserSession>(TALON_INIT_ENDPOINT, {
       json: body,
       responseType: 'json',
       headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
@@ -224,7 +228,7 @@ export default class TalonSdk {
       ...initData,
     };
     this.L.trace({ body, TALON_EXECUTE_ENDPOINT }, 'POST');
-    const resp = await got.post<PhaserSession>(TALON_EXECUTE_ENDPOINT, {
+    const resp = await this.request.post<PhaserSession>(TALON_EXECUTE_ENDPOINT, {
       json: body,
       responseType: 'json',
       headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
