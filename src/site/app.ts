@@ -56,13 +56,21 @@ router.get(
   })
 );
 
-interface InitResp {
+interface InitReq {
   initData: InitData;
   id: string;
 }
 
+interface InitResp {
+  captchaKey: string;
+  provider: 'h_captcha' | 'arkose';
+  blob?: string;
+  session: Record<string, any>;
+  timing: Record<string, any>[];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-router.post<any, any, InitResp, any>(
+router.post<any, InitResp, InitReq, any>(
   '/init',
   asyncHandler(async (req, res) => {
     if (!req.headers?.['user-agent']) {
@@ -73,15 +81,21 @@ router.post<any, any, InitResp, any>(
     const { initData, id } = req.body;
     const { email } = getPendingCaptcha(id);
     const talon = new TalonSdk(email, req.headers['user-agent']);
-    const talonSessionResp = await talon.beingTalonSession(initData);
-    let { session } = talonSessionResp;
-    const { timing } = talonSessionResp;
-    while (!session.session.plan.h_captcha?.site_key) {
-      // Epic still returns Arkose some of the time
-      // eslint-disable-next-line no-await-in-loop
-      session = (await talon.beingTalonSession(initData)).session;
-    }
-    res.status(200).send({ sitekey: session.session.plan.h_captcha.site_key, timing, session });
+    const talonSessionResp = await talon.beginTalonSession(initData);
+    const { session, timing, blob } = talonSessionResp;
+    const provider = session.session.plan.mode;
+    const captchaKey =
+      session.session.plan.mode === 'h_captcha'
+        ? session.session.plan.h_captcha.site_key
+        : session.session.plan.arkose.public_key;
+    const resBody: InitResp = {
+      captchaKey,
+      blob,
+      provider,
+      session,
+      timing,
+    };
+    res.status(200).send(resBody);
   })
 );
 
