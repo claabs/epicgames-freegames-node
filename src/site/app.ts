@@ -10,6 +10,7 @@ import L from '../common/logger';
 import { config } from '../common/config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
 import TalonSdk, { assembleFinalCaptchaKey, InitData, PhaserSession, Timing } from './talon-sdk';
+import { TALON_REFERRER, TALON_WEBSITE_BASE } from '../common/constants';
 
 const baseUrl = new URL(config.baseUrl);
 const basePath = baseUrl.pathname;
@@ -18,6 +19,7 @@ const app = express();
 
 const router = express.Router();
 
+// Replace the hostname in the HCaptcha getsiteconfig call
 router.use(
   '/proxy',
   proxy('https://hcaptcha.com', {
@@ -32,7 +34,53 @@ router.use(
     },
   })
 );
+// HCaptcha assets proxy, fixes issues on HTTP clients
 router.use('/assets', proxy('https://assets.hcaptcha.com'));
+
+// Replace every hostname available in the Akamai device info
+router.use(
+  '/utils',
+  proxy(TALON_WEBSITE_BASE, {
+    // Keeps /utils at the base of the path
+    proxyReqPathResolver: req => {
+      L.debug(req);
+      return req.originalUrl;
+    },
+    // Updates Akamai request headers
+    proxyReqOptDecorator: proxyReqOpts => {
+      const { headers } = proxyReqOpts;
+      const updatedHeaders = {
+        ...headers,
+        referrer: TALON_REFERRER,
+        origin: TALON_WEBSITE_BASE,
+      };
+      const updatedReq = proxyReqOpts;
+      updatedReq.headers = updatedHeaders;
+      return updatedReq;
+    },
+    // Updates URL in Akamai sensor_data body
+    proxyReqBodyDecorator: (bodyContent: Buffer, srcReq) => {
+      L.debug({ srcReq });
+      const body = bodyContent.toString();
+      const updatedBody = body.replace(
+        new RegExp(`https://${baseUrl.hostname}.*?,`, 'g'),
+        `${TALON_REFERRER}-1,`
+      );
+      L.debug({ updatedBody });
+      return updatedBody;
+    },
+    // Updates cookie domain to keep Akamai happy
+    userResHeaderDecorator: headers => {
+      const updatedHeaders = headers;
+      let setCookie = headers['set-cookie'];
+      if (setCookie) {
+        setCookie = setCookie.map(value => value.replace(/\.epicgames\.com/, baseUrl.hostname));
+      }
+      updatedHeaders['set-cookie'] = setCookie;
+      return updatedHeaders;
+    },
+  })
+);
 router.use(express.static(path.join(__dirname, 'public')));
 router.use(express.json());
 
