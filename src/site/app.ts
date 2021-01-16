@@ -6,18 +6,19 @@ import proxy from 'express-http-proxy';
 import nocache from 'nocache';
 import got from 'got';
 import asyncHandler from 'express-async-handler';
+import cookieParser from 'cookie-parser';
 import L from '../common/logger';
 import { config } from '../common/config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
 import TalonSdk, { assembleFinalCaptchaKey, InitData, PhaserSession, Timing } from './talon-sdk';
 import { TALON_REFERRER, TALON_WEBSITE_BASE } from '../common/constants';
-import { getCookies } from '../common/request';
+import { getCookies, setCookie } from '../common/request';
 
 const baseUrl = new URL(config.baseUrl);
 const basePath = baseUrl.pathname;
 
 const app = express();
-
+app.use(cookieParser());
 const router = express.Router();
 
 // Replace the hostname in the HCaptcha getsiteconfig call
@@ -44,7 +45,7 @@ router.use(
   proxy(TALON_WEBSITE_BASE, {
     // Keeps /utils at the base of the path
     proxyReqPathResolver: req => {
-      L.debug(req);
+      L.trace(req);
       return req.originalUrl;
     },
     // Updates Akamai request headers
@@ -61,23 +62,55 @@ router.use(
     },
     // Updates URL in Akamai sensor_data body
     proxyReqBodyDecorator: (bodyContent: Buffer, srcReq) => {
-      L.debug({ srcReq });
+      L.trace({ srcReq });
       const body = bodyContent.toString();
       const updatedBody = body.replace(
         new RegExp(`https://${baseUrl.hostname}.*?,`, 'g'),
         `${TALON_REFERRER}-1,`
       );
-      L.debug({ updatedBody });
+      L.trace({ updatedBody });
       return updatedBody;
     },
     // Updates cookie domain to keep Akamai happy
     userResHeaderDecorator: headers => {
       const updatedHeaders = headers;
-      let setCookie = headers['set-cookie'];
-      if (setCookie) {
-        setCookie = setCookie.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
+      let cookieHeader = headers['set-cookie'];
+      if (cookieHeader) {
+        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
       }
-      updatedHeaders['set-cookie'] = setCookie;
+      updatedHeaders['set-cookie'] = cookieHeader;
+      return updatedHeaders;
+    },
+  })
+);
+router.use(
+  '/akam',
+  proxy('https://talon-website-prod.ak.epicgames.com', {
+    // Use original path
+    proxyReqPathResolver: req => {
+      L.trace(req);
+      return req.originalUrl;
+    },
+    // Updates Akamai request headers
+    proxyReqOptDecorator: proxyReqOpts => {
+      const { headers } = proxyReqOpts;
+      const updatedHeaders = {
+        ...headers,
+        referrer: TALON_REFERRER,
+        origin: TALON_WEBSITE_BASE,
+      };
+      const updatedReq = proxyReqOpts;
+      updatedReq.headers = updatedHeaders;
+      return updatedReq;
+    },
+    // Updates cookie domain to keep Akamai happy
+    userResHeaderDecorator: headers => {
+      const updatedHeaders = headers;
+      let cookieHeader = headers['set-cookie'];
+      if (cookieHeader) {
+        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
+        updatedHeaders['set-cookie'] = cookieHeader;
+      }
       return updatedHeaders;
     },
   })
@@ -168,8 +201,10 @@ router.post<any, any, CompleteBody, any>(
       return;
     }
     L.trace({ body: req.body }, 'incoming /complete POST body');
+    const { _abck } = req.cookies;
     const { id, captchaResult, initData, session, timing } = req.body;
     const { email } = getPendingCaptcha(id);
+    if (_abck) setCookie(email, '_abck', _abck);
     const talon = new TalonSdk(email, req.headers['user-agent']);
     await talon.challengeComplete(session, timing);
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);

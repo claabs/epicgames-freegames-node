@@ -71,6 +71,19 @@ export function getCookies(username: string): Record<string, string> {
   );
 }
 
+export function setCookie(username: string, key: string, value: string): void {
+  const fileSafeUsername = filenamify(username);
+  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const cookieJar = new tough.CookieJar(new FileCookieStore(cookieFilename));
+  cookieJar.setCookieSync(
+    new tough.Cookie({
+      key,
+      value,
+    }),
+    '.epicgames.com'
+  );
+}
+
 export function deleteCookies(username?: string): void {
   if (username) {
     fs.unlinkSync(`./config/${username}-cookies.json`);
