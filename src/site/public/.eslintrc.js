@@ -6,7 +6,7 @@ module.exports = {
   },
   globals: {
     hcaptcha: true,
-    draw: true
+    draw: true,
   },
   extends: [
     'airbnb-base',

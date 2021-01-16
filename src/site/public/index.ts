@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError } from 'axios';
 import { getInitData } from './talon-harness';
@@ -73,6 +74,18 @@ async function talonSuccess(captchaResult: string): Promise<void> {
   console.log('Successfully sent Captcha token');
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   document.getElementById('success-text')!.hidden = false;
+}
+
+function createAkamaiScript(): void {
+  window._cf = [];
+  window._cf.push(['_setFsp', true]);
+  window._cf.push(['_setBm', true]);
+  window._cf.push(['_setAu', '/utils/fe752231657ti20929d6cbf2d4fd75f43']);
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src =
+    'https://talon-website-prod.ak.epicgames.com/utils/fe752231657ti20929d6cbf2d4fd75f43';
+  document.head.append(script);
 }
 
 // =========
@@ -203,6 +216,7 @@ window.addEventListener('load', async () => {
     try {
       gInitData = getInitData();
       const initResp = await sendInit(gInitData);
+      createAkamaiScript();
       const { provider } = initResp;
       gCaptchaKey = initResp.captchaKey;
       gSession = initResp.session;

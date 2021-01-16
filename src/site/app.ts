@@ -11,6 +11,7 @@ import { config } from '../common/config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
 import TalonSdk, { assembleFinalCaptchaKey, InitData, PhaserSession, Timing } from './talon-sdk';
 import { TALON_REFERRER, TALON_WEBSITE_BASE } from '../common/constants';
+import { getCookies } from '../common/request';
 
 const baseUrl = new URL(config.baseUrl);
 const basePath = baseUrl.pathname;
@@ -74,7 +75,7 @@ router.use(
       const updatedHeaders = headers;
       let setCookie = headers['set-cookie'];
       if (setCookie) {
-        setCookie = setCookie.map(value => value.replace(/\.epicgames\.com/, baseUrl.hostname));
+        setCookie = setCookie.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
       }
       updatedHeaders['set-cookie'] = setCookie;
       return updatedHeaders;
@@ -136,6 +137,9 @@ router.post<any, InitResp, InitReq, any>(
       session.session.plan.mode === 'h_captcha'
         ? session.session.plan.h_captcha.site_key
         : session.session.plan.arkose.public_key;
+    const cookies = getCookies(email);
+    const cookieEntries = Object.entries(cookies);
+    cookieEntries.forEach(([key, value]) => res.cookie(key, value));
     const resBody: InitResp = {
       captchaKey,
       blob,
@@ -170,6 +174,9 @@ router.post<any, any, CompleteBody, any>(
     await talon.challengeComplete(session, timing);
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);
     await responseManualCaptcha({ id, sessionData });
+    const cookies = getCookies(email);
+    const cookieEntries = Object.entries(cookies);
+    cookieEntries.forEach(([key, value]) => res.cookie(key, value));
     res.status(200).send();
   })
 );

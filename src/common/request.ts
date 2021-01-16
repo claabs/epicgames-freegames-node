@@ -60,6 +60,17 @@ export function newCookieJar(username: string): Got {
   });
 }
 
+export function getCookies(username: string): Record<string, string> {
+  const fileSafeUsername = filenamify(username);
+  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const cookieJar = new tough.CookieJar(new FileCookieStore(cookieFilename));
+  const { cookies } = cookieJar.toJSON();
+  return cookies.reduce<Record<string, string>>(
+    (accum, cookie) => ({ ...accum, [cookie.key]: cookie.value }),
+    {}
+  );
+}
+
 export function deleteCookies(username?: string): void {
   if (username) {
     fs.unlinkSync(`./config/${username}-cookies.json`);
