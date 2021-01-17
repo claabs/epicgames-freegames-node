@@ -6,7 +6,7 @@
   "scripts": {
     "install": "cd src/site/public && npm i",
     "start": "node dist/src/index.js",
-    "start:ts": "ts-node src/index.ts",
+    "start:ts": "cd src/site/public && npm run build && cd ../../.. && ts-node src/index.ts",
     "build": "rm -rf dist && tsc && cd src/site/public && npm run build && cd ../../.. && npx copyfiles -E src/**/public/*.html src/**/public/*.bundle.js dist",
     "lint": "tsc --noEmit && eslint **/*.ts && (cd src/site/public && npm run lint)",
     "test": "jest",
