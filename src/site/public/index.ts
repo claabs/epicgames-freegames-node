@@ -80,7 +80,7 @@ function createAkamaiScript(): void {
   window._cf = [];
   window._cf.push(['_setFsp', true]);
   window._cf.push(['_setBm', true]);
-  window._cf.push(['_setAu', '/utils/fe752231657ti20929d6cbf2d4fd75f43']);
+  window._cf.push(['_setAu', `${apiRoot}/utils/fe752231657ti20929d6cbf2d4fd75f43`]);
   const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src =
