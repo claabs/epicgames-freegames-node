@@ -214,7 +214,7 @@ window.addEventListener('load', async () => {
   } else {
     console.log('Performing Talon captcha. Getting session...');
     try {
-      gInitData = getInitData();
+      gInitData = await getInitData();
       const initResp = await sendInit(gInitData);
       createAkamaiScript();
       const { provider } = initResp;
