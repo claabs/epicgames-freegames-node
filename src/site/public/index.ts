@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError } from 'axios';
 import { getInitData } from './talon-harness';
@@ -14,15 +15,19 @@ console.info('blob:', blob);
 const apiRoot = `${window.location.origin}`;
 
 // =========
-// hCaptcha
+// Talon
 // =========
 
 let gSession: Record<string, any> = {};
 let gInitData: Record<string, any> = {};
 let gTiming: Record<string, any>[] = [];
+let gCaptchaKey: string;
+let gBlob: string | undefined;
 
 interface InitResp {
-  sitekey: string;
+  captchaKey: string;
+  provider: 'h_captcha' | 'arkose';
+  blob?: string;
   session: Record<string, any>;
   timing: Record<string, any>[];
 }
@@ -53,8 +58,8 @@ function errorMessage(err: any): void {
   errorDiv.hidden = false;
 }
 
-async function captchaSuccess(captchaResult: string): Promise<void> {
-  console.log('captchaResponse', captchaResult);
+async function talonSuccess(captchaResult: string): Promise<void> {
+  console.log('talon captchaResult:', captchaResult);
   try {
     await sendComplete({
       id: id as string,
@@ -71,31 +76,56 @@ async function captchaSuccess(captchaResult: string): Promise<void> {
   document.getElementById('success-text')!.hidden = false;
 }
 
+function createAkamaiScript(): void {
+  window._cf = [];
+  window._cf.push(['_setFsp', true]);
+  window._cf.push(['_setBm', true]);
+  window._cf.push(['_setAu', `${apiRoot}/utils/fe752231657ti20929d6cbf2d4fd75f43`]);
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src =
+    'https://talon-website-prod.ak.epicgames.com/utils/fe752231657ti20929d6cbf2d4fd75f43';
+  document.head.append(script);
+}
+
+// =========
+// hCaptcha
+// =========
+
+async function hcaptchaSuccess(captchaResult: string): Promise<void> {
+  console.log('hcaptcha captchaResult', captchaResult);
+  talonSuccess(captchaResult);
+}
+
 async function hCaptchaLoaded(): Promise<void> {
   try {
-    if (!pkey) {
-      console.log('loading hCaptcha');
-      gInitData = getInitData();
-      const initResp = await sendInit(gInitData);
-      const { sitekey } = initResp;
-      gSession = initResp.session;
-      gTiming = initResp.timing;
-
-      const widgetID = hcaptcha.render('hcaptcha', {
-        endpoint: `${apiRoot}/proxy`,
-        sitekey,
-        theme: 'dark',
-        size: 'invisible',
-        callback: captchaSuccess,
-        'challenge-container': 'challenge_container_hcaptcha',
-      });
-      hcaptcha.execute(widgetID);
-    }
+    console.log('loaded hCaptcha');
+    const widgetID = hcaptcha.render('hcaptcha', {
+      endpoint: `${apiRoot}/proxy`,
+      sitekey: gCaptchaKey,
+      theme: 'dark',
+      size: 'invisible',
+      callback: hcaptchaSuccess,
+      'challenge-container': 'challenge_container_hcaptcha',
+    });
+    hcaptcha.execute(widgetID);
   } catch (err) {
     errorMessage(err);
   }
 }
 global.hCaptchaLoaded = hCaptchaLoaded;
+
+function createHcaptchaScript(): void {
+  console.log('Creating hCaptcha captcha script');
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = '/hcaptcha-api.js?onload=hCaptchaLoaded&render=explicit';
+  script.async = true;
+  script.defer = true;
+  script.id = 'hcaptchascript';
+
+  document.head.append(script);
+}
 
 // =========
 // Arkose
@@ -128,24 +158,31 @@ function setupArkoseEnforcement(enforcement: Arkose): void {
 
   Arkose.setConfig({
     async onCompleted(t: ArkoseCompleteEvent) {
-      console.log('Captcha sessionData:', t);
-      const postPath = `${apiRoot}/arkose`;
-      const body = {
-        sessionData: t.token,
-        id,
-      };
-      await axios.post(postPath, body);
-      console.log('Successfully sent Captcha token');
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      document.getElementById('success-text')!.hidden = false;
-      success = true;
+      console.log('arkose captchaResult', t);
+      if (!pkey) {
+        // Talon flow
+        talonSuccess(t.token);
+      } else {
+        // Explicit Arkose flow
+        console.log('Captcha sessionData:', t);
+        const postPath = `${apiRoot}/arkose`;
+        const body = {
+          sessionData: t.token,
+          id,
+        };
+        await axios.post(postPath, body);
+        console.log('Successfully sent Captcha token');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        document.getElementById('success-text')!.hidden = false;
+        success = true;
+      }
     },
     onReady() {
       console.log('ready');
       arkoseLoaded = true;
       if (!success) Arkose.run();
     },
-    data: { blob },
+    data: { blob: gBlob || blob },
   });
 
   console.log('arkoseLoaded', arkoseLoaded);
@@ -153,10 +190,11 @@ function setupArkoseEnforcement(enforcement: Arkose): void {
 }
 global.setupArkoseEnforcement = setupArkoseEnforcement;
 
-function createArkoseScript(): void {
+function createArkoseScript(captchaKey: string): void {
+  console.log('Creating Arkose captcha script');
   const script = document.createElement('script');
   script.type = 'text/javascript';
-  script.src = `https://client-api.arkoselabs.com/v2/${pkey}/api.js`;
+  script.src = `https://client-api.arkoselabs.com/v2/${captchaKey}/api.js`;
   script.setAttribute('data-callback', 'setupArkoseEnforcement');
   script.async = true;
   script.defer = true;
@@ -165,9 +203,37 @@ function createArkoseScript(): void {
   document.head.append(script);
 }
 
-window.addEventListener('load', () => {
+// =========
+// Both
+// =========
+
+window.addEventListener('load', async () => {
   if (pkey) {
-    console.log('loading Arkose Captcha');
-    createArkoseScript();
+    console.log('Performing explicit Arkose captcha. Loading Arkose captcha...');
+    createArkoseScript(pkey);
+  } else {
+    console.log('Performing Talon captcha. Getting session...');
+    try {
+      gInitData = await getInitData();
+      const initResp = await sendInit(gInitData);
+      createAkamaiScript();
+      const { provider } = initResp;
+      gCaptchaKey = initResp.captchaKey;
+      gSession = initResp.session;
+      gTiming = initResp.timing;
+      gBlob = initResp.blob;
+      console.log('captchaKey:', gCaptchaKey);
+      console.log('session:', gSession);
+      console.log('timing:', gTiming);
+      if (provider === 'arkose') {
+        createArkoseScript(gCaptchaKey);
+      } else if (provider === 'h_captcha') {
+        createHcaptchaScript();
+      } else {
+        console.error('Unrecognized captcha provider');
+      }
+    } catch (err) {
+      errorMessage(err);
+    }
   }
 });

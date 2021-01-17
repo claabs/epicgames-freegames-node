@@ -22,5 +22,13 @@ interface Performance {
   };
 }
 
+interface Window {
+  _cf: any;
+}
+
+interface Screen {
+  availTop: number;
+}
+
 declare function hCaptchaLoaded(): void;
 declare function setupArkoseEnforcement(enforcement: any): void;

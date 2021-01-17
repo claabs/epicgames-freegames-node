@@ -30,4 +30,8 @@ export const AUTHENTICATE_ENDPOINT = `https://www.epicgames.com/id/api/authentic
 export const PHASER_F_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/phaser/f';
 export const TALON_IP_ENDPOINT = 'https://talon-service-v4-prod.ak.epicgames.com/v1/init/ip';
 export const TALON_INIT_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/init';
-export const TALON_EXECUTE_ENDPOINT = 'https://talon-service-prod.ak.epicgames.com/v1/init/execute';
+export const TALON_EXECUTE_ENDPOINT =
+  'https://talon-service-v4-prod.ak.epicgames.com/v1/init/execute';
+export const TALON_WEBSITE_BASE = 'https://talon-website-prod.ak.epicgames.com';
+export const TALON_REFERRER =
+  'https://talon-website-prod.ak.epicgames.com/challenge?env=prod&flow=login_prod&origin=https%3A%2F%2Fwww.epicgames.com';

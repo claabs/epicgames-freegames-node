@@ -11,6 +11,7 @@ import tlsh from 'tlsh';
 
 // ==================================
 // EPIC GAMES talon_harness.js CODE
+// https://talon-website-prod.ak.epicgames.com/talon_harness.js
 // ==================================
 
 const HASHKEY_STRING = 'B8lpKXL3eSq3FXr4Di4V7RJNaA3vtPIu9yl8w8DU';
@@ -37,10 +38,11 @@ const generateRandomHash = () => {
 };
 
 const getDocumentHeadData = () => {
-  return {
-    title: document.title,
-    referer: document.referer, // lmao typo???
-  };
+  // return {
+  //   title: document.title,
+  //   referer: document.referer, // lmao typo???
+  // };
+  return { title: 'Talon Challenge' };
 };
 
 const objectToArray = (type: Record<string, any>) => {
@@ -162,10 +164,11 @@ const getWebGLFingerprint = () => {
 };
 
 const getWindowLocation = () => {
-  return {
-    origin: window.location.origin,
-    pathname: window.location.pathname,
-  };
+  // return {
+  //   origin: window.location.origin,
+  //   pathname: window.location.pathname,
+  // };
+  return { origin: 'https://talon-website-prod.ak.epicgames.com', pathname: '/challenge' };
 };
 
 const getWindowHistory = () => {
@@ -178,6 +181,7 @@ const getScreenFingerprint = () => {
   return {
     avail_height: window.screen.availHeight,
     avail_width: window.screen.availWidth,
+    avail_top: window.screen.availTop,
     height: window.screen.height,
     width: window.screen.width,
     color_depth: window.screen.colorDepth,
@@ -203,79 +207,55 @@ const getMemoryFingerprint = () => {
   };
 };
 
-export const getInitData = () => {
+const getMediaDevices = async () => {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.map(d => ({ device_id: d.deviceId, kind: d.kind, group_id: d.groupId }));
+};
+
+const getDateData = () => {
+  const t = Intl.DateTimeFormat().resolvedOptions();
+  return {
+    timezone_offset: new Date().getTimezoneOffset(),
+    format: {
+      calendar: t.calendar,
+      day: t.day,
+      locale: t.locale,
+      month: t.month,
+      numbering_system: t.numberingSystem,
+      time_zone: t.timeZone,
+      year: t.year,
+    },
+  };
+};
+
+const getFingerprintBase = async () => {
+  const f = {
+    fingerprint_verion: 4,
+    timestamp: getIsoString(),
+    math_rand: generateRandomHash(),
+    document: getDocumentHeadData(),
+    navigator: getBrowserFingerprint(),
+    web_gl: getWebGLFingerprint(),
+    window: {
+      location: getWindowLocation(),
+      history: getWindowHistory(),
+      screen: getScreenFingerprint(),
+      performance: getMemoryFingerprint(),
+      device_pixel_ratio: window.devicePixelRatio,
+      media_devices: await getMediaDevices(),
+      dark_mode: true,
+    },
+    date: getDateData(),
+  };
+  console.log('Fingerprint JSON:', f);
+  return f;
+};
+
+export const getInitData = async () => {
   return {
     v: 1,
-    xal: createXal({
-      timestamp: getIsoString(),
-      math_rand: generateRandomHash(),
-      document: getDocumentHeadData(),
-      navigator: getBrowserFingerprint(),
-      web_gl: getWebGLFingerprint(),
-      window: {
-        location: getWindowLocation(),
-        history: getWindowHistory(),
-        screen: getScreenFingerprint(),
-        performance: getMemoryFingerprint(),
-        device_pixel_ratio: window.devicePixelRatio,
-      },
-    }),
+    xal: createXal(await getFingerprintBase()),
     ewa: 'b',
     kid: 'sk29dsv',
   };
 };
-
-// function parse(o: any, stack?: boolean) {
-//   const r = Object.keys(o);
-//   if (Object.getOwnPropertySymbols) {
-//     let neighbors = Object.getOwnPropertySymbols(o);
-//     if (stack) {
-//       neighbors = neighbors.filter(key => {
-//         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//         return Object.getOwnPropertyDescriptor(o, key)!.enumerable;
-//       });
-//     }
-//     // eslint-disable-next-line prefer-spread
-//     r.push.apply(r, (neighbors as unknown) as string[]);
-//   }
-//   return r;
-// }
-
-// function filter() {
-//   return (obj: Record<string, any>, key: string, value: any) => {
-//     // eslint-disable-next-line no-return-assign
-//     return (
-//       key in obj
-//         ? Object.defineProperty(obj, key, {
-//             value,
-//             enumerable: true,
-//             configurable: true,
-//             writable: true,
-//           })
-//         : // eslint-disable-next-line no-param-reassign
-//           (obj[key] = value),
-//       obj
-//     );
-//   };
-// }
-
-// export function extend(obj: Record<string, any>) {
-//   let i = 1;
-//   for (; i < arguments.length; i += 1) {
-//     // eslint-disable-next-line prefer-rest-params
-//     const properties = arguments[i] != null ? arguments[i] : {};
-//     if (i % 2) {
-//       parse(Object(properties), true).forEach(tempLocation => {
-//         filter()(obj, tempLocation, properties[tempLocation]);
-//       });
-//     } else if (Object.getOwnPropertyDescriptors) {
-//       Object.defineProperties(obj, Object.getOwnPropertyDescriptors(properties));
-//     } else {
-//       parse(Object(properties)).forEach(prop => {
-//         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//         Object.defineProperty(obj, prop, Object.getOwnPropertyDescriptor(properties, prop)!);
-//       });
-//     }
-//   }
-//   return obj;
-// }

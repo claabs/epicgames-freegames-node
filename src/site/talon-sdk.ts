@@ -39,14 +39,26 @@ export interface Session {
   plan: Plan;
 }
 
-export interface Plan {
-  mode: string;
+export type Plan = HcaptchaPlan | ArkosePlan;
+export interface HcaptchaPlan {
+  mode: 'h_captcha';
   h_captcha: HCaptcha;
+}
+
+export interface ArkosePlan {
+  mode: 'arkose';
+  arkose: Arkose;
 }
 
 export interface HCaptcha {
   plan_name: string;
   site_key: string;
+}
+
+export interface Arkose {
+  plan_name: string;
+  public_key: string;
+  sdk_base_url: string;
 }
 
 export interface PhaserEvent {
@@ -58,6 +70,7 @@ export interface PhaserEvent {
 
 export interface BeginSessionReturn extends Pick<PhaserEvent, 'timing'> {
   session: PhaserSession;
+  blob?: string;
 }
 
 export interface InitData {
@@ -86,13 +99,36 @@ export interface FinalCaptchaJson extends InitData {
   plan_results: PlanResults;
 }
 
-export interface PlanResults {
+export type PlanResults = HCaptchaPlanResults | ArkosePlanResults;
+
+export interface HCaptchaPlanResults {
   h_captcha: PlanResultsHCaptcha;
+}
+
+export interface ArkosePlanResults {
+  arkose: PlanResultsArkose;
 }
 
 export interface PlanResultsHCaptcha {
   value: string;
   resp_key: string;
+}
+
+export interface PlanResultsArkose {
+  value: string;
+}
+
+export type TalonExecuteResponse = HCaptchaExecuteResponse | ArkoseExecuteResponse;
+
+export interface HCaptchaExecuteResponse {
+  h_captcha: {};
+}
+export interface ArkoseExecuteResponse {
+  arkose: {
+    data: {
+      blob: string;
+    };
+  };
 }
 
 export default class TalonSdk {
@@ -219,49 +255,66 @@ export default class TalonSdk {
       responseType: 'json',
       headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
     });
+    this.L.trace({ resp: resp.body }, 'Init Talon response');
     return resp.body;
   }
 
-  async executeTalon(initData: InitData, session: PhaserSession): Promise<PhaserSession> {
+  async executeTalon(initData: InitData, session: PhaserSession): Promise<TalonExecuteResponse> {
     const body: ExecuteBody = {
       session,
       ...initData,
     };
     this.L.trace({ body, TALON_EXECUTE_ENDPOINT }, 'POST');
-    const resp = await this.request.post<PhaserSession>(TALON_EXECUTE_ENDPOINT, {
+    const resp = await this.request.post<TalonExecuteResponse>(TALON_EXECUTE_ENDPOINT, {
       json: body,
       responseType: 'json',
       headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
     });
+    this.L.trace({ resp: resp.body }, 'Execute Talon response');
     return resp.body;
   }
 
-  async beingTalonSession(initData: InitData): Promise<BeginSessionReturn> {
+  async beginTalonSession(initData: InitData): Promise<BeginSessionReturn> {
     await this.sdkLoad();
     let timing = await this.sdkInit();
     const session = await this.initTalon(initData); // Send fingerprint
     timing = await this.sdkInitComplete(session, timing);
     timing = await this.challengeReady(session, timing);
     timing = await this.sdkExecute(session, timing);
-    await this.executeTalon(initData, session);
+    const executeResp = await this.executeTalon(initData, session);
+    let blob: string | undefined;
+    if ('arkose' in executeResp) {
+      blob = executeResp.arkose.data.blob;
+    }
     timing = await this.challengeExecute(session, timing);
-    return { session, timing };
+    return { session, timing, blob };
   }
 }
 
 export function assembleFinalCaptchaKey(
   session: PhaserSession,
   initData: InitData,
-  hCaptchaKey: string
+  captchaResult: string
 ): string {
-  const captchaJson: FinalCaptchaJson = {
-    session_wrapper: session,
-    plan_results: {
+  let planResults: PlanResults;
+  if (session.session.plan.mode === 'h_captcha') {
+    planResults = {
       h_captcha: {
-        value: hCaptchaKey,
+        value: captchaResult,
         resp_key: '',
       },
-    },
+    };
+  } else {
+    planResults = {
+      arkose: {
+        value: captchaResult,
+      },
+    };
+  }
+
+  const captchaJson: FinalCaptchaJson = {
+    session_wrapper: session,
+    plan_results: planResults,
     ...initData,
   };
   return Buffer.from(JSON.stringify(captchaJson)).toString('base64');

@@ -96,10 +96,10 @@ export default class Login {
     attempt = 0
   ): Promise<void> {
     this.L.debug({ email, captcha, attempt }, 'Attempting login');
-    const csrfToken = await this.getCsrf();
-    if (attempt > 2) {
+    if (attempt > 5) {
       throw new Error('Too many login attempts');
     }
+    const csrfToken = await this.getCsrf();
     const loginBody: LoginBody = {
       password,
       rememberMe: true,
@@ -124,7 +124,12 @@ export default class Login {
           e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
         ) {
           this.L.debug('Captcha required');
-          const captchaToken = await notifyManualCaptcha(email);
+          let captchaToken: string;
+          if (attempt % 2 === 0) {
+            captchaToken = await notifyManualCaptcha(email);
+          } else {
+            captchaToken = captcha;
+          }
           await this.login(email, password, captchaToken, totp, blob, attempt + 1);
         } else if (
           e.response.body.errorCode ===

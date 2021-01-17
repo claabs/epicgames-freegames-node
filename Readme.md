@@ -49,6 +49,7 @@ To use this requires:
 
 1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the machine's port 81 to the container's port 3000)
 1. If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS
+    * Hosting over HTTPS may result in better captcha solving success
 1. Set the `baseUrl` in the config
 1. Set the SMTP settings in the email config
     * [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server)
