@@ -208,6 +208,7 @@ const getMemoryFingerprint = () => {
 };
 
 const getMediaDevices = async () => {
+  if (!navigator.mediaDevices) return [];
   const devices = await navigator.mediaDevices.enumerateDevices();
   return devices.map(d => ({ device_id: d.deviceId, kind: d.kind, group_id: d.groupId }));
 };
