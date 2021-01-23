@@ -14,6 +14,22 @@ import TalonSdk, { assembleFinalCaptchaKey, InitData, PhaserSession, Timing } fr
 import { TALON_REFERRER, TALON_WEBSITE_BASE } from '../common/constants';
 import { getCookies, setCookie } from '../common/request';
 
+function filterNecessaryCookies(cookies: [string, string][]): [string, string][] {
+  const validKeys = [
+    'bm_sz',
+    'bm_sv',
+    'ak_bmsc',
+    '_abck',
+    'XSRF-TOKEN',
+    'EPIC_SESSION_REPUTATION',
+    'EPIC_SESSION_ID',
+    'EPIC_SESSION_AP',
+    'EPIC_LOCALE_COOKIE',
+    'EPIC_DEVICE',
+  ];
+  return cookies.filter(([key]) => validKeys.includes(key));
+}
+
 const baseUrl = new URL(config.baseUrl);
 const basePath = baseUrl.pathname;
 
@@ -171,7 +187,7 @@ router.post<any, InitResp, InitReq, any>(
         ? session.session.plan.h_captcha.site_key
         : session.session.plan.arkose.public_key;
     const cookies = getCookies(email);
-    const cookieEntries = Object.entries(cookies);
+    const cookieEntries = filterNecessaryCookies(Object.entries(cookies));
     cookieEntries.forEach(([key, value]) => res.cookie(key, value));
     const resBody: InitResp = {
       captchaKey,
@@ -210,7 +226,7 @@ router.post<any, any, CompleteBody, any>(
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);
     await responseManualCaptcha({ id, sessionData });
     const cookies = getCookies(email);
-    const cookieEntries = Object.entries(cookies);
+    const cookieEntries = filterNecessaryCookies(Object.entries(cookies));
     cookieEntries.forEach(([key, value]) => res.cookie(key, value));
     res.status(200).send();
   })
