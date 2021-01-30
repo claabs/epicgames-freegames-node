@@ -231,7 +231,7 @@ const getDateData = () => {
 
 const getFingerprintBase = async () => {
   const f = {
-    fingerprint_verion: 4,
+    fingerprint_version: 4,
     timestamp: getIsoString(),
     math_rand: generateRandomHash(),
     document: getDocumentHeadData(),
