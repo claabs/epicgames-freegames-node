@@ -37,7 +37,7 @@ const app = express();
 app.use(cookieParser());
 const router = express.Router();
 
-// Replace the hostname in the HCaptcha getsiteconfig call
+// Replace the hostname in the various hcaptcha process calls
 router.use(
   '/proxy',
   proxy('https://hcaptcha.com', {
@@ -50,10 +50,57 @@ router.use(
       }
       return url;
     },
+    proxyReqBodyDecorator: proxyReqData => {
+      let data: string = proxyReqData.toString('utf8');
+      if (data.includes(baseUrl.hostname)) {
+        data = data.replace(
+          new RegExp(baseUrl.hostname, 'g'),
+          'talon-website-prod.ak.epicgames.com'
+        );
+      }
+      return data;
+    },
   })
 );
+
+const insertTags = (data: string, url: string, component: string): string => {
+  if (url.includes(`${component}.html`)) {
+    let updatedData = data;
+    const scriptElem = `<script type="text/javascript" src="../${component}.js"></script>`;
+    const cssElem = `<link rel="stylesheet" type="text/css" href="css/style.css">`;
+    updatedData = updatedData.replace(/<script.*<\/script>/, ''); // Delete script, since it still works on .com sites
+    // Manually insert CSS and JS tags
+    updatedData = updatedData.replace(/\n<\/head>/, `\n${scriptElem}\n${cssElem}\n</head>`);
+    updatedData = updatedData.replace(/<meta http-equiv="Content-Security-Policy".*?>/, '');
+    return updatedData;
+  }
+  return data;
+};
 // HCaptcha assets proxy, fixes issues on HTTP clients
-router.use('/assets', proxy('https://assets.hcaptcha.com'));
+router.use(
+  '/assets',
+  proxy('https://assets.hcaptcha.com', {
+    userResDecorator: (_proxyRes, proxyResData, userReq) => {
+      let data: string = proxyResData
+        .toString('utf8')
+        .replace(new RegExp('assets.hcaptcha.com', 'g'), `${baseUrl.hostname}/assets`);
+      // Manually place JS and CSS elements since hcaptcha's dynamic code doesn't work on http or non-.com domains
+      data = insertTags(data, userReq.url, 'hcaptcha-checkbox');
+      data = insertTags(data, userReq.url, 'hcaptcha-challenge');
+      // Replace hcaptcha.com URL in hcaptcha js
+      if (
+        userReq.url.includes('hcaptcha-checkbox.js') ||
+        userReq.url.includes('hcaptcha-challenge.js')
+      ) {
+        data = data.replace(
+          /endpoint:"https:\/\/hcaptcha\.com"/g,
+          `endpoint:"${baseUrl.origin}/proxy"`
+        );
+      }
+      return data;
+    },
+  })
+);
 
 // Replace every hostname available in the Akamai device info
 router.use(
