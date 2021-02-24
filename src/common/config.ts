@@ -146,7 +146,7 @@ const envVarConfig: PartialConfig = {
     emailSenderAddress: process.env.EMAIL_SENDER_ADDRESS,
     emailSenderName: process.env.EMAIL_SENDER_NAME,
     emailRecipientAddress: process.env.EMAIL_RECIPIENT_ADDRESS,
-    secure: process.env.SMTP_SECURE === 'true',
+    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true,
     auth: {
       user: process.env.SMTP_USERNAME,
       pass: process.env.SMTP_PASSWORD,
