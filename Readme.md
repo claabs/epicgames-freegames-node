@@ -134,7 +134,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 
 | Host port | Container port | Description                                                                   |
 |-----------|----------------|-------------------------------------------------------------------------------|
-| `3001`    | `3000`         | Port mapping on which the web server hosting the Captcha solving page resides |
+| `3000`    | `3000`         | Port mapping on which the web server hosting the Captcha solving page resides |
 
 #### Volumes
 
@@ -163,7 +163,7 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 
 #### Without JSON Config
 
-`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3001:3000 charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
 
 ### Cookie Import
 
