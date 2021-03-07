@@ -7,6 +7,7 @@ import nocache from 'nocache';
 import got from 'got';
 import asyncHandler from 'express-async-handler';
 import cookieParser from 'cookie-parser';
+// import jwt from 'jsonwebtoken';
 import L from '../common/logger';
 import { config } from '../common/config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
@@ -35,7 +36,9 @@ const basePath = baseUrl.pathname;
 
 const app = express();
 app.use(cookieParser());
+app.disable('etag');
 const router = express.Router();
+router.use(nocache());
 
 // Replace the hostname in the various hcaptcha process calls
 router.use(
@@ -60,7 +63,39 @@ router.use(
       }
       return data;
     },
-  })
+    // hCaptcha returns an assets URL in a JWT, but it doesn't seem necessary to patch it...yet
+    // userResDecorator: (_proxyRes, proxyResData, userReq) => {
+    //   let data: string = proxyResData.toString('utf8');
+    //   if (userReq.path.includes('checksiteconfig') || userReq.path.includes('getcaptcha')) {
+    //     const resData = JSON.parse(data);
+    //     const token = resData.c.req;
+    //     const decParts = jwt.decode(token, { complete: true, json: false }) as Record<string, any>;
+    //     const { payload } = decParts;
+    //     payload.l = payload.l.replace(
+    //       new RegExp('assets.hcaptcha.com', 'g'),
+    //       `${baseUrl.hostname}/assets`
+    //     );
+    //     const newToken = jwt.sign(payload, 'secret', {
+    //       algorithm: 'HS256',
+    //     });
+    //     resData.c.req = newToken;
+    //     data = JSON.stringify(resData);
+    //   }
+    //   return data;
+    // },
+  }),
+  nocache()
+);
+
+router.use(
+  '/challenge',
+  proxy('https://assets.hcaptcha.com/captcha', {
+    proxyReqPathResolver: req => {
+      L.trace(req);
+      return req.originalUrl;
+    },
+  }),
+  nocache()
 );
 
 const insertTags = (data: string, url: string, component: string): string => {
@@ -99,7 +134,8 @@ router.use(
       }
       return data;
     },
-  })
+  }),
+  nocache()
 );
 
 // Replace every hostname available in the Akamai device info
@@ -144,7 +180,8 @@ router.use(
       updatedHeaders['set-cookie'] = cookieHeader;
       return updatedHeaders;
     },
-  })
+  }),
+  nocache()
 );
 router.use(
   '/akam',
@@ -176,7 +213,8 @@ router.use(
       }
       return updatedHeaders;
     },
-  })
+  }),
+  nocache()
 );
 router.use(express.static(path.join(__dirname, 'public')));
 router.use(express.json());
@@ -198,7 +236,8 @@ router.get(
       .replace('(hcaptcha|1\\/api)', 'hcaptcha-api');
     res.header('content-type', resp.headers['content-type']);
     res.status(200).send(body);
-  })
+  }),
+  nocache()
 );
 
 interface InitReq {
@@ -302,9 +341,6 @@ const errorHandler: ErrorRequestHandler = (err: Error, req, res, next) => {
 };
 
 router.use(errorHandler);
-
-app.use(nocache());
-app.disable('etag');
 
 app.use(basePath, router);
 
