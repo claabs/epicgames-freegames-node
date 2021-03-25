@@ -97,7 +97,9 @@ export default class Login {
   ): Promise<void> {
     this.L.debug({ email, captcha, attempt }, 'Attempting login');
     if (attempt > 5) {
-      throw new Error('Too many login attempts');
+      throw new Error(
+        'Too many login attempts. This probably because something is wrong with the captcha process.'
+      );
     }
     const csrfToken = await this.getCsrf();
     const loginBody: LoginBody = {

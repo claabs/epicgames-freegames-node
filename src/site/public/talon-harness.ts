@@ -14,7 +14,9 @@ import tlsh from 'tlsh';
 // https://talon-website-prod.ak.epicgames.com/talon_harness.js
 // ==================================
 
-const HASHKEY_STRING = 'B8lpKXL3eSq3FXr4Di4V7RJNaA3vtPIu9yl8w8DU';
+// This is easiest to find if you just debug the code with a breakpoint after one of the `atob`s.
+// You can also get a full sample fingerprint in the same place
+const HASHKEY_STRING = 'dKULY3noXthW3c10ZJ6qaIzDnUdi7gzIS6VDsB5g5gg';
 
 const createXal = (fingerprintData: Record<string, any>): string => {
   const hashkey = atob(HASHKEY_STRING);
@@ -231,7 +233,7 @@ const getDateData = () => {
 
 const getFingerprintBase = async () => {
   const f = {
-    fingerprint_version: 4,
+    fingerprint_version: 6,
     timestamp: getIsoString(),
     math_rand: generateRandomHash(),
     document: getDocumentHeadData(),
@@ -245,8 +247,65 @@ const getFingerprintBase = async () => {
       device_pixel_ratio: window.devicePixelRatio,
       media_devices: await getMediaDevices(),
       dark_mode: true,
+      property_list: [
+        'caches',
+        'cookieStore',
+        'ondevicemotion',
+        'ondeviceorientation',
+        'ondeviceorientationabsolute',
+        'showDirectoryPicker',
+        'showOpenFilePicker',
+        'showSaveFilePicker',
+        'bazadebezolkohpepadr',
+        '_cf',
+        'webpackJsonp_N_E',
+        '_N_E',
+        '_ac',
+        'bmak',
+        'bm_counter',
+        'bm_script',
+        'scripts',
+        'bm_url',
+        'url_split',
+        'obfus_state_field',
+        'state_field_str',
+        '_sd_trace',
+        'op',
+        'regeneratorRuntime',
+        '__NEXT_DATA__',
+        '__SSG_MANIFEST_CB',
+        '__NEXT_P',
+        'next',
+        '2f1acc6c3a606b082e5eef5e54414ffb',
+        'IntlPolyfill',
+        '__BUILD_MANIFEST_CB',
+        '__BUILD_MANIFEST',
+        '__SSG_MANIFEST',
+        'a0_0x1136',
+        'a0_0x378c',
+        'talon',
+        'hCaptchaLoaded',
+        'hcaptcha',
+        'grecaptcha',
+      ],
     },
     date: getDateData(),
+    runtime: {
+      sd_recurse: false,
+    },
+    parent_document: {
+      title: 'Sign in to Your Epic Games Account | Epic Games',
+    },
+    parent_window: {
+      location: {
+        origin: 'https://www.epicgames.com',
+        pathname: '/id/login/epic',
+      },
+      history: {
+        length: 5,
+      },
+    },
+    solve_token: false,
   };
   console.log('Fingerprint JSON:', f);
   return f;
@@ -257,6 +316,6 @@ export const getInitData = async () => {
     v: 1,
     xal: createXal(await getFingerprintBase()),
     ewa: 'b',
-    kid: 'sk29dsv',
+    kid: 'bfetm',
   };
 };

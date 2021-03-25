@@ -3,6 +3,7 @@ import { Got } from 'got';
 import { Logger } from 'pino';
 import {
   PHASER_F_ENDPOINT,
+  PHASER_BATCH_ENDPOINT,
   TALON_INIT_ENDPOINT,
   TALON_IP_ENDPOINT,
   TALON_EXECUTE_ENDPOINT,
@@ -68,6 +69,8 @@ export interface PhaserEvent {
   errors: string[];
 }
 
+export type PhaserBatchBody = PhaserEvent[];
+
 export interface BeginSessionReturn extends Pick<PhaserEvent, 'timing'> {
   session: PhaserSession;
   blob?: string;
@@ -80,7 +83,7 @@ export interface InitData {
   kid: string;
 }
 
-export interface InitBody extends InitData {
+export interface InitBody {
   flow_id: string;
 }
 
@@ -174,6 +177,15 @@ export default class TalonSdk {
     return timing;
   }
 
+  // TODO: Convert Talon SDK to batched events using batch endpoint
+  private async rawSendPhaserBatch(body: PhaserBatchBody, referrerOrigin: string): Promise<void> {
+    this.L.trace({ body, PHASER_BATCH_ENDPOINT }, 'POST');
+    await this.request.post(PHASER_BATCH_ENDPOINT, {
+      json: body,
+      headers: this.getHeaders(referrerOrigin),
+    });
+  }
+
   private getHeaders(referrerOrigin: string): Record<string, string> {
     return {
       pragma: 'no-cache',
@@ -244,10 +256,10 @@ export default class TalonSdk {
     return resp.body;
   }
 
-  async initTalon(initData: InitData): Promise<PhaserSession> {
+  async initTalon(): Promise<PhaserSession> {
     const body: InitBody = {
       flow_id: 'login_prod',
-      ...initData,
+      // ...initData,
     };
     this.L.trace({ body, TALON_INIT_ENDPOINT }, 'POST');
     const resp = await this.request.post<PhaserSession>(TALON_INIT_ENDPOINT, {
@@ -277,7 +289,7 @@ export default class TalonSdk {
   async beginTalonSession(initData: InitData): Promise<BeginSessionReturn> {
     await this.sdkLoad();
     let timing = await this.sdkInit();
-    const session = await this.initTalon(initData); // Send fingerprint
+    const session = await this.initTalon(); // Send fingerprint
     timing = await this.sdkInitComplete(session, timing);
     timing = await this.challengeReady(session, timing);
     timing = await this.sdkExecute(session, timing);
