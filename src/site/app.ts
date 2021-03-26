@@ -263,8 +263,8 @@ router.post<any, InitResp, InitReq, any>(
     }
     L.trace({ body: req.body }, 'incoming /init POST body');
     const { initData, id } = req.body;
-    const { email } = getPendingCaptcha(id);
-    const talon = new TalonSdk(email, req.headers['user-agent']);
+    const { email, xsrfToken } = getPendingCaptcha(id);
+    const talon = new TalonSdk(email, req.headers['user-agent'], xsrfToken);
     const talonSessionResp = await talon.beginTalonSession(initData);
     const { session, timing, blob } = talonSessionResp;
     const provider = session.session.plan.mode;
@@ -305,9 +305,9 @@ router.post<any, any, CompleteBody, any>(
     L.trace({ body: req.body }, 'incoming /complete POST body');
     const { _abck } = req.cookies;
     const { id, captchaResult, initData, session, timing } = req.body;
-    const { email } = getPendingCaptcha(id);
+    const { email, xsrfToken } = getPendingCaptcha(id);
     if (_abck) setCookie(email, '_abck', _abck);
-    const talon = new TalonSdk(email, req.headers['user-agent']);
+    const talon = new TalonSdk(email, req.headers['user-agent'], xsrfToken);
     await talon.challengeComplete(session, timing);
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);
     await responseManualCaptcha({ id, sessionData });

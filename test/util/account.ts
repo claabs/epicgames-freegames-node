@@ -178,7 +178,7 @@ export default class AccountManager {
             e.response.body.message === 'captcha is required')
         ) {
           L.debug('Captcha required');
-          const newCaptcha = await notifyManualCaptcha(this.permMailAddress);
+          const newCaptcha = await notifyManualCaptcha(this.permMailAddress, csrfToken);
           await this.createAccount(email, password, attempt + 1, newCaptcha);
         } else if (e.response.body.errorCode.includes('email_verification_required')) {
           const code = await this.getPermVerification();

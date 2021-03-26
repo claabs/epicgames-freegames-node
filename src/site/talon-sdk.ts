@@ -139,14 +139,17 @@ export default class TalonSdk {
 
   private userAgent: string;
 
+  private xsrfToken: string;
+
   private request: Got;
 
-  constructor(email: string, userAgent: string) {
+  constructor(email: string, userAgent: string, xsrfToken: string) {
     this.L = logger.child({
       user: email,
     });
     this.userAgent = userAgent;
     this.request = newCookieJar(email);
+    this.xsrfToken = xsrfToken;
   }
 
   private async sendPhaserEvent(
@@ -196,6 +199,7 @@ export default class TalonSdk {
       'sec-fetch-mode': 'cors',
       'sec-fetch-dest': 'empty',
       referer: `${referrerOrigin}/`,
+      'x-xsrf-token': this.xsrfToken,
     };
   }
 

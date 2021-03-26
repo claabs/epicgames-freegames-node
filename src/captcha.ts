@@ -20,6 +20,7 @@ export interface CaptchaSolution {
 export interface PendingCaptcha {
   id: string;
   email: string;
+  xsrfToken: string;
 }
 
 let pendingCaptchas: PendingCaptcha[] = [];
@@ -67,13 +68,14 @@ const solveLocally = async (url: string): Promise<void> => {
 
 export async function notifyManualCaptcha(
   email: string,
+  xsrfToken: string,
   publicKey?: EpicArkosePublicKey,
   blob?: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const L = logger.child({ user: email });
     const id = uuid();
-    const pending: PendingCaptcha = { id, email };
+    const pending: PendingCaptcha = { id, email, xsrfToken };
     pendingCaptchas.push(pending);
     const qs = querystring.stringify({ id, pkey: publicKey, blob });
     const url = `${config.baseUrl}?${qs}`;

@@ -101,7 +101,7 @@ export default class Login {
         'Too many login attempts. This probably because something is wrong with the captcha process.'
       );
     }
-    const csrfToken = await this.getCsrf();
+    let csrfToken = await this.getCsrf();
     const loginBody: LoginBody = {
       password,
       rememberMe: true,
@@ -128,7 +128,8 @@ export default class Login {
           this.L.debug('Captcha required');
           let captchaToken: string;
           if (attempt % 2 === 0) {
-            captchaToken = await notifyManualCaptcha(email);
+            csrfToken = await this.getCsrf();
+            captchaToken = await notifyManualCaptcha(email, csrfToken);
           } else {
             captchaToken = captcha;
           }
