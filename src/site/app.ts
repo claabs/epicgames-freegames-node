@@ -87,17 +87,6 @@ router.use(
   nocache()
 );
 
-router.use(
-  '/challenge',
-  proxy('https://assets.hcaptcha.com/captcha', {
-    proxyReqPathResolver: req => {
-      L.trace(req);
-      return req.originalUrl;
-    },
-  }),
-  nocache()
-);
-
 const insertTags = (data: string, url: string, component: string): string => {
   if (url.includes(`${component}.html`)) {
     let updatedData = data;
@@ -160,8 +149,7 @@ router.use(
       return updatedReq;
     },
     // Updates URL in Akamai sensor_data body
-    proxyReqBodyDecorator: (bodyContent: Buffer, srcReq) => {
-      L.trace({ srcReq });
+    proxyReqBodyDecorator: (bodyContent: Buffer) => {
       const body = bodyContent.toString();
       const updatedBody = body.replace(
         new RegExp(`https://${baseUrl.hostname}.*?,`, 'g'),
@@ -240,6 +228,24 @@ router.get(
   nocache()
 );
 
+router.get(
+  '/challenge/grid/challenge.js',
+  asyncHandler(async (_req, res) => {
+    L.trace('incoming /challenge/grid/challenge.js request');
+    const resp = await got.get(`https://hcaptcha.com/challenge/grid/challenge.js`, {
+      followRedirect: true,
+      responseType: 'text',
+    });
+    const body = resp.body.replace(
+      new RegExp('https://assets.hcaptcha.com', 'g'),
+      `${baseUrl.origin}/assets`
+    );
+    res.header('content-type', resp.headers['content-type']);
+    res.status(200).send(body);
+  }),
+  nocache()
+);
+
 interface InitReq {
   initData: InitData;
   id: string;
@@ -309,6 +315,7 @@ router.post<any, any, CompleteBody, any>(
     if (_abck) setCookie(email, '_abck', _abck);
     const talon = new TalonSdk(email, req.headers['user-agent'], xsrfToken);
     await talon.challengeComplete(session, timing);
+    await talon.sendBatchEvents();
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);
     await responseManualCaptcha({ id, sessionData });
     const cookies = getCookies(email);

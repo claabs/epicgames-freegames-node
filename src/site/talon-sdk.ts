@@ -143,6 +143,8 @@ export default class TalonSdk {
 
   private request: Got;
 
+  private eventBuffer: PhaserEvent[] = [];
+
   constructor(email: string, userAgent: string, xsrfToken: string) {
     this.L = logger.child({
       user: email,
@@ -154,7 +156,6 @@ export default class TalonSdk {
 
   private async sendPhaserEvent(
     event: EventType,
-    referrerOrigin: string,
     session?: PhaserSession,
     oldTiming?: Timing[]
   ): Promise<Timing[]> {
@@ -172,21 +173,20 @@ export default class TalonSdk {
       timing,
       errors: [],
     };
-    this.L.trace({ body, PHASER_F_ENDPOINT }, 'POST');
-    await this.request.post(PHASER_F_ENDPOINT, {
-      json: body,
-      headers: this.getHeaders(referrerOrigin),
-    });
+    this.L.trace({ body }, 'Add to event buffer');
+
+    this.eventBuffer.push(body);
     return timing;
   }
 
-  // TODO: Convert Talon SDK to batched events using batch endpoint
-  private async rawSendPhaserBatch(body: PhaserBatchBody, referrerOrigin: string): Promise<void> {
+  async sendBatchEvents(): Promise<void> {
+    const body = this.eventBuffer;
     this.L.trace({ body, PHASER_BATCH_ENDPOINT }, 'POST');
     await this.request.post(PHASER_BATCH_ENDPOINT, {
       json: body,
-      headers: this.getHeaders(referrerOrigin),
+      headers: this.getHeaders('https://talon-website-prod.ak.epicgames.com'),
     });
+    this.eventBuffer = [];
   }
 
   private getHeaders(referrerOrigin: string): Record<string, string> {
@@ -204,51 +204,35 @@ export default class TalonSdk {
   }
 
   async sdkLoad(): Promise<void> {
-    await this.sendPhaserEvent('sdk_load', 'https://www.epicgames.com');
+    await this.sendPhaserEvent('sdk_load');
   }
 
   async sdkInit(): Promise<Timing[]> {
-    return this.sendPhaserEvent('sdk_init', 'https://www.epicgames.com');
+    return this.sendPhaserEvent('sdk_init');
   }
 
   async sdkInitComplete(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
-    return this.sendPhaserEvent(
-      'sdk_init_complete',
-      'https://www.epicgames.com',
-      session,
-      oldTiming
-    );
+    return this.sendPhaserEvent('sdk_init_complete', session, oldTiming);
   }
 
   async challengeReady(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
-    return this.sendPhaserEvent('challenge_ready', 'https://www.epicgames.com', session, oldTiming);
+    return this.sendPhaserEvent('challenge_ready', session, oldTiming);
   }
 
   async challengeExecute(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
-    return this.sendPhaserEvent(
-      'challenge_execute',
-      'https://www.epicgames.com',
-      session,
-      oldTiming
-    );
+    return this.sendPhaserEvent('challenge_execute', session, oldTiming);
+  }
+
+  async challengeOpened(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
+    return this.sendPhaserEvent('challenge_opened', session, oldTiming);
   }
 
   async sdkExecute(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
-    return this.sendPhaserEvent(
-      'sdk_execute',
-      'https://talon-website-prod.ak.epicgames.com',
-      session,
-      oldTiming
-    );
+    return this.sendPhaserEvent('sdk_execute', session, oldTiming);
   }
 
   async challengeComplete(session: PhaserSession, oldTiming: Timing[]): Promise<Timing[]> {
-    return this.sendPhaserEvent(
-      'challenge_complete',
-      'https://www.epicgames.com',
-      session,
-      oldTiming
-    );
+    return this.sendPhaserEvent('challenge_complete', session, oldTiming);
   }
 
   async initIp(): Promise<ClientIp> {
@@ -303,6 +287,8 @@ export default class TalonSdk {
       blob = executeResp.arkose.data.blob;
     }
     timing = await this.challengeExecute(session, timing);
+    timing = await this.challengeOpened(session, timing);
+    this.sendBatchEvents();
     return { session, timing, blob };
   }
 }
