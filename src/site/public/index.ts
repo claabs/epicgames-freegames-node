@@ -61,11 +61,12 @@ function errorMessage(err: any): void {
 async function talonSuccess(captchaResult: string): Promise<void> {
   console.log('talon captchaResult:', captchaResult);
   try {
+    const newInitData = await getInitData(true);
     await sendComplete({
       id: id as string,
       captchaResult,
       session: gSession,
-      initData: gInitData,
+      initData: newInitData,
       timing: gTiming,
     });
   } catch (err) {
@@ -214,7 +215,7 @@ window.addEventListener('load', async () => {
   } else {
     console.log('Performing Talon captcha. Getting session...');
     try {
-      gInitData = await getInitData();
+      gInitData = await getInitData(false);
       const initResp = await sendInit(gInitData);
       createAkamaiScript();
       const { provider } = initResp;

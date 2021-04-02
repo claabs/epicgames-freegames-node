@@ -231,7 +231,7 @@ const getDateData = () => {
   };
 };
 
-const getFingerprintBase = async () => {
+const getFingerprintBase = async (solveToken: boolean) => {
   const f = {
     fingerprint_version: 6,
     timestamp: getIsoString(),
@@ -305,16 +305,16 @@ const getFingerprintBase = async () => {
         length: 5,
       },
     },
-    solve_token: false,
+    solve_token: solveToken,
   };
   console.log('Fingerprint JSON:', f);
   return f;
 };
 
-export const getInitData = async () => {
+export const getInitData = async (isPostSolve: boolean) => {
   return {
     v: 1,
-    xal: createXal(await getFingerprintBase()),
+    xal: createXal(await getFingerprintBase(isPostSolve)),
     ewa: 'b',
     kid: 'bfetm',
   };
