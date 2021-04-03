@@ -67,8 +67,12 @@ router.use(
     },
     proxyReqOptDecorator: proxyReqOpts => {
       const req = proxyReqOpts;
-      if (req.headers && req.path?.includes('checkcaptcha')) {
-        // req.headers.host = 'talon-website-prod.ak.epicgames.com';
+      if (
+        req.headers &&
+        (req.path?.includes('checkcaptcha') ||
+          req.path?.includes('checksiteconfig') ||
+          req.path?.includes('getcaptcha'))
+      ) {
         if (req.headers.referer)
           req.headers.referer = (req.headers.referer as string).replace(
             new RegExp(baseUrl.host, 'g'),
