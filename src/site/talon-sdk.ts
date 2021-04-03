@@ -2,7 +2,6 @@
 import { Got } from 'got';
 import { Logger } from 'pino';
 import {
-  PHASER_F_ENDPOINT,
   PHASER_BATCH_ENDPOINT,
   TALON_INIT_ENDPOINT,
   TALON_IP_ENDPOINT,
@@ -292,7 +291,6 @@ export default class TalonSdk {
       blob = executeResp.h_captcha.data;
     }
     timing = await this.challengeExecute(session, timing);
-    timing = await this.challengeOpened(session, timing);
     this.sendBatchEvents();
     return { session, timing, blob };
   }
