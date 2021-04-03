@@ -56,12 +56,32 @@ router.use(
     proxyReqBodyDecorator: proxyReqData => {
       let data: string = proxyReqData.toString('utf8');
       if (data.includes(baseUrl.hostname)) {
+        L.trace(data, 'replacing data component');
         data = data.replace(
           new RegExp(baseUrl.hostname, 'g'),
           'talon-website-prod.ak.epicgames.com'
         );
+        L.trace({ data }, 'updated data');
       }
       return data;
+    },
+    proxyReqOptDecorator: proxyReqOpts => {
+      const req = proxyReqOpts;
+      if (req.headers && req.path?.includes('checkcaptcha')) {
+        // req.headers.host = 'talon-website-prod.ak.epicgames.com';
+        if (req.headers.referer)
+          req.headers.referer = (req.headers.referer as string).replace(
+            new RegExp(baseUrl.host, 'g'),
+            'assets.hcaptcha.com'
+          );
+        if (req.headers.origin)
+          req.headers.origin = (req.headers.referer as string).replace(
+            new RegExp(baseUrl.host, 'g'),
+            'assets.hcaptcha.com'
+          );
+        L.trace({ headers: req.headers }, 'new headers');
+      }
+      return req;
     },
     // hCaptcha returns an assets URL in a JWT, but it doesn't seem necessary to patch it...yet
     // userResDecorator: (_proxyRes, proxyResData, userReq) => {
@@ -73,7 +93,7 @@ router.use(
     //     const { payload } = decParts;
     //     payload.l = payload.l.replace(
     //       new RegExp('assets.hcaptcha.com', 'g'),
-    //       `${baseUrl.hostname}/assets`
+    //       `${baseUrl.host}/assets`
     //     );
     //     const newToken = jwt.sign(payload, 'secret', {
     //       algorithm: 'HS256',
@@ -107,7 +127,7 @@ router.use(
     userResDecorator: (_proxyRes, proxyResData, userReq) => {
       let data: string = proxyResData
         .toString('utf8')
-        .replace(new RegExp('assets.hcaptcha.com', 'g'), `${baseUrl.hostname}/assets`);
+        .replace(new RegExp('https://assets.hcaptcha.com', 'g'), `${baseUrl.origin}/assets`);
       // Manually place JS and CSS elements since hcaptcha's dynamic code doesn't work on http or non-.com domains
       data = insertTags(data, userReq.url, 'hcaptcha-checkbox');
       data = insertTags(data, userReq.url, 'hcaptcha-challenge');
@@ -152,7 +172,7 @@ router.use(
     proxyReqBodyDecorator: (bodyContent: Buffer) => {
       const body = bodyContent.toString();
       const updatedBody = body.replace(
-        new RegExp(`https://${baseUrl.hostname}.*?,`, 'g'),
+        new RegExp(`https://${baseUrl.host}.*?,`, 'g'),
         `${TALON_REFERRER}-1,`
       );
       L.trace({ updatedBody });
@@ -163,7 +183,7 @@ router.use(
       const updatedHeaders = headers;
       let cookieHeader = headers['set-cookie'];
       if (cookieHeader) {
-        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
+        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.host));
       }
       updatedHeaders['set-cookie'] = cookieHeader;
       return updatedHeaders;
@@ -196,7 +216,7 @@ router.use(
       const updatedHeaders = headers;
       let cookieHeader = headers['set-cookie'];
       if (cookieHeader) {
-        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.hostname));
+        cookieHeader = cookieHeader.map(value => value.replace(/epicgames\.com/, baseUrl.host));
         updatedHeaders['set-cookie'] = cookieHeader;
       }
       return updatedHeaders;

@@ -27,7 +27,7 @@ let gBlob: string | undefined;
 interface InitResp {
   captchaKey: string;
   provider: 'h_captcha' | 'arkose';
-  blob?: string;
+  blob: string;
   session: Record<string, any>;
   timing: Record<string, any>[];
 }
@@ -109,7 +109,8 @@ async function hCaptchaLoaded(): Promise<void> {
       callback: hcaptchaSuccess,
       'challenge-container': 'challenge_container_hcaptcha',
     });
-    hcaptcha.execute(widgetID);
+    // hcaptcha.setData(widgetID, { rqdata: gBlob }); // Enterprise hCaptcha feature, little documentation
+    hcaptcha.execute(widgetID, { rqdata: gBlob }); // Setting the rqdata here is the only way for it to work...
   } catch (err) {
     errorMessage(err);
   }
@@ -224,6 +225,7 @@ window.addEventListener('load', async () => {
       gTiming = initResp.timing;
       gBlob = initResp.blob;
       console.log('captchaKey:', gCaptchaKey);
+      console.log('blob:', gBlob);
       console.log('session:', gSession);
       console.log('timing:', gTiming);
       if (provider === 'arkose') {

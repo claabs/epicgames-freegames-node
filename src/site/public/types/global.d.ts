@@ -3,7 +3,8 @@ declare const hcaptcha: {
   reset: (widgetID?: string) => void;
   getResponse: (widgetID?: string) => string;
   getRespKey: (widgetID?: string) => string;
-  execute: (widgetID?: string) => void;
+  execute: (widgetID?: string, data?: Record<string, any>) => void;
+  setData: (widgetID: string, data: Record<string, any>) => void;
 };
 
 interface Navigator {

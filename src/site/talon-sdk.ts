@@ -124,7 +124,9 @@ export interface PlanResultsArkose {
 export type TalonExecuteResponse = HCaptchaExecuteResponse | ArkoseExecuteResponse;
 
 export interface HCaptchaExecuteResponse {
-  h_captcha: {};
+  h_captcha: {
+    data: string;
+  };
 }
 export interface ArkoseExecuteResponse {
   arkose: {
@@ -285,6 +287,9 @@ export default class TalonSdk {
     let blob: string | undefined;
     if ('arkose' in executeResp) {
       blob = executeResp.arkose.data.blob;
+    }
+    if ('h_captcha' in executeResp) {
+      blob = executeResp.h_captcha.data;
     }
     timing = await this.challengeExecute(session, timing);
     timing = await this.challengeOpened(session, timing);
