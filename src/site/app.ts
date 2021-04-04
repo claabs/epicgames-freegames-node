@@ -21,6 +21,8 @@ function filterNecessaryCookies(cookies: [string, string][]): [string, string][]
     'bm_sv',
     'ak_bmsc',
     '_abck',
+    '_tald',
+    'INGRESS_COOKIE',
     'XSRF-TOKEN',
     'EPIC_SESSION_REPUTATION',
     'EPIC_SESSION_ID',
@@ -73,16 +75,8 @@ router.use(
           req.path?.includes('checksiteconfig') ||
           req.path?.includes('getcaptcha'))
       ) {
-        if (req.headers.referer)
-          req.headers.referer = (req.headers.referer as string).replace(
-            new RegExp(baseUrl.host, 'g'),
-            'assets.hcaptcha.com'
-          );
-        if (req.headers.origin)
-          req.headers.origin = (req.headers.referer as string).replace(
-            new RegExp(baseUrl.host, 'g'),
-            'assets.hcaptcha.com'
-          );
+        if (req.headers.referer) req.headers.referer = 'https://assets.hcaptcha.com/';
+        if (req.headers.origin) req.headers.origin = 'https://assets.hcaptcha.com';
         L.trace({ headers: req.headers }, 'new headers');
       }
       return req;

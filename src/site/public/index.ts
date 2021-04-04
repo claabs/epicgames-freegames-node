@@ -129,8 +129,8 @@ async function hcaptchaSuccess(captchaResult: string): Promise<void> {
   await talonSuccess(captchaResult);
 }
 
-async function hcaptchaOpened(...args: any[]): Promise<void> {
-  console.log('hcaptcha opened args:', args);
+async function hcaptchaOpened(): Promise<void> {
+  console.log('hcaptcha opened');
   await talonOpened();
 }
 
@@ -143,7 +143,7 @@ async function hCaptchaLoaded(): Promise<void> {
       theme: 'dark',
       size: 'invisible',
       callback: hcaptchaSuccess,
-      'data-open-callback': hcaptchaOpened,
+      'open-callback': hcaptchaOpened,
       'challenge-container': 'challenge_container_hcaptcha',
     });
     // hcaptcha.setData(widgetID, { rqdata: gBlob }); // Enterprise hCaptcha feature, little documentation
