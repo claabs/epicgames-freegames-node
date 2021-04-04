@@ -316,6 +316,44 @@ router.post<any, InitResp, InitReq, any>(
   })
 );
 
+interface OpenedBody {
+  id: string;
+  session: PhaserSession;
+  timing: Timing[];
+}
+
+interface OpenedResp {
+  session: Record<string, any>;
+  timing: Record<string, any>[];
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+router.post<any, OpenedResp, OpenedBody, any>(
+  '/opened',
+  asyncHandler(async (req, res) => {
+    if (!req.headers?.['user-agent']) {
+      res.status(400).send('user-agent header required');
+      return;
+    }
+    L.trace({ body: req.body }, 'incoming /complete POST body');
+    const { _abck } = req.cookies;
+    const { id } = req.body;
+    let { session, timing } = req.body;
+    const { email, xsrfToken } = getPendingCaptcha(id);
+    if (_abck) setCookie(email, '_abck', _abck);
+    const talon = new TalonSdk(email, req.headers['user-agent'], xsrfToken);
+    ({ session, timing } = await talon.handleCaptchaOpened(session, timing));
+    const cookies = getCookies(email);
+    const cookieEntries = filterNecessaryCookies(Object.entries(cookies));
+    cookieEntries.forEach(([key, value]) => res.cookie(key, value));
+    const resBody: OpenedResp = {
+      session,
+      timing,
+    };
+    res.status(200).send(resBody);
+  })
+);
+
 interface CompleteBody {
   id: string;
   captchaResult: string;
@@ -338,7 +376,7 @@ router.post<any, any, CompleteBody, any>(
     const { email, xsrfToken } = getPendingCaptcha(id);
     if (_abck) setCookie(email, '_abck', _abck);
     const talon = new TalonSdk(email, req.headers['user-agent'], xsrfToken);
-    await talon.challengeComplete(session, timing);
+    await talon.challengeComplete(session, timing); // Maybe not needed? This occurs after login
     await talon.sendBatchEvents();
     const sessionData = assembleFinalCaptchaKey(session, initData, captchaResult);
     await responseManualCaptcha({ id, sessionData });

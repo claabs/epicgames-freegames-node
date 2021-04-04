@@ -49,6 +49,21 @@ async function sendComplete(completeBody: CompleteBody): Promise<void> {
   await axios.post(postPath, completeBody);
 }
 
+interface OpenedBody {
+  id: string;
+  session: Record<string, any>;
+  timing: Record<string, any>[];
+}
+interface OpenedResp {
+  session: Record<string, any>;
+  timing: Record<string, any>[];
+}
+async function sendOpened(openedBody: OpenedBody): Promise<OpenedResp> {
+  const postPath = `${apiRoot}/opened`;
+  const resp = await axios.post<OpenedResp>(postPath, openedBody);
+  return resp.data;
+}
+
 function errorMessage(err: any): void {
   console.error(err);
   const e: AxiosError<string> = err;
@@ -77,6 +92,22 @@ async function talonSuccess(captchaResult: string): Promise<void> {
   document.getElementById('success-text')!.hidden = false;
 }
 
+async function talonOpened(): Promise<void> {
+  console.log('talon opened');
+  try {
+    const openedResp = await sendOpened({
+      id: id as string,
+      session: gSession,
+      timing: gTiming,
+    });
+    gSession = openedResp.session;
+    gTiming = openedResp.timing;
+  } catch (err) {
+    errorMessage(err);
+  }
+  console.log('Successfully sent opened event');
+}
+
 function createAkamaiScript(): void {
   window._cf = [];
   window._cf.push(['_setFsp', true]);
@@ -94,8 +125,13 @@ function createAkamaiScript(): void {
 // =========
 
 async function hcaptchaSuccess(captchaResult: string): Promise<void> {
-  console.log('hcaptcha captchaResult', captchaResult);
-  talonSuccess(captchaResult);
+  console.log('hcaptcha captchaResult:', captchaResult);
+  await talonSuccess(captchaResult);
+}
+
+async function hcaptchaOpened(...args: any[]): Promise<void> {
+  console.log('hcaptcha opened args:', args);
+  await talonOpened();
 }
 
 async function hCaptchaLoaded(): Promise<void> {
@@ -107,6 +143,7 @@ async function hCaptchaLoaded(): Promise<void> {
       theme: 'dark',
       size: 'invisible',
       callback: hcaptchaSuccess,
+      'data-open-callback': hcaptchaOpened,
       'challenge-container': 'challenge_container_hcaptcha',
     });
     // hcaptcha.setData(widgetID, { rqdata: gBlob }); // Enterprise hCaptcha feature, little documentation
@@ -163,7 +200,8 @@ function setupArkoseEnforcement(enforcement: Arkose): void {
       console.log('arkose captchaResult', t);
       if (!pkey) {
         // Talon flow
-        talonSuccess(t.token);
+        await talonOpened();
+        await talonSuccess(t.token);
       } else {
         // Explicit Arkose flow
         console.log('Captcha sessionData:', t);

@@ -70,9 +70,15 @@ export interface PhaserEvent {
 
 export type PhaserBatchBody = PhaserEvent[];
 
-export interface BeginSessionReturn extends Pick<PhaserEvent, 'timing'> {
+export interface BeginSessionReturn {
+  timing: Timing[];
   session: PhaserSession;
   blob?: string;
+}
+
+export interface HandleOpenedReturn {
+  timing: Timing[];
+  session: PhaserSession;
 }
 
 export interface InitData {
@@ -277,11 +283,11 @@ export default class TalonSdk {
 
   async beginTalonSession(initData: InitData): Promise<BeginSessionReturn> {
     await this.sdkLoad();
-    let timing = await this.sdkInit();
     const session = await this.initTalon(); // Send fingerprint
+    let timing = await this.sdkInit();
     timing = await this.sdkInitComplete(session, timing);
     timing = await this.challengeReady(session, timing);
-    timing = await this.sdkExecute(session, timing);
+    this.sendBatchEvents();
     const executeResp = await this.executeTalon(initData, session);
     let blob: string | undefined;
     if ('arkose' in executeResp) {
@@ -290,9 +296,18 @@ export default class TalonSdk {
     if ('h_captcha' in executeResp) {
       blob = executeResp.h_captcha.data;
     }
-    timing = await this.challengeExecute(session, timing);
-    this.sendBatchEvents();
     return { session, timing, blob };
+  }
+
+  async handleCaptchaOpened(
+    session: PhaserSession,
+    inTimings: Timing[]
+  ): Promise<HandleOpenedReturn> {
+    let timing = await this.sdkExecute(session, inTimings);
+    timing = await this.challengeExecute(session, timing);
+    timing = await this.challengeOpened(session, timing);
+    await this.sendBatchEvents();
+    return { session, timing };
   }
 }
 
