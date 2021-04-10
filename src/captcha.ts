@@ -85,7 +85,7 @@ export async function notifyManualCaptcha(
 
     solveStep(url, email)
       .then(() => {
-        L.info({ id }, 'Action requested. Waiting for Captcha to be solved');
+        L.info({ id, url }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
           if (captcha.id === id) resolve(captcha.sessionData);
         });
