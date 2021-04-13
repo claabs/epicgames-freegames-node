@@ -1,10 +1,12 @@
-import open from 'open';
 import { v4 as uuid } from 'uuid';
 import querystring from 'qs';
 import EventEmitter from 'events';
-import nodemailer from 'nodemailer';
 import logger from './common/logger';
-import { config } from './common/config';
+import { config, NotificationType } from './common/config';
+import localNotifier from './notifications/local';
+import emailNotifier from './notifications/email';
+import NotificationService from './notifications';
+import telegramNotifier from './notifications/telegram';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -27,44 +29,17 @@ let pendingCaptchas: PendingCaptcha[] = [];
 
 const captchaEmitter = new EventEmitter();
 
-const emailTransporter = nodemailer.createTransport({
-  host: config.email.smtpHost,
-  port: config.email.smtpPort,
-  secure: config.email.secure,
-  auth: config.email.auth,
-});
-
-async function sendEmail(url: string, email: string): Promise<void> {
-  const L = logger.child({ user: email });
-  L.trace('Sending email');
-  try {
-    await emailTransporter.sendMail({
-      from: {
-        address: config.email.emailSenderAddress,
-        name: config.email.emailSenderName,
-      },
-      to: config.email.emailRecipientAddress,
-      subject: 'Epic Games free games needs a Captcha solved',
-      html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
-             <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
-      textEncoding: 'base64', // Some email clients don't like the '=' in the URL when using quoted-printable?
-    });
-    L.debug(
-      {
-        from: config.email.emailSenderAddress,
-        to: config.email.emailRecipientAddress,
-      },
-      'Email sent.'
-    );
-  } catch (err) {
-    L.error({ emailConfig: config.email }, 'Error sending email. Please check your configuration');
-    throw err;
-  }
-}
-
-const solveLocally = async (url: string): Promise<void> => {
-  await open(url);
+const notifiers: Record<NotificationType, NotificationService> = {
+  [NotificationType.EMAIL]: emailNotifier,
+  [NotificationType.TELEGRAM]: telegramNotifier,
 };
+
+function getNotifier(): NotificationService {
+  if (process.env.ENV === 'local') {
+    return localNotifier;
+  }
+  return notifiers[config.notificationType];
+}
 
 export async function notifyManualCaptcha(
   email: string,
@@ -72,18 +47,18 @@ export async function notifyManualCaptcha(
   publicKey?: EpicArkosePublicKey,
   blob?: string
 ): Promise<string> {
+  const L = logger.child({ user: email });
+  const id = uuid();
+
+  pendingCaptchas.push({ id, email, xsrfToken });
+
+  const qs = querystring.stringify({ id, pkey: publicKey, blob });
+  const url = `${config.baseUrl}?${qs}`;
+  L.debug(`Go to ${url} and solve the captcha`);
+
   return new Promise((resolve, reject) => {
-    const L = logger.child({ user: email });
-    const id = uuid();
-    const pending: PendingCaptcha = { id, email, xsrfToken };
-    pendingCaptchas.push(pending);
-    const qs = querystring.stringify({ id, pkey: publicKey, blob });
-    const url = `${config.baseUrl}?${qs}`;
-    L.debug(`Go to ${url} and solve the captcha`);
-
-    const solveStep = process.env.ENV === 'local' ? solveLocally : sendEmail;
-
-    solveStep(url, email)
+    getNotifier()
+      .sendNotification(url, email)
       .then(() => {
         L.info({ id, url }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {

@@ -109,3 +109,5 @@ dist
 .vscode-test
 
 config/*
+
+.idea

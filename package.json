@@ -16,6 +16,7 @@
     "docker:build-test": "docker build . -t charlocharlie/epicgames-freegames-test:latest --target deploy"
   },
   "dependencies": {
+    "@types/node-telegram-bot-api": "^0.51.1",
     "cookie-parser": "^1.4.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -28,6 +29,7 @@
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.24.0",
     "nocache": "^2.1.0",
+    "node-telegram-bot-api": "^0.52.0",
     "nodemailer": "^6.4.16",
     "object-assign-deep": "^0.4.0",
     "open": "^8.0.4",
