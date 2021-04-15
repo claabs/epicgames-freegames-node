@@ -11,7 +11,7 @@ import {
 } from './common/constants';
 import { BundlesContent } from './interfaces/bundles-content';
 import Login from './login';
-import { config } from './common/config';
+import config from './config';
 import { OffersQueryResponse } from './interfaces/offer-response';
 
 export default class FreeGames {

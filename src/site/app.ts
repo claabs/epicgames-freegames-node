@@ -9,7 +9,7 @@ import asyncHandler from 'express-async-handler';
 import cookieParser from 'cookie-parser';
 // import jwt from 'jsonwebtoken';
 import L from '../common/logger';
-import { config } from '../common/config';
+import config from '../config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';
 import TalonSdk, { assembleFinalCaptchaKey, InitData, PhaserSession, Timing } from './talon-sdk';
 import { TALON_REFERRER, TALON_WEBSITE_BASE } from '../common/constants';

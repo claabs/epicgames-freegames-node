@@ -17,7 +17,8 @@ module.exports = {
   },
   plugins: ['@typescript-eslint', 'jest'],
   rules: {
-    'import/extensions': 0
+    'import/extensions': 0,
+    'no-undef': ['off'],
   },
   settings: {
     'import/extensions': ['.js', '.ts',],

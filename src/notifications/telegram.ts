@@ -1,9 +1,9 @@
 import TelegramBot from 'node-telegram-bot-api';
 import logger from '../common/logger';
-import { config } from '../common/config';
-import NotificationService from './index';
+import config from '../config';
+import NotifierService from '../models/NotifierService';
 
-class TelegramNotifier implements NotificationService {
+class TelegramNotifier implements NotifierService {
   telegramBot: TelegramBot;
 
   constructor() {

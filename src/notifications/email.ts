@@ -1,10 +1,10 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import logger from '../common/logger';
-import { config } from '../common/config';
-import NotificationService from './index';
+import config from '../config';
+import NotifierService from '../models/NotifierService';
 
-class EmailNotifier implements NotificationService {
+class EmailNotifier implements NotifierService {
   emailTransporter: Mail;
 
   constructor() {

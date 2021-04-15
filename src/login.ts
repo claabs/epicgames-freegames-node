@@ -24,7 +24,7 @@ import {
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
 } from './common/constants';
-import { config } from './common/config';
+import config from './config';
 
 export default class Login {
   private request: Got;

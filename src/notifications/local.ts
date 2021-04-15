@@ -1,7 +1,7 @@
 import open from 'open';
-import NotificationService from './index';
+import NotifierService from '../models/NotifierService';
 
-class LocalNotifier implements NotificationService {
+class LocalNotifier implements NotifierService {
   // eslint-disable-next-line class-methods-use-this
   async sendNotification(url: string): Promise<void> {
     await open(url);

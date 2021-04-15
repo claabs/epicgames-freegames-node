@@ -1,6 +1,8 @@
-/* eslint-disable no-await-in-loop */
+// Import dotenv config before all other imports, so ENV variables are loaded for all imports
+import 'dotenv/config';
+
 import 'source-map-support/register';
-import { config } from './common/config';
+import config from './config';
 import L from './common/logger';
 import Login from './login';
 import FreeGames from './free-games';

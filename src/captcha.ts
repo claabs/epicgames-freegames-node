@@ -2,11 +2,8 @@ import { v4 as uuid } from 'uuid';
 import querystring from 'qs';
 import EventEmitter from 'events';
 import logger from './common/logger';
-import { config, NotificationType } from './common/config';
-import localNotifier from './notifications/local';
-import emailNotifier from './notifications/email';
-import NotificationService from './notifications';
-import telegramNotifier from './notifications/telegram';
+import config from './config';
+import getNotifier from './notifications';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -28,18 +25,6 @@ export interface PendingCaptcha {
 let pendingCaptchas: PendingCaptcha[] = [];
 
 const captchaEmitter = new EventEmitter();
-
-const notifiers: Record<NotificationType, NotificationService> = {
-  [NotificationType.EMAIL]: emailNotifier,
-  [NotificationType.TELEGRAM]: telegramNotifier,
-};
-
-function getNotifier(): NotificationService {
-  if (process.env.ENV === 'local') {
-    return localNotifier;
-  }
-  return notifiers[config.notificationType];
-}
 
 export async function notifyManualCaptcha(
   email: string,

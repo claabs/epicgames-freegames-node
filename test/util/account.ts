@@ -1,8 +1,10 @@
+// Import dotenv config before all other imports, so ENV variables are loaded for all imports
+import 'dotenv/config';
+
 /* eslint-disable class-methods-use-this */
 import RandExp from 'randexp';
 import cookieParser from 'set-cookie-parser';
 import { v4 as uuid } from 'uuid';
-import { config } from 'dotenv';
 import { TOTP } from 'otpauth';
 import { Got } from 'got/dist/source';
 import L from '../../src/common/logger';
@@ -21,8 +23,6 @@ import {
   ACCOUNT_SESSION_ENDPOINT,
 } from '../../src/common/constants';
 import '../../src/site/app';
-
-config();
 
 interface CreateAccountRequest {
   country: string;
