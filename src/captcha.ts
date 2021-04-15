@@ -3,7 +3,7 @@ import querystring from 'qs';
 import EventEmitter from 'events';
 import logger from './common/logger';
 import config from './config';
-import getNotifier from './notifications';
+import getNotifier from './notifiers';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
