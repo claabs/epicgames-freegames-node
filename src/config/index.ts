@@ -3,8 +3,9 @@ import json5 from 'json5';
 import fs from 'fs';
 import path from 'path';
 import verifyConfigBasedOnNotificationType from './verifyConfigBasedOnNotificationType';
-import { Config, EmailConfig, PartialConfig, TelegramConfig, Account } from '../models/Config';
-import { isNotificationType, NotificationType } from '../models/NotificationsType';
+import { Config, PartialConfig, Account } from '../models/Config';
+import { toSafeNotificationType } from '../models/NotificationsType';
+import NotificationConfig from './notificationConfig';
 
 const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
 const CONFIG_DIR = 'config';
@@ -13,25 +14,31 @@ const CONFIG_FILE_NAME = 'config';
 // This is required to prevent a stupid error message from node-telegram-bot-api, https://github.com/yagop/node-telegram-bot-api/issues/540
 process.env.NTBA_FIX_319 = '1';
 
+function validateAccounts({ accounts }: PartialConfig): void {
+  if (!accounts || accounts.length < 1) {
+    throw new Error('At least one account is required');
+  }
+
+  accounts.forEach((account, index) => {
+    if (!account.email) {
+      throw new Error(`Account ${index + 1} is missing email`);
+    }
+    if (!account.password) {
+      throw new Error(`Account ${index + 1} is missing password`);
+    }
+  });
+}
+
 function validateConfig(config: PartialConfig): Config {
   // console.debug('Parsing config');
   try {
-    if (!config.accounts || config.accounts.length < 1) {
-      throw new Error('At least one account is required');
-    }
-    config.accounts.forEach((account, index) => {
-      if (!account.email) {
-        throw new Error(`Account ${index + 1} is missing email`);
-      }
-      if (!account.password) {
-        throw new Error(`Account ${index + 1} is missing password`);
-      }
-    });
+    validateAccounts(config);
 
-    if (!isNotificationType(config.notificationType))
-      throw new Error('Missing notification type config');
+    const notificationType = toSafeNotificationType(config.notificationType);
+    const notificationConfig = new NotificationConfig();
+    const specialConfig = verifyConfigBasedOnNotificationType[notificationType](config);
 
-    verifyConfigBasedOnNotificationType[config.notificationType](config);
+    notificationConfig.addConfig(notificationType, specialConfig);
 
     return {
       accounts: config.accounts as Account[],
@@ -42,9 +49,8 @@ function validateConfig(config: PartialConfig): Config {
       logLevel: config.logLevel || 'info',
       baseUrl: config.baseUrl || 'http://localhost:3000',
       serverPort: config.serverPort || 3000,
-      notificationType: NotificationType[config.notificationType],
-      email: config.email as EmailConfig,
-      telegram: config.telegram as TelegramConfig,
+      notificationType,
+      notificationConfig,
     };
   } catch (err) {
     // Can't use pino here due to circular dependency

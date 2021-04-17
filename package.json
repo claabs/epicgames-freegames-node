@@ -1,6 +1,6 @@
 {
   "name": "epicgames-freegames-node",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
@@ -79,7 +79,7 @@
     "yargs": "^16.0.3"
   },
   "engines": {
-    "node": "12"
+    "node": "15"
   },
   "repository": {
     "type": "git",

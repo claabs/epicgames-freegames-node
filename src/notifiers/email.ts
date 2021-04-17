@@ -3,30 +3,47 @@ import Mail from 'nodemailer/lib/mailer';
 import logger from '../common/logger';
 import config from '../config';
 import NotifierService from '../models/NotifierService';
+import { EmailConfig } from '../models/NotificationsConfig';
+import { NotificationType } from '../models/NotificationsType';
 
 class EmailNotifier implements NotifierService {
-  emailTransporter: Mail;
+  private readonly isActive: boolean = false;
+
+  private readonly emailConfig!: EmailConfig;
+
+  private readonly emailTransporter!: Mail;
 
   constructor() {
+    const emailConfig = config.notificationConfig.getConfig(NotificationType.EMAIL);
+    if (!emailConfig) {
+      return;
+    }
+    this.isActive = true;
+
+    this.emailConfig = emailConfig;
     this.emailTransporter = nodemailer.createTransport({
-      host: config.email.smtpHost,
-      port: config.email.smtpPort,
-      secure: config.email.secure,
-      auth: config.email.auth,
+      host: this.emailConfig.smtpHost,
+      port: this.emailConfig.smtpPort,
+      secure: this.emailConfig.secure,
+      auth: this.emailConfig.auth,
     });
   }
 
   async sendNotification(url: string, account: string): Promise<void> {
+    if (!this.isActive) {
+      throw new Error(`Tried to call sendNotification of inactive notifier`);
+    }
+
     const L = logger.child({ user: account });
     L.trace('Sending email');
 
     try {
       await this.emailTransporter.sendMail({
         from: {
-          address: config.email.emailSenderAddress,
-          name: config.email.emailSenderName,
+          address: this.emailConfig.emailSenderAddress,
+          name: this.emailConfig.emailSenderName,
         },
-        to: config.email.emailRecipientAddress,
+        to: this.emailConfig.emailRecipientAddress,
         subject: `Epic Games free games needs a Captcha solved for ${account}`,
         html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
              <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
@@ -34,14 +51,14 @@ class EmailNotifier implements NotifierService {
       });
       L.debug(
         {
-          from: config.email.emailSenderAddress,
-          to: config.email.emailRecipientAddress,
+          from: this.emailConfig.emailSenderAddress,
+          to: this.emailConfig.emailRecipientAddress,
         },
         'Email sent.'
       );
     } catch (err) {
       L.error(
-        { emailConfig: config.email },
+        { emailConfig: this.emailConfig },
         'Error sending email. Please check your configuration'
       );
       throw err;

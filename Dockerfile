@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:12-alpine as base
+FROM node:15-alpine as base
 
 WORKDIR /usr/app
 
@@ -18,7 +18,7 @@ COPY src/site/public/package*.json src/site/public/tsconfig.json ./src/site/publ
 RUN npm ci && cd src/site/public && npm ci
 
 # Copy source code
-COPY src src
+COPY src /usr/app/src
 
 RUN npm run build
 

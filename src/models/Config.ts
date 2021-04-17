@@ -1,37 +1,17 @@
 import { NotificationType } from './NotificationsType';
+import {
+  PartialDiscordConfig,
+  PartialEmailConfig,
+  PartialLocalConfig,
+  PartialTelegramConfig,
+} from './NotificationsConfig';
+import NotificationConfig from '../config/notificationConfig';
 
 interface Account {
   email: string;
   password: string;
   totp?: string;
 }
-
-interface SmtpAuth {
-  user: string;
-  pass: string;
-}
-
-interface EmailConfig {
-  smtpHost: string;
-  smtpPort: number;
-  emailSenderAddress: string;
-  emailSenderName: string;
-  emailRecipientAddress: string;
-  secure: boolean;
-  auth?: SmtpAuth;
-}
-
-interface TelegramConfig {
-  token: string;
-  chatIds: string[];
-}
-
-type PartialEmailConfig = Partial<Omit<EmailConfig, 'auth'>> & {
-  auth?: Partial<SmtpAuth>;
-};
-type PartialTelegramConfig = Partial<Omit<TelegramConfig, 'chatIds'>> & {
-  chatIds?: (string | undefined)[];
-};
 
 interface PartialConfig {
   accounts?: Partial<Account>[];
@@ -45,9 +25,11 @@ interface PartialConfig {
   notificationType?: string;
   email?: PartialEmailConfig;
   telegram?: PartialTelegramConfig;
+  discord?: PartialDiscordConfig;
+  local?: PartialLocalConfig;
 }
 
-interface Config extends PartialConfig {
+interface Config {
   accounts: Account[];
   onlyWeekly: boolean;
   runOnStartup: boolean;
@@ -57,17 +39,7 @@ interface Config extends PartialConfig {
   baseUrl: string;
   serverPort: number;
   notificationType: NotificationType;
-  email: EmailConfig;
-  telegram: TelegramConfig;
+  notificationConfig: NotificationConfig;
 }
 
-export {
-  Config,
-  PartialConfig,
-  EmailConfig,
-  PartialEmailConfig,
-  TelegramConfig,
-  PartialTelegramConfig,
-  Account,
-  SmtpAuth,
-};
+export { Config, PartialConfig, Account };
