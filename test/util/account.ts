@@ -15,14 +15,15 @@ import { newCookieJar } from '../../src/common/request';
 import { notifyManualCaptcha } from '../../src/captcha';
 import { CSRFSetCookies } from '../../src/interfaces/types';
 import {
-  EPIC_CLIENT_ID,
-  CHANGE_EMAIL_ENDPOINT,
-  USER_INFO_ENDPOINT,
-  SETUP_MFA,
   ACCOUNT_CSRF_ENDPOINT,
   ACCOUNT_SESSION_ENDPOINT,
+  CHANGE_EMAIL_ENDPOINT,
+  EPIC_CLIENT_ID,
+  SETUP_MFA,
+  USER_INFO_ENDPOINT,
 } from '../../src/common/constants';
 import '../../src/site/app';
+import NotificationReason from '../../src/models/NotificationReason';
 
 interface CreateAccountRequest {
   country: string;
@@ -178,7 +179,11 @@ export default class AccountManager {
             e.response.body.message === 'captcha is required')
         ) {
           L.debug('Captcha required');
-          const newCaptcha = await notifyManualCaptcha(this.permMailAddress, csrfToken);
+          const newCaptcha = await notifyManualCaptcha(
+            NotificationReason.CREATE_ACCOUNT,
+            this.permMailAddress,
+            csrfToken
+          );
           await this.createAccount(email, password, attempt + 1, newCaptcha);
         } else if (e.response.body.errorCode.includes('email_verification_required')) {
           const code = await this.getPermVerification();

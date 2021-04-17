@@ -3,18 +3,19 @@ import { Got } from 'got';
 import { Logger } from 'pino';
 import logger from './common/logger';
 import {
-  OrderPreviewResponse,
-  OfferInfo,
-  ConfirmPurcaseError,
-  OrderConfirmRequest,
   ConfirmLineOffer,
+  ConfirmPurcaseError,
+  OfferInfo,
+  OrderConfirmRequest,
+  OrderPreviewResponse,
 } from './interfaces/types';
 import { EpicArkosePublicKey, notifyManualCaptcha } from './captcha';
 import {
+  EPIC_PURCHASE_ENDPOINT,
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
-  EPIC_PURCHASE_ENDPOINT,
 } from './common/constants';
+import NotificationReason from './models/NotificationReason';
 
 export default class Purchase {
   private request: Got;
@@ -91,9 +92,10 @@ export default class Purchase {
         const newPreview = orderPreview;
         newPreview.syncToken = confirmOrderResp.body.syncToken;
         const captchaToken = await notifyManualCaptcha(
+          NotificationReason.PURCHASE,
           this.email,
           '',
-          EpicArkosePublicKey.PURCHASE
+          { publicKey: EpicArkosePublicKey.PURCHASE }
         );
         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
         await this.confirmOrder(newPreview, purchaseToken, captchaToken);

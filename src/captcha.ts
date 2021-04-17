@@ -4,6 +4,7 @@ import EventEmitter from 'events';
 import logger from './common/logger';
 import config from './config';
 import getNotifier from './notifiers';
+import NotificationReason from './models/NotificationReason';
 
 export enum EpicArkosePublicKey {
   LOGIN = '37D033EB-6489-3763-2AE1-A228C04103F5',
@@ -27,23 +28,23 @@ let pendingCaptchas: PendingCaptcha[] = [];
 const captchaEmitter = new EventEmitter();
 
 export async function notifyManualCaptcha(
+  reason: NotificationReason,
   email: string,
   xsrfToken: string,
-  publicKey?: EpicArkosePublicKey,
-  blob?: string
+  options: { xsrfToken?: string; publicKey?: EpicArkosePublicKey; blob?: string } = {}
 ): Promise<string> {
-  const L = logger.child({ user: email });
+  const L = logger.child({ user: email, reason });
   const id = uuid();
 
   pendingCaptchas.push({ id, email, xsrfToken });
 
-  const qs = querystring.stringify({ id, pkey: publicKey, blob });
+  const qs = querystring.stringify({ id, pkey: options.publicKey, blob: options.blob });
   const url = `${config.baseUrl}?${qs}`;
   L.debug(`Go to ${url} and solve the captcha`);
 
   return new Promise((resolve, reject) => {
     getNotifier()
-      .sendNotification(url, email)
+      .sendNotification(url, email, reason)
       .then(() => {
         L.info({ id, url }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {

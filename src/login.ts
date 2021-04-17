@@ -6,25 +6,26 @@ import logger from './common/logger';
 import {
   CSRFSetCookies,
   LoginBody,
-  RedirectResponse,
   MFABody,
+  RedirectResponse,
   ReputationData,
 } from './interfaces/types';
 import { notifyManualCaptcha } from './captcha';
 import {
-  CSRF_ENDPOINT,
-  LOGIN_ENDPOINT,
-  EPIC_CLIENT_ID,
-  REDIRECT_ENDPOINT,
-  REPUTATION_ENDPOINT,
-  EMAIL_VERIFY,
-  STORE_HOMEPAGE,
-  MFA_LOGIN_ENDPOINT,
-  SET_SID_ENDPOINT,
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
+  CSRF_ENDPOINT,
+  EMAIL_VERIFY,
+  EPIC_CLIENT_ID,
+  LOGIN_ENDPOINT,
+  MFA_LOGIN_ENDPOINT,
+  REDIRECT_ENDPOINT,
+  REPUTATION_ENDPOINT,
+  SET_SID_ENDPOINT,
+  STORE_HOMEPAGE,
 } from './common/constants';
 import config from './config';
+import NotificationReason from './models/NotificationReason';
 
 export default class Login {
   private request: Got;
@@ -129,7 +130,7 @@ export default class Login {
           let captchaToken: string;
           if (attempt % 2 === 0) {
             csrfToken = await this.getCsrf();
-            captchaToken = await notifyManualCaptcha(email, csrfToken);
+            captchaToken = await notifyManualCaptcha(NotificationReason.LOGIN, email, csrfToken);
           } else {
             captchaToken = captcha;
           }

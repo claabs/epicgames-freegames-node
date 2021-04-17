@@ -5,6 +5,7 @@ import config from '../config';
 import NotifierService from '../models/NotifierService';
 import { EmailConfig } from '../models/NotificationsConfig';
 import { NotificationType } from '../models/NotificationsType';
+import NotificationReason from '../models/NotificationReason';
 
 class EmailNotifier implements NotifierService {
   private readonly isActive: boolean = false;
@@ -29,12 +30,12 @@ class EmailNotifier implements NotifierService {
     });
   }
 
-  async sendNotification(url: string, account: string): Promise<void> {
+  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
     if (!this.isActive) {
       throw new Error(`Tried to call sendNotification of inactive notifier`);
     }
 
-    const L = logger.child({ user: account });
+    const L = logger.child({ user: account, reason });
     L.trace('Sending email');
 
     try {
@@ -44,8 +45,8 @@ class EmailNotifier implements NotifierService {
           name: this.emailConfig.emailSenderName,
         },
         to: this.emailConfig.emailRecipientAddress,
-        subject: `Epic Games free games needs a Captcha solved for ${account}`,
-        html: `<p><b>epicgames-freegames-node</b> needs a captcha solved.</p>
+        subject: `Epic Games free games needs a Captcha solved`,
+        html: `<p><b>epicgames-freegames-node</b>, reason: ${reason}, account: ${account}.</p>
              <p>Open this page and solve the captcha: <a href="${url}">${url}</a></p>`,
         textEncoding: 'base64', // Some email clients don't like the '=' in the URL when using quoted-printable?
       });

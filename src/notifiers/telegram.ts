@@ -4,6 +4,7 @@ import config from '../config';
 import NotifierService from '../models/NotifierService';
 import { NotificationType } from '../models/NotificationsType';
 import { TelegramConfig } from '../models/NotificationsConfig';
+import NotificationReason from '../models/NotificationReason';
 
 class TelegramNotifier implements NotifierService {
   private readonly isActive: boolean = false;
@@ -23,21 +24,21 @@ class TelegramNotifier implements NotifierService {
     this.telegramBot = new TelegramBot(this.telegramConfig.token);
   }
 
-  async sendNotification(url: string, account: string): Promise<void> {
+  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
     if (!this.isActive) {
       throw new Error(`Tried to call sendNotification of inactive notifier`);
     }
 
-    const L = logger.child({ user: account });
+    const L = logger.child({ user: account, reason });
     L.trace('Sending telegram notification');
 
     await Promise.all(
       this.telegramConfig.chatIds.map(chatId => {
         return this.telegramBot.sendMessage(
           chatId,
-          `<b>epicgames-freegames-node</b> captcha: ${url}`,
+          `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account},\ncaptcha: [Captcha](${url})`,
           // eslint-disable-next-line @typescript-eslint/camelcase
-          { parse_mode: 'HTML' }
+          { parse_mode: 'Markdown', disable_web_page_preview: true }
         );
       })
     ).catch(err => {

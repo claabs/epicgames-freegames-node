@@ -4,6 +4,7 @@ import config from '../config';
 import NotifierService from '../models/NotifierService';
 import { NotificationType } from '../models/NotificationsType';
 import { DiscordConfig } from '../models/NotificationsConfig';
+import NotificationReason from '../models/NotificationReason';
 
 // https://birdie0.github.io/discord-webhooks-guide/index.html
 class DiscordNotifier implements NotifierService {
@@ -21,18 +22,18 @@ class DiscordNotifier implements NotifierService {
     this.discordConfig = discordConfig;
   }
 
-  async sendNotification(url: string, account: string): Promise<void> {
+  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
     if (!this.isActive) {
       throw new Error(`Tried to call sendNotification of inactive notifier`);
     }
 
-    const L = logger.child({ user: account });
+    const L = logger.child({ user: account, reason });
     L.trace('Sending telegram notification');
 
     await got
       .post(this.discordConfig.webhookUrl, {
         json: {
-          content: `**epicgames-freegames-node**, account: ${account}`,
+          content: `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account}`,
           embeds: [
             {
               title: 'Captcha',
