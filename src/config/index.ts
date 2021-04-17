@@ -103,6 +103,9 @@ const envVarConfig: PartialConfig = {
     token: process.env.TELEGRAM_TOKEN,
     chatIds: [process.env.TELEGRAM_CHAT_ID],
   },
+  discord: {
+    webhookUrl: process.env.DISCORD_WEBHOOK_URL,
+  },
 };
 
 partialConfig = {
