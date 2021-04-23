@@ -16,7 +16,7 @@ import tlsh from 'tlsh';
 
 // This is easiest to find if you just debug the code with a breakpoint after one of the `atob`s.
 // You can also get a full sample fingerprint in the same place
-const HASHKEY_STRING = 'dKULY3noXthW3c10ZJ6qaIzDnUdi7gzIS6VDsB5g5gg';
+const HASHKEY_STRING = 'a1xvnzZFEsVWfE2Yc9G/wMK/H1jVxqa92DCQlqW8NFA';
 
 const createXal = (fingerprintData: Record<string, any>): string => {
   const hashkey = atob(HASHKEY_STRING);
@@ -233,7 +233,7 @@ const getDateData = () => {
 
 const getFingerprintBase = async (solveToken: boolean) => {
   const f = {
-    fingerprint_version: 6,
+    fingerprint_version: 7,
     timestamp: getIsoString(),
     math_rand: generateRandomHash(),
     document: getDocumentHeadData(),
@@ -316,6 +316,6 @@ export const getInitData = async (isPostSolve: boolean) => {
     v: 1,
     xal: createXal(await getFingerprintBase(isPostSolve)),
     ewa: 'b',
-    kid: 'bfetm',
+    kid: 'avp91q',
   };
 };

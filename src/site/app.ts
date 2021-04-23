@@ -144,6 +144,31 @@ router.use(
   }),
   nocache()
 );
+router.use(
+  '/newassets',
+  proxy('https://assets.hcaptcha.com', {
+    userResDecorator: (_proxyRes, proxyResData, userReq) => {
+      let data: string = proxyResData
+        .toString('utf8')
+        .replace(new RegExp('https://newassets.hcaptcha.com', 'g'), `${baseUrl.origin}/newassets`);
+      // Manually place JS and CSS elements since hcaptcha's dynamic code doesn't work on http or non-.com domains
+      data = insertTags(data, userReq.url, 'hcaptcha-checkbox');
+      data = insertTags(data, userReq.url, 'hcaptcha-challenge');
+      // Replace hcaptcha.com URL in hcaptcha js
+      if (
+        userReq.url.includes('hcaptcha-checkbox.js') ||
+        userReq.url.includes('hcaptcha-challenge.js')
+      ) {
+        data = data.replace(
+          /endpoint:"https:\/\/hcaptcha\.com"/g,
+          `endpoint:"${baseUrl.origin}/proxy"`
+        );
+      }
+      return data;
+    },
+  }),
+  nocache()
+);
 
 // Replace every hostname available in the Akamai device info
 router.use(
@@ -151,7 +176,7 @@ router.use(
   proxy(TALON_WEBSITE_BASE, {
     // Keeps /utils at the base of the path
     proxyReqPathResolver: req => {
-      L.trace(req);
+      // L.trace(req);
       return req.originalUrl;
     },
     // Updates Akamai request headers
@@ -173,7 +198,7 @@ router.use(
         new RegExp(`https://${baseUrl.host}.*?,`, 'g'),
         `${TALON_REFERRER}-1,`
       );
-      L.trace({ updatedBody });
+      // L.trace({ updatedBody });
       return updatedBody;
     },
     // Updates cookie domain to keep Akamai happy
@@ -194,7 +219,7 @@ router.use(
   proxy('https://talon-website-prod.ak.epicgames.com', {
     // Use original path
     proxyReqPathResolver: req => {
-      L.trace(req);
+      // L.trace(req);
       return req.originalUrl;
     },
     // Updates Akamai request headers
@@ -238,7 +263,7 @@ router.get(
       }
     );
     const body = resp.body
-      .replace(new RegExp('https://assets.hcaptcha.com', 'g'), `${baseUrl.origin}/assets`)
+      .replace(new RegExp('https://newassets.hcaptcha.com', 'g'), `${baseUrl.origin}/newassets`)
       .replace('(hcaptcha|1\\/api)', 'hcaptcha-api');
     res.header('content-type', resp.headers['content-type']);
     res.status(200).send(body);
@@ -255,8 +280,8 @@ router.get(
       responseType: 'text',
     });
     const body = resp.body.replace(
-      new RegExp('https://assets.hcaptcha.com', 'g'),
-      `${baseUrl.origin}/assets`
+      new RegExp('https://newassets.hcaptcha.com', 'g'),
+      `${baseUrl.origin}/newassets`
     );
     res.header('content-type', resp.headers['content-type']);
     res.status(200).send(body);

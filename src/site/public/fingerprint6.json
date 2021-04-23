@@ -1,0 +1,163 @@
+{
+    "fingerprint_version": 6,
+    "timestamp": "2021-03-25T22:26:13.973Z",
+    "math_rand": "1c6fb77780b420",
+    "document": {
+        "title": "Talon Challenge"
+    },
+    "navigator": {
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",
+        "platform": "Win32",
+        "language": "en-US",
+        "languages": [
+            "en-US",
+            "en"
+        ],
+        "hardware_concurrency": 24,
+        "device_memory": 8,
+        "product": "Gecko",
+        "product_sub": "20030107",
+        "vendor": "Google Inc.",
+        "vendor_sub": "",
+        "webdriver": false,
+        "max_touch_points": 0,
+        "cookie_enabled": true,
+        "property_list": [
+            "webdriver",
+            "serial",
+            "locks",
+            "wakeLock",
+            "usb",
+            "clipboard",
+            "credentials",
+            "keyboard",
+            "mediaDevices",
+            "storage",
+            "serviceWorker",
+            "deviceMemory",
+            "hid",
+            "presentation",
+            "userAgentData",
+            "bluetooth",
+            "xr",
+            "canShare",
+            "share",
+            "registerProtocolHandler",
+            "unregisterProtocolHandler",
+            "getInstalledRelatedApps",
+            "clearAppBadge",
+            "setAppBadge",
+            "getUserMedia",
+            "requestMIDIAccess",
+            "requestMediaKeySystemAccess",
+            "webkitGetUserMedia"
+        ]
+    },
+    "web_gl": {
+        "canvas_fingerprint": {
+            "length": 32482,
+            "num_colors": 4516,
+            "md5": "55cbbfa0b94c92d8c4589939db8b8d2f"
+        },
+        "parameters": {
+            "renderer": "ANGLE (NVIDIA GeForce GTX 1080 Ti Direct3D11 vs_5_0 ps_5_0)",
+            "vendor": "Google Inc."
+        }
+    },
+    "window": {
+        "location": {
+            "origin": "https://talon-website-prod.ak.epicgames.com",
+            "pathname": "/challenge"
+        },
+        "history": {
+            "length": 5
+        },
+        "screen": {
+            "avail_height": 1440,
+            "avail_width": 2560,
+            "avail_top": 0,
+            "height": 1440,
+            "width": 2560,
+            "color_depth": 24
+        },
+        "performance": {
+            "memory": {
+                "js_heap_size_limit": 4294705152,
+                "total_js_heap_size": 75331330,
+                "used_js_heap_size": 56454298
+            }
+        },
+        "device_pixel_ratio": 1.5,
+        "dark_mode": true,
+        "chrome": true,
+        "property_list": [
+            "caches",
+            "cookieStore",
+            "ondevicemotion",
+            "ondeviceorientation",
+            "ondeviceorientationabsolute",
+            "showDirectoryPicker",
+            "showOpenFilePicker",
+            "showSaveFilePicker",
+            "bazadebezolkohpepadr",
+            "_cf",
+            "webpackJsonp_N_E",
+            "_N_E",
+            "_ac",
+            "bmak",
+            "bm_counter",
+            "bm_script",
+            "scripts",
+            "bm_url",
+            "url_split",
+            "obfus_state_field",
+            "state_field_str",
+            "_sd_trace",
+            "op",
+            "regeneratorRuntime",
+            "__NEXT_DATA__",
+            "__SSG_MANIFEST_CB",
+            "__NEXT_P",
+            "next",
+            "2f1acc6c3a606b082e5eef5e54414ffb",
+            "IntlPolyfill",
+            "__BUILD_MANIFEST_CB",
+            "__BUILD_MANIFEST",
+            "__SSG_MANIFEST",
+            "a0_0x1136",
+            "a0_0x378c",
+            "talon",
+            "hCaptchaLoaded",
+            "hcaptcha",
+            "grecaptcha"
+        ]
+    },
+    "date": {
+        "timezone_offset": 300,
+        "format": {
+            "calendar": "gregory",
+            "day": "numeric",
+            "locale": "en-US",
+            "month": "numeric",
+            "numbering_system": "latn",
+            "time_zone": "America/Chicago",
+            "year": "numeric"
+        }
+    },
+    "runtime": {
+        "sd_recurse": false
+    },
+    "parent_document": {
+        "title": "Sign in to Your Epic Games Account | Epic Games"
+    },
+    "parent_window": {
+        "location": {
+            "origin": "https://www.epicgames.com",
+            "pathname": "/id/login/epic"
+        },
+        "history": {
+            "length": 5
+        }
+    },
+    "solve_token": false
+}
