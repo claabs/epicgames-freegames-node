@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api';
+import got from 'got';
 import logger from '../common/logger';
 import config from '../config';
 import NotifierService from '../models/NotifierService';
@@ -11,8 +11,6 @@ class TelegramNotifier implements NotifierService {
 
   private readonly telegramConfig!: TelegramConfig;
 
-  private readonly telegramBot!: TelegramBot;
-
   constructor() {
     const telegramConfig = config.notificationConfig.getConfig(NotificationType.TELEGRAM);
     if (!telegramConfig) {
@@ -21,7 +19,6 @@ class TelegramNotifier implements NotifierService {
     this.isActive = true;
 
     this.telegramConfig = telegramConfig;
-    this.telegramBot = new TelegramBot(this.telegramConfig.token);
   }
 
   async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
@@ -33,14 +30,20 @@ class TelegramNotifier implements NotifierService {
     L.trace('Sending telegram notification');
 
     await Promise.all(
-      this.telegramConfig.chatIds.map(chatId => {
-        return this.telegramBot.sendMessage(
-          chatId,
-          `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account},\ncaptcha: [Captcha](${url})`,
-          // eslint-disable-next-line @typescript-eslint/camelcase
-          { parse_mode: 'Markdown', disable_web_page_preview: true }
-        );
-      })
+      this.telegramConfig.chatIds.map(chatId =>
+        got.post(`https://api.telegram.org/bot${this.telegramConfig.token}/sendMessage`, {
+          json: {
+            // eslint-disable-next-line @typescript-eslint/camelcase
+            chat_id: chatId,
+            text: `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account}, \nurl: ${url}`,
+            // eslint-disable-next-line @typescript-eslint/camelcase
+            disable_web_page_preview: true,
+            // eslint-disable-next-line @typescript-eslint/camelcase
+            parse_mode: 'Markdown',
+          },
+          responseType: 'json',
+        })
+      )
     ).catch(err => {
       L.error({ telegram: this.telegramConfig }, `Failed to send message`, err);
       throw err;
