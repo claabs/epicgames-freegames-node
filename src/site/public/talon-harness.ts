@@ -170,7 +170,12 @@ const getWindowLocation = () => {
   //   origin: window.location.origin,
   //   pathname: window.location.pathname,
   // };
-  return { origin: 'https://talon-website-prod.ak.epicgames.com', pathname: '/challenge' };
+  return {
+    origin: 'https://talon-website-prod.ak.epicgames.com',
+    pathname: '/challenge',
+    href:
+      'https://talon-website-prod.ak.epicgames.com/challenge?env=prod&flow=login_prod&origin=https%3A%2F%2Fwww.epicgames.com',
+  };
 };
 
 const getWindowHistory = () => {
@@ -233,7 +238,7 @@ const getDateData = () => {
 
 const getFingerprintBase = async (solveToken: boolean) => {
   const f = {
-    fingerprint_version: 7,
+    fingerprint_version: 12,
     timestamp: getIsoString(),
     math_rand: generateRandomHash(),
     document: getDocumentHeadData(),
@@ -245,8 +250,9 @@ const getFingerprintBase = async (solveToken: boolean) => {
       screen: getScreenFingerprint(),
       performance: getMemoryFingerprint(),
       device_pixel_ratio: window.devicePixelRatio,
-      media_devices: await getMediaDevices(),
       dark_mode: true,
+      chrome: true,
+      // media_devices: await getMediaDevices(),
       property_list: [
         'caches',
         'cookieStore',
@@ -300,6 +306,8 @@ const getFingerprintBase = async (solveToken: boolean) => {
       location: {
         origin: 'https://www.epicgames.com',
         pathname: '/id/login/epic',
+        href:
+          'https://www.epicgames.com/id/login/epic?redirect_uri=https%3A%2F%2Fwww.epicgames.com%2Fstore%2Fen-US%2F&client_id=875a3b57d3a640a6b7f9b4e883463ab4',
       },
       history: {
         length: 5,
