@@ -179,11 +179,10 @@ If you're experiencing issues logging with with username and password, you can i
 
 **Notes:**
 
-* Due to device ID issues, you will only stay logged in for 8 hours.
 * If you log out of the browser session you copied the cookies from, the container will break.
 * If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.
 * If you get an email prompting you to solve a captcha to log in, you should repeat the above process.
-* Epic Games still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
+* Epic Games may still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
 * Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
 
 ## Development
