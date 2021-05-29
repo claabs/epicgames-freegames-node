@@ -171,9 +171,9 @@ If you're experiencing issues logging with with username and password, you can i
 
 1. Setup the container per the below instructions
 1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
-1. Install the [Cookie Editor](https://cookie-editor.cgagnier.ca/) or [EditThisCookie](http://www.editthiscookie.com/) browser extension.
-1. While viewing the Epic Games Store page, copy your cookies to clipboard by clicking the "Export" button on the extension:
-![Cookie Editor export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/cookie-editor.png?raw=true)
+1. Install the [EditThisCookie](http://www.editthiscookie.com/) browser extension.
+1. While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to `https://www.epicgames.com/id`, and click the export button:
+![EditThisCookie export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true)
 1. In your mounted `./config` folder, create `<email_address>-cookies.json` (e.g. `me@example.com-cookies.json`), and paste in your cookies.
 1. Start the epicgames-freegames-node container and the cookies will automatically be converted to a new format.
 

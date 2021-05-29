@@ -7,6 +7,8 @@ import objectAssignDeep from 'object-assign-deep';
 import L from './logger';
 
 export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): ToughCookieFileStore {
+  const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP'];
+
   const tcfs: ToughCookieFileStore = {};
   etc.forEach(etcCookie => {
     const domain = etcCookie.domain.replace(/^\./, '');
@@ -15,24 +17,28 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
       : undefined;
     const { path, name } = etcCookie;
 
-    const temp: ToughCookieFileStore = {
-      [domain]: {
-        [path]: {
-          [name]: {
-            key: name,
-            value: etcCookie.value,
-            expires,
-            domain,
-            path,
-            secure: etcCookie.secure,
-            httpOnly: etcCookie.httpOnly,
-            hostOnly: etcCookie.hostOnly,
+    if (COOKIE_WHITELIST.includes(name)) {
+      const temp: ToughCookieFileStore = {
+        [domain]: {
+          [path]: {
+            [name]: {
+              key: name,
+              value: etcCookie.value,
+              expires,
+              domain,
+              path,
+              secure: etcCookie.secure,
+              httpOnly: etcCookie.httpOnly,
+              hostOnly: etcCookie.hostOnly,
+            },
           },
         },
-      },
-    };
-    objectAssignDeep(tcfs, temp);
+      };
+      L.debug({ tempCookie: temp });
+      objectAssignDeep(tcfs, temp);
+    }
   });
+  L.debug({ convertedCookies: tcfs });
   return tcfs;
 }
 
