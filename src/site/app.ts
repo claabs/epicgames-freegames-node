@@ -7,7 +7,6 @@ import nocache from 'nocache';
 import got from 'got';
 import asyncHandler from 'express-async-handler';
 import cookieParser from 'cookie-parser';
-// import jwt from 'jsonwebtoken';
 import L from '../common/logger';
 import config from '../config';
 import { getPendingCaptcha, responseManualCaptcha } from '../captcha';

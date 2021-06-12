@@ -29,25 +29,29 @@ class TelegramNotifier implements NotifierService {
     const L = logger.child({ user: account, reason });
     L.trace('Sending telegram notification');
 
+    /* eslint-disable @typescript-eslint/camelcase */
     await Promise.all(
-      this.telegramConfig.chatIds.map(chatId =>
-        got.post(`https://api.telegram.org/bot${this.telegramConfig.token}/sendMessage`, {
-          json: {
-            // eslint-disable-next-line @typescript-eslint/camelcase
-            chat_id: chatId,
-            text: `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account}, \nurl: ${url}`,
-            // eslint-disable-next-line @typescript-eslint/camelcase
-            disable_web_page_preview: true,
-            // eslint-disable-next-line @typescript-eslint/camelcase
-            parse_mode: 'Markdown',
-          },
+      this.telegramConfig.chatIds.map(chatId => {
+        const encodedUrl = encodeURI(url);
+        const jsonPayload = {
+          chat_id: chatId,
+          text: `*Epicgames-freegames-node*,\nreason: ${reason},\naccount: ${account}, \nurl: [Click me!](${encodedUrl})`,
+          disable_web_page_preview: true,
+          parse_mode: 'Markdown',
+        };
+
+        L.trace({ jsonPayload }, 'Sending json payload');
+
+        return got.post(`https://api.telegram.org/bot${this.telegramConfig.token}/sendMessage`, {
+          json: jsonPayload,
           responseType: 'json',
-        })
-      )
+        });
+      })
     ).catch(err => {
       L.error({ telegram: this.telegramConfig }, `Failed to send message`, err);
       throw err;
     });
+    /* eslint-enable @typescript-eslint/camelcase */
   }
 }
 

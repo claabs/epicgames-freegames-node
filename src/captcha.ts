@@ -48,7 +48,10 @@ export async function notifyManualCaptcha(
       .then(() => {
         L.info({ id, url }, 'Action requested. Waiting for Captcha to be solved');
         captchaEmitter.on('solved', (captcha: CaptchaSolution) => {
-          if (captcha.id === id) resolve(captcha.sessionData);
+          if (captcha.id === id) {
+            L.info({ id }, 'Captcha solved event received, resolving session');
+            resolve(captcha.sessionData);
+          }
         });
       })
       .catch(err => {
@@ -67,7 +70,8 @@ export async function responseManualCaptcha(captchaSolution: CaptchaSolution): P
   }
 }
 
-export function getPendingCaptcha(id: string): PendingCaptcha {
+export function getPendingCaptcha(id?: string): PendingCaptcha {
+  if (!id) throw new Error('No id provided, did you access the url directly?');
   const retCaptcha = pendingCaptchas.find(pending => pending.id === id);
   if (!retCaptcha) throw new Error(`Could not find captcha id: ${id}`);
   return retCaptcha;
