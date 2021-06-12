@@ -43,7 +43,7 @@ export async function notifyManualCaptcha(
   L.debug(`Go to ${url} and solve the captcha`);
 
   return new Promise((resolve, reject) => {
-    getNotifier()
+    getNotifier(email)
       .sendNotification(url, email, reason)
       .then(() => {
         L.info({ id, url }, 'Action requested. Waiting for Captcha to be solved');

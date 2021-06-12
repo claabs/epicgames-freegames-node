@@ -13,6 +13,8 @@ const notifiers: Record<NotificationType, NotifierService> = {
   [NotificationType.LOCAL]: localNotifier,
 };
 
-export default function getNotifier(): NotifierService {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function getNotifier(email: string): NotifierService {
+  // TODO: Return notifier based on email, requires changes on how config is loaded/validated
   return notifiers[config.notificationType];
 }
