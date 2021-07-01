@@ -286,7 +286,7 @@ export default class FreeGames {
                 } 
               }
             }`;
-              if (!(page.offer.hasOffer && page.offer.namespace && page.offer.id)) return null;
+              if (!(page.offer.namespace && page.offer.id)) return null;
               const variables = {
                 productNamespace: page.offer.namespace,
                 offerId: page.offer.id,
