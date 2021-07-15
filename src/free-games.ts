@@ -146,12 +146,13 @@ export default class FreeGames {
     const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
       let r = false;
       if (offer.promotions) {
+        const isReleased = new Date(offer.effectiveDate) <= nowDate;
         offer.promotions.promotionalOffers.forEach(innerOffers => {
           innerOffers.promotionalOffers.forEach(pOffer => {
             const startDate = new Date(pOffer.startDate);
             const endDate = new Date(pOffer.endDate);
             const isFree = pOffer.discountSetting.discountPercentage === 0;
-            if (startDate <= nowDate && nowDate <= endDate && isFree) {
+            if (startDate <= nowDate && nowDate <= endDate && isFree && isReleased) {
               r = true;
             }
           });
@@ -247,79 +248,87 @@ export default class FreeGames {
         }
         if (productTypes.includes('games')) {
           // Call store content game page URL to get updated IDs for everything on the game page
-          const url = `${STORE_CONTENT}/products/${offer.productSlug.split('/')[0]}`;
-          this.L.trace({ url }, 'Fetching updated IDs');
-          const productsResp = await this.request.get<ProductInfo>(url);
+          // const url = `${STORE_CONTENT}/products/${offer.productSlug.split('/')[0]}`;
+          // this.L.trace({ url }, 'Fetching updated IDs');
+          // const productsResp = await this.request.get<ProductInfo>(url);
 
-          // Call the catalog with the updated IDs to get price and discounts for all page items
-          const offerRequest: (GraphQLBody | null)[] = productsResp.body.pages
-            .map(page => {
-              const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) { 
-              Catalog { 
-                catalogOffer(namespace: $productNamespace, id: $offerId, locale: $locale) { 
-                  title 
-                  id 
-                  namespace 
-                  description 
-                  effectiveDate 
-                  expiryDate 
-                  isCodeRedemptionOnly 
-                  productSlug 
-                  urlSlug 
-                  url 
-                  items { 
-                    id 
-                    namespace 
-                  } 
-                  categories { 
-                    path 
-                  } 
-                  price(country: $country) { 
-                    totalPrice { 
-                      discountPrice 
-                      originalPrice 
-                      voucherDiscount 
-                      discount 
-                      currencyCode 
-                    } 
-                  } 
-                } 
-              }
-            }`;
-              if (!(page.offer.namespace && page.offer.id)) return null;
-              const variables = {
-                productNamespace: page.offer.namespace,
-                offerId: page.offer.id,
-                locale: 'en-US',
-                country: 'US',
-              };
-              const data: GraphQLBody = { query, variables };
-              return data;
-            })
-            .filter((elem): elem is GraphQLBody => elem !== null);
-          this.L.trace({ offerRequest, url: GRAPHQL_ENDPOINT }, 'Posting for offer promotions');
-          const offersResp = await this.request.post<OffersQueryResponse[]>(GRAPHQL_ENDPOINT, {
-            json: offerRequest,
-          });
-          this.L.trace({ body: JSON.stringify(offersResp.body) }, 'Offers response');
+          // // Call the catalog with the updated IDs to get price and discounts for all page items
+          // const offerRequest: (GraphQLBody | null)[] = productsResp.body.pages
+          //   .map(page => {
+          //     const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) {
+          //     Catalog {
+          //       catalogOffer(namespace: $productNamespace, id: $offerId, locale: $locale) {
+          //         title
+          //         id
+          //         namespace
+          //         description
+          //         effectiveDate
+          //         expiryDate
+          //         isCodeRedemptionOnly
+          //         productSlug
+          //         urlSlug
+          //         url
+          //         items {
+          //           id
+          //           namespace
+          //         }
+          //         categories {
+          //           path
+          //         }
+          //         price(country: $country) {
+          //           totalPrice {
+          //             discountPrice
+          //             originalPrice
+          //             voucherDiscount
+          //             discount
+          //             currencyCode
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }`;
+          //     if (!(page.offer.namespace && page.offer.id)) return null;
+          //     const variables = {
+          //       productNamespace: page.offer.namespace,
+          //       offerId: page.offer.id,
+          //       locale: 'en-US',
+          //       country: 'US',
+          //     };
+          //     const data: GraphQLBody = { query, variables };
+          //     return data;
+          //   })
+          //   .filter((elem): elem is GraphQLBody => elem !== null);
+          // this.L.trace({ offerRequest, url: GRAPHQL_ENDPOINT }, 'Posting for offer promotions');
+          // const offersResp = await this.request.post<OffersQueryResponse[]>(GRAPHQL_ENDPOINT, {
+          //   json: offerRequest,
+          // });
+          // this.L.trace({ body: JSON.stringify(offersResp.body) }, 'Offers response');
 
-          // Select the items with a 100% discount
-          const freePromoOffers = offersResp.body.filter(
-            promoOffer =>
-              promoOffer.data.Catalog.catalogOffer.price.totalPrice.originalPrice ===
-              promoOffer.data.Catalog.catalogOffer.price.totalPrice.discount
-          );
+          // // Select the items with a 100% discount
+          // const freePromoOffers = offersResp.body.filter(
+          //   promoOffer =>
+          //     promoOffer.data.Catalog.catalogOffer.price.totalPrice.originalPrice ===
+          //     promoOffer.data.Catalog.catalogOffer.price.totalPrice.discount
+          // );
 
-          if (freePromoOffers.length === 0) {
-            this.L.error(`Could not find free offer for ${offer.productSlug}`);
-            return null;
-          }
+          // if (freePromoOffers.length === 0) {
+          //   this.L.error(`Could not find free offer for ${offer.productSlug}`);
+          //   return null;
+          // }
 
-          return freePromoOffers.map(promoOffer => ({
-            ...offers[index],
-            id: promoOffer.data.Catalog.catalogOffer.id,
-            namespace: promoOffer.data.Catalog.catalogOffer.namespace,
-          }));
+          // return freePromoOffers.map(promoOffer => ({
+          //   ...offers[index],
+          //   id: promoOffer.data.Catalog.catalogOffer.id,
+          //   namespace: promoOffer.data.Catalog.catalogOffer.namespace,
+          // }));
+
+          return [
+            {
+              ...offers[index],
+              id: offer.id,
+              namespace: offer.namespace,
+            },
+          ];
         }
 
         this.L.error(`Unrecognized productType: ${productTypes}`);
