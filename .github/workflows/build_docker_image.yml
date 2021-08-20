@@ -47,7 +47,7 @@ jobs:
             charlocharlie/epicgames-freegames:latest
             ghcr.io/claabs/epicgames-freegames-node:latest
             ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          platforms: linux/amd64,linux/arm64
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
@@ -58,7 +58,7 @@ jobs:
           tags: |
             charlocharlie/epicgames-freegames:dev
             ghcr.io/claabs/epicgames-freegames-node:dev
-          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          platforms: linux/amd64,linux/arm64
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
