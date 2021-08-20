@@ -1,7 +1,7 @@
 import got, { Got } from 'got';
 import * as tough from 'tough-cookie';
 import { FileCookieStore } from 'tough-cookie-file-store';
-import fs from 'fs';
+import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
 import L from './logger';
@@ -90,6 +90,17 @@ export function setCookie(username: string, key: string, value: string): void {
   );
 }
 
+export async function mergeCookiesRaw(
+  username: string,
+  newCookies: ToughCookieFileStore
+): Promise<void> {
+  const fileSafeUsername = filenamify(username);
+  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const existingCookies: ToughCookieFileStore = await fs.readJSON(cookieFilename);
+  const mergedCookies = objectAssignDeep(existingCookies, newCookies);
+  await fs.writeJSON(cookieFilename, mergedCookies);
+}
+
 export function deleteCookies(username?: string): void {
   if (username) {
     fs.unlinkSync(`./config/${username}-cookies.json`);
@@ -102,7 +113,7 @@ export interface ToughCookieFileStore {
 }
 
 export interface TCFSPaths {
-  [site: string]: TCFSCookies;
+  [path: string]: TCFSCookies;
 }
 
 export interface TCFSCookies {
