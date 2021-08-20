@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:12-alpine as base
+FROM node:14-alpine as base
 
 WORKDIR /usr/app
 
@@ -29,9 +29,23 @@ FROM base as deploy
 
 VOLUME [ "/usr/app/config" ]
 
-RUN apk add --no-cache \
+# Chromium dependencies https://github.com/Zenika/alpine-chrome/blob/master/Dockerfile
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
+    && echo "http://dl-cdn.alpinelinux.org/alpine/v3.12/main" >> /etc/apk/repositories \
+    && apk add --no-cache \
+    libstdc++ \
+    chromium \
+    harfbuzz \
+    nss \
+    freetype \
+    ttf-freefont \
+    font-noto-emoji \
+    wqy-zenhei \
+    # App dependencies
     jq \
-    tzdata 
+    tzdata
 
 ENV NODE_ENV production
 

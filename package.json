@@ -1,10 +1,10 @@
 {
   "name": "epicgames-freegames-node",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
-    "install": "cd src/site/public && npm i",
+    "install": "(cd src/site/public && npm i)",
     "start": "node dist/src/index.js",
     "start:ts": "cd src/site/public && npm run build && cd ../../.. && ts-node src/index.ts",
     "build": "rm -rf dist && tsc && cd src/site/public && npm run build && cd ../../.. && npx copyfiles -E src/**/public/*.html src/**/public/*.bundle.js dist",
@@ -34,6 +34,9 @@
     "otpauth": "^5.0.6",
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
+    "puppeteer-core": "^5.5.0",
+    "puppeteer-extra": "^3.1.18",
+    "puppeteer-extra-plugin-portal": "^3.0.0-rc.2",
     "qs": "^6.9.4",
     "set-cookie-parser": "^2.4.3",
     "source-map-support": "^0.5.19",
@@ -77,11 +80,11 @@
     "yargs": "^16.0.3"
   },
   "engines": {
-    "node": "12"
+    "node": "14"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/charlocharlie/epicgames-freegames-node.git"
+    "url": "https://github.com/claabs/epicgames-freegames-node.git"
   },
   "author": "Charlie Laabs",
   "eslintIgnore": [
