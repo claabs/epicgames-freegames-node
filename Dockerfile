@@ -47,7 +47,7 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositorie
     jq \
     tzdata
 
-ENV NODE_ENV production
+ENV NODE_ENV=production PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy package.json for version number
 COPY package*.json ./

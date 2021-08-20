@@ -47,6 +47,7 @@ export interface PartialConfig {
   baseUrl?: string;
   serverPort?: number;
   email?: PartialEmailConfig;
+  hcaptchaAccessibilityUrl?: string;
 }
 
 export interface ConfigObject extends PartialConfig {
@@ -59,6 +60,7 @@ export interface ConfigObject extends PartialConfig {
   baseUrl: string;
   serverPort: number;
   email: EmailConfig;
+  hcaptchaAccessibilityUrl?: string;
 }
 
 const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
@@ -152,6 +154,7 @@ const envVarConfig: PartialConfig = {
       pass: process.env.SMTP_PASSWORD,
     },
   },
+  hcaptchaAccessibilityUrl: process.env.HCAPTCHA_ACCESSIBILITY_URL,
 };
 
 partialConfig = {
