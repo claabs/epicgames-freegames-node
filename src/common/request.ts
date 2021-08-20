@@ -77,6 +77,13 @@ export function getCookies(username: string): Record<string, string> {
   );
 }
 
+export async function getCookiesRaw(username: string): Promise<ToughCookieFileStore> {
+  const fileSafeUsername = filenamify(username);
+  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const existingCookies: ToughCookieFileStore = await fs.readJSON(cookieFilename);
+  return existingCookies;
+}
+
 export function setCookie(username: string, key: string, value: string): void {
   const fileSafeUsername = filenamify(username);
   const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
