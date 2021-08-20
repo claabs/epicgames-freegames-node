@@ -60,5 +60,10 @@ jobs:
             ghcr.io/claabs/epicgames-freegames-node:dev
           platforms: linux/amd64,linux/arm64
 
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Image digest master
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: echo ${{ steps.docker_build_master.outputs.digest }}
+
+      - name: Image digest dev
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: echo ${{ steps.docker_build_dev.outputs.digest }}
