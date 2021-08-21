@@ -30,16 +30,15 @@ export const setHcaptchaCookies = async (username: string): Promise<void> => {
   }
   let cookieData = await getCookieCache();
   if (!cookieData) {
-    // TODO: Check cache for existing valid token
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.goto(hcaptchaAccessibilityUrl);
     await page.waitForNavigation({ waitUntil: 'networkidle0' });
     const setCookieButton = await page.waitForSelector(
-      'button[data-cy="setAccessibilityCookie"]:not([disabled])'
+      `button[data-cy='setAccessibilityCookie']:not([disabled])`
     );
     await setCookieButton.click();
-    await page.waitForSelector('span[data-cy="fetchStatus"]');
+    await page.waitForSelector(`span[data-cy='fetchStatus']`);
     const currentUrlCookies = await page.cookies();
     cookieData = puppeteerCookieToToughCookieFileStore(currentUrlCookies);
   }
