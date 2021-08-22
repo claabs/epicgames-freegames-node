@@ -1,16 +1,34 @@
 import puppeteer from 'puppeteer-extra';
 import { Cookie, SetCookie } from 'puppeteer';
-import PortalPlugin from 'puppeteer-extra-plugin-portal';
+import PortalPlugin, {
+  ChromiumRemoteDebuggingConnectionConfig,
+  WebPortalConnectionConfig,
+} from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { ToughCookieFileStore } from './request';
 import { config } from './config';
 
+const defaultWebPortalConfig: WebPortalConnectionConfig = {
+  baseUrl: 'http://localhost:3000',
+  listenOpts: {
+    port: 3000,
+  },
+};
+
+const defaultWebSocketConfig: ChromiumRemoteDebuggingConnectionConfig = {
+  baseUrl: 'ws://localhost:3001',
+  port: 3001,
+};
+
 puppeteer.use(
   PortalPlugin({
-    webPortalConfig: config.webPortalConfig,
-    webSocketConfig: config.webSocketConfig,
+    webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
+    webSocketConfig: objectAssignDeep(defaultWebSocketConfig, config.webSocketConfig),
   })
 );
+
+puppeteer.use(StealthPlugin());
 
 export default puppeteer;
 

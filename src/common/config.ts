@@ -114,6 +114,9 @@ function validateConfig(config: PartialConfig): ConfigObject {
       baseUrl: config.baseUrl || 'http://localhost:3000',
       serverPort: config.serverPort || 3000,
       email: (config.email as unknown) as EmailConfig,
+      hcaptchaAccessibilityUrl: config.hcaptchaAccessibilityUrl,
+      webPortalConfig: config.webPortalConfig,
+      webSocketConfig: config.webSocketConfig,
     };
     return validConfig;
   } catch (err) {
@@ -171,3 +174,4 @@ partialConfig = {
 };
 
 export const config = validateConfig(partialConfig);
+// console.log(JSON.stringify(config, null, 2));

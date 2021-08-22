@@ -29,7 +29,7 @@ async function main(): Promise<void> {
     }
   });
   await Promise.all(accountPromises);
-  process.exit(); // necessary due to express server running
+  // process.exit(); // necessary due to express server running
 }
 
-main();
+main().catch(err => L.error(err));

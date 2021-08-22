@@ -1,7 +1,8 @@
 import fs from 'fs-extra';
+import { Cookie } from 'puppeteer';
 import puppeteer, { puppeteerCookieToToughCookieFileStore } from '../common/puppeteer';
 import { config } from '../common/config';
-import L from '../common/logger';
+import logger from '../common/logger';
 import { mergeCookiesRaw, ToughCookieFileStore } from '../common/request';
 
 const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = './config/hcaptcha-accessibility-cache.json';
@@ -21,8 +22,13 @@ const getCookieCache = async (): Promise<ToughCookieFileStore | null> => {
   }
 };
 
+const setCookieCache = async (cookies: ToughCookieFileStore): Promise<void> => {
+  await fs.writeJSON(HCAPTCHA_ACCESSIBILITY_CACHE_FILE, cookies);
+};
+
 // eslint-disable-next-line import/prefer-default-export
-export const setHcaptchaCookies = async (username: string): Promise<void> => {
+export const setHcaptchaCookies = async (email: string): Promise<void> => {
+  const L = logger.child({ email });
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {
     L.debug('hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed');
@@ -30,17 +36,32 @@ export const setHcaptchaCookies = async (username: string): Promise<void> => {
   }
   let cookieData = await getCookieCache();
   if (!cookieData) {
+    L.debug('Setting hCaptcha accessibility cookies');
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
+    const portalUrl = await page.openPortal();
+    L.info({ portalUrl });
+    L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);
     await page.goto(hcaptchaAccessibilityUrl);
-    await page.waitForNavigation({ waitUntil: 'networkidle0' });
+    L.trace(`Waiting for setAccessibilityCookie button`);
     const setCookieButton = await page.waitForSelector(
       `button[data-cy='setAccessibilityCookie']:not([disabled])`
     );
-    await setCookieButton.click();
-    await page.waitForSelector(`span[data-cy='fetchStatus']`);
-    const currentUrlCookies = await page.cookies();
-    cookieData = puppeteerCookieToToughCookieFileStore(currentUrlCookies);
+    L.trace(`Clicking setAccessibilityCookie button`);
+    await Promise.all([
+      await setCookieButton.click({ delay: 100 }),
+      await page.waitForSelector(`span[data-cy='fetchStatus']`),
+    ]);
+
+    await page.closePortal();
+    L.trace(`Saving new cookies`);
+    // eslint-disable-next-line no-underscore-dangle,@typescript-eslint/no-explicit-any
+    const currentUrlCookies: { cookies: Cookie[] } = await (page as any)._client.send(
+      'Network.getAllCookies'
+    );
+    await browser.close();
+    cookieData = puppeteerCookieToToughCookieFileStore(currentUrlCookies.cookies);
+    await setCookieCache(cookieData);
   }
-  await mergeCookiesRaw(username, cookieData);
+  await mergeCookiesRaw(email, cookieData);
 };

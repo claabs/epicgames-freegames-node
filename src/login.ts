@@ -25,6 +25,7 @@ import {
   CLIENT_REDIRECT_ENDPOINT,
 } from './common/constants';
 import { config } from './common/config';
+import PuppetLogin from './puppet/login';
 
 export default class Login {
   private request: Got;
@@ -209,9 +210,9 @@ export default class Login {
       this.L.info('Successfully refreshed login');
     } else {
       this.L.debug('Could not refresh credentials. Logging in fresh.');
-      const reputation = await this.getReputation();
-      await this.login(email, password, '', totp, reputation.arkose_data.blob);
-      await this.refreshAndSid(true);
+      const puppetLogin = new PuppetLogin(email, password, totp);
+      await puppetLogin.login();
+      // await this.refreshAndSid(true);
       this.L.info('Successfully logged in fresh');
     }
   }

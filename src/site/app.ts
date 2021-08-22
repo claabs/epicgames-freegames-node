@@ -432,4 +432,4 @@ router.use(errorHandler);
 
 app.use(basePath, router);
 
-app.listen(config.serverPort);
+// app.listen(config.serverPort);
