@@ -1,9 +1,11 @@
+/* eslint-disable class-methods-use-this */
 import { writeFileSync } from 'fs';
 import { TOTP } from 'otpauth';
 import { Logger } from 'pino';
 import { Cookie, ElementHandle, Page, Response } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
+  getDevtoolsUrl,
   puppeteerCookieToToughCookieFileStore,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
@@ -30,25 +32,11 @@ export default class PuppetLogin {
     this.totp = totp;
   }
 
-  async login(): Promise<void> {
-    const hCaptchaCookies = await getHcaptchaCookies();
-    const userCookies = await getCookiesRaw(this.email);
-    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
-      dumpio: true,
-    });
-    const page = await browser.newPage();
-    // eslint-disable-next-line no-underscore-dangle
-    await (page as any)._client.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
-    });
+  private async startLogin(page: Page): Promise<void> {
     this.L.trace('Navigating to Epic Games login page');
     await Promise.all([
       page.goto('https://www.epicgames.com/id/login/epic'),
-      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
     this.L.trace('Waiting for email field');
     const emailElem = await page.waitForSelector('#email');
@@ -59,7 +47,10 @@ export default class PuppetLogin {
     this.L.trace('Filling password field');
     await passElem.type(this.password);
     this.L.trace('Waiting for sign-in button');
-    const signInElem = await page.waitForSelector('#sign-in:not([disabled]');
+    const [signInElem] = await Promise.all([
+      page.waitForSelector('#sign-in:not([disabled]'),
+      page.waitForTimeout(5000), // TODO: why is this required?
+    ]);
     // Remember me should be checked by default
     this.L.trace('Clicking sign-in button');
     try {
@@ -73,6 +64,26 @@ export default class PuppetLogin {
       await page.screenshot({ path: 'test.png' });
       throw err;
     }
+  }
+
+  async login(): Promise<void> {
+    const hCaptchaCookies = await getHcaptchaCookies();
+    const userCookies = await getCookiesRaw(this.email);
+    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
+    this.L.debug('Logging in with puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+    });
+    const page = await browser.newPage();
+    this.L.trace(getDevtoolsUrl(page));
+    const cdpClient = await page.target().createCDPSession();
+    await cdpClient.send('Network.setCookies', {
+      cookies: [...puppeteerCookies, ...hCaptchaCookies],
+    });
+    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+    await this.startLogin(page);
+
     this.L.trace('Saving new cookies');
     const currentUrlCookies = await page.cookies();
     await browser.close();
@@ -86,8 +97,6 @@ export default class PuppetLogin {
     const talonFrame = await talonHandle.contentFrame();
     if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
     this.L.trace('Waiting for hcaptcha iframe');
-    const content = await talonFrame.content();
-    writeFileSync('test2.html', content);
     const hcaptchaFrame = await talonFrame.waitForSelector(`iframe[src*='hcaptcha']`);
     return hcaptchaFrame;
   }
@@ -95,10 +104,10 @@ export default class PuppetLogin {
   // eslint-disable-next-line class-methods-use-this
   private async handleLoginClick(page: Page): Promise<void> {
     this.L.trace('Waiting for sign-in result');
-    // eslint-disable-next-line no-underscore-dangle
-    const currentUrlCookies: { cookies: Cookie[] } = await (page as any)._client.send(
-      'Network.getAllCookies'
-    );
+    const cdpClient = await page.target().createCDPSession();
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Cookie[];
+    };
     writeFileSync('test-cookies.json', JSON.stringify(currentUrlCookies, null, 2));
     const result = await Promise.race([
       this.waitForHCaptcha(page),
@@ -112,23 +121,34 @@ export default class PuppetLogin {
       const portalUrl = await page.openPortal();
       this.L.info({ portalUrl }, 'Go to this URL and do something');
       // TODO: Notify with url
-      await this.handleMfa(page);
+      await this.handleCaptchaSolved(page);
       await page.closePortal();
     }
   }
 
-  private async handleMfa(page: Page): Promise<void> {
+  private async handleCaptchaSolved(page: Page): Promise<void> {
     this.L.trace('Waiting for MFA possibility');
     const result = await Promise.race([
       page.waitForSelector(`input[name="code-input-0]`, {
         timeout: NOTIFICATION_TIMEOUT,
+      }),
+      page.waitForSelector('div[role="alert"] > h6:first-of-type', {
+        timeout: NOTIFICATION_TIMEOUT,
+        visible: true,
       }),
       page.waitForNavigation({
         waitUntil: 'networkidle0',
         timeout: NOTIFICATION_TIMEOUT,
       }),
     ]);
-    if (!(result instanceof Response)) {
+    if (!(result as Response).ok) {
+      const resultElement = result as ElementHandle<HTMLHeadingElement>;
+      if (await resultElement.evaluate(el => el.innerText.includes('refresh'))) {
+        const errorMessage = await resultElement.evaluate(el => el.innerText);
+        this.L.warn(`Login returned error: ${errorMessage}`);
+        await this.startLogin(page);
+        return;
+      }
       this.L.trace('MFA detected');
       if (!this.totp) throw new Error('TOTP required for MFA login');
       const totp = new TOTP({ secret: this.totp });

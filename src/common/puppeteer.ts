@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-extra';
-import { Cookie, SetCookie } from 'puppeteer';
+import { Cookie, Page, SetCookie } from 'puppeteer';
 import PortalPlugin, {
   ChromiumRemoteDebuggingConnectionConfig,
   WebPortalConnectionConfig,
@@ -81,4 +81,12 @@ export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore
     });
   });
   return puppetCookies;
+}
+
+export function getDevtoolsUrl(page: Page): string {
+  // eslint-disable-next-line no-underscore-dangle
+  const targetId = (page as any)._target._targetId as string;
+  const wsEndpoint = new URL(page.browser().wsEndpoint());
+  // devtools://devtools/bundled/inspector.html?ws=127.0.0.1:35871/devtools/page/2B4E5714B42640A1C61AB9EE7E432730
+  return `devtools://devtools/bundled/inspector.html?ws=${wsEndpoint.host}/devtools/page/${targetId}`;
 }
