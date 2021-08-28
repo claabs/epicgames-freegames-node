@@ -17,8 +17,8 @@ const defaultWebPortalConfig: WebPortalConnectionConfig = {
 };
 
 const defaultWebSocketConfig: ChromiumRemoteDebuggingConnectionConfig = {
-  baseUrl: 'ws://localhost:3001',
-  port: 3001,
+  // baseUrl: 'ws://localhost:3001',
+  // port: 3001,
 };
 
 puppeteer.use(

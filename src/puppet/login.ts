@@ -1,13 +1,14 @@
+import { writeFileSync } from 'fs';
 import { TOTP } from 'otpauth';
 import { Logger } from 'pino';
-import { ElementHandle, Page, Response } from 'puppeteer';
+import { Cookie, ElementHandle, Page, Response } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   puppeteerCookieToToughCookieFileStore,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, mergeCookiesRaw } from '../common/request';
-import { setHcaptchaCookies } from './hcaptcha';
+import { getHcaptchaCookies } from './hcaptcha';
 
 const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000; // TODO: Add to config
 
@@ -30,13 +31,20 @@ export default class PuppetLogin {
   }
 
   async login(): Promise<void> {
-    await setHcaptchaCookies(this.email);
+    const hCaptchaCookies = await getHcaptchaCookies();
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+      dumpio: true,
+    });
     const page = await browser.newPage();
-    page.setCookie(...puppeteerCookies);
+    // eslint-disable-next-line no-underscore-dangle
+    await (page as any)._client.send('Network.setCookies', {
+      cookies: [...puppeteerCookies, ...hCaptchaCookies],
+    });
     this.L.trace('Navigating to Epic Games login page');
     await Promise.all([
       page.goto('https://www.epicgames.com/id/login/epic'),
@@ -60,6 +68,8 @@ export default class PuppetLogin {
         await this.handleLoginClick(page),
       ]);
     } catch (err) {
+      const content = await page.content();
+      writeFileSync('test.html', content);
       await page.screenshot({ path: 'test.png' });
       throw err;
     }
@@ -70,14 +80,34 @@ export default class PuppetLogin {
     await mergeCookiesRaw(this.email, cookieData);
   }
 
+  private async waitForHCaptcha(page: Page): Promise<ElementHandle<Element>> {
+    const talonHandle = await page.$('iframe#talon_frame_login_prod');
+    if (!talonHandle) throw new Error('Could not find talon_frame_login_prod');
+    const talonFrame = await talonHandle.contentFrame();
+    if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
+    this.L.trace('Waiting for hcaptcha iframe');
+    const content = await talonFrame.content();
+    writeFileSync('test2.html', content);
+    const hcaptchaFrame = await talonFrame.waitForSelector(`iframe[src*='hcaptcha']`);
+    return hcaptchaFrame;
+  }
+
   // eslint-disable-next-line class-methods-use-this
   private async handleLoginClick(page: Page): Promise<void> {
     this.L.trace('Waiting for sign-in result');
+    // eslint-disable-next-line no-underscore-dangle
+    const currentUrlCookies: { cookies: Cookie[] } = await (page as any)._client.send(
+      'Network.getAllCookies'
+    );
+    writeFileSync('test-cookies.json', JSON.stringify(currentUrlCookies, null, 2));
     const result = await Promise.race([
-      page.waitForSelector(`iframe[src*='hcaptcha']`), // TODO: this isn't detecting for some reason?
+      this.waitForHCaptcha(page),
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
-    if (!(result instanceof Response)) {
+    if (!(result as Response).ok) {
+      const content = await page.content();
+      writeFileSync('test.html', content);
+      await page.screenshot({ path: 'test.png' });
       this.L.trace('Captcha detected');
       const portalUrl = await page.openPortal();
       this.L.info({ portalUrl }, 'Go to this URL and do something');
