@@ -41,18 +41,22 @@ export default class PuppetLogin {
     this.L.trace('Waiting for email field');
     const emailElem = await page.waitForSelector('#email');
     this.L.trace('Filling email field');
-    await emailElem.type(this.email);
+    await emailElem.focus();
+    await emailElem.type(this.email, { delay: 50 });
     this.L.trace('Waiting for password field');
     const passElem = await page.waitForSelector('#password');
     this.L.trace('Filling password field');
-    await passElem.type(this.password);
+    await passElem.focus();
+    await passElem.type(this.password, { delay: 50 });
     this.L.trace('Waiting for sign-in button');
     const [signInElem] = await Promise.all([
       page.waitForSelector('#sign-in:not([disabled]'),
-      page.waitForTimeout(5000), // TODO: why is this required?
+      page.waitForTimeout(10000), // TODO: why is this required?
     ]);
     // Remember me should be checked by default
     this.L.trace('Clicking sign-in button');
+    await signInElem.hover();
+    await signInElem.focus();
     try {
       await Promise.all([
         await signInElem.click({ delay: 100 }),
