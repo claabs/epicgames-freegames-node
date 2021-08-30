@@ -28,7 +28,9 @@ puppeteer.use(
   })
 );
 
-puppeteer.use(StealthPlugin());
+const stealth = StealthPlugin();
+stealth.enabledEvasions.delete('iframe.contentWindow'); // https://github.com/berstend/puppeteer-extra/issues/543
+puppeteer.use(stealth);
 
 export default puppeteer;
 

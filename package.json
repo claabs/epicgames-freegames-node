@@ -4,7 +4,6 @@
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
-    "install": "(cd src/site/public && npm i)",
     "start": "node dist/src/index.js",
     "start:ts": "ts-node src/index.ts",
     "build": "rm -rf dist && tsc && cd src/site/public && npm run build && cd ../../.. && npx copyfiles -E src/**/public/*.html src/**/public/*.bundle.js dist",
