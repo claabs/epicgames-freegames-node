@@ -23,6 +23,7 @@ import {
   SET_SID_ENDPOINT,
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
+  LOCATION_ENDPOINT,
 } from './common/constants';
 import { config } from './common/config';
 
@@ -52,6 +53,11 @@ export default class Login {
     this.L.trace({ url: REPUTATION_ENDPOINT }, 'Reputation request');
     const resp = await this.request.get<ReputationData>(REPUTATION_ENDPOINT);
     return resp.body;
+  }
+
+  async getLocation(): Promise<void> {
+    this.L.trace({ url: LOCATION_ENDPOINT }, 'Location request');
+    await this.request.get<ReputationData>(LOCATION_ENDPOINT);
   }
 
   async loginMFA(totpSecret?: string): Promise<void> {
@@ -164,6 +170,7 @@ export default class Login {
     await this.getStoreToken();
 
     await this.getReputation();
+    await this.getLocation();
     // const csrfToken = await this.getCsrf();
 
     const clientRedirectSearchParams = { redirectUrl: STORE_HOMEPAGE };
