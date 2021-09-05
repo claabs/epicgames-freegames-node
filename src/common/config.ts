@@ -3,10 +3,7 @@ import json5 from 'json5';
 import fs from 'fs';
 import path from 'path';
 import { config as dotenv } from 'dotenv';
-import {
-  WebPortalConnectionConfig,
-  ChromiumRemoteDebuggingConnectionConfig,
-} from 'puppeteer-extra-plugin-portal';
+import { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 
 dotenv();
 
@@ -53,7 +50,6 @@ export interface PartialConfig {
   email?: PartialEmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
-  webSocketConfig?: ChromiumRemoteDebuggingConnectionConfig;
 }
 
 export interface ConfigObject extends PartialConfig {
@@ -68,7 +64,6 @@ export interface ConfigObject extends PartialConfig {
   email: EmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
-  webSocketConfig?: ChromiumRemoteDebuggingConnectionConfig;
 }
 
 const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
@@ -116,7 +111,6 @@ function validateConfig(config: PartialConfig): ConfigObject {
       email: (config.email as unknown) as EmailConfig,
       hcaptchaAccessibilityUrl: config.hcaptchaAccessibilityUrl,
       webPortalConfig: config.webPortalConfig,
-      webSocketConfig: config.webSocketConfig,
     };
     return validConfig;
   } catch (err) {

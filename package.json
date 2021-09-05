@@ -5,14 +5,14 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "node dist/src/index.js",
-    "start:ts": "DEBUG=puppeteer-extra-plugin:portal ts-node src/index.ts",
-    "build": "rm -rf dist && tsc && cd src/site/public && npm run build && cd ../../.. && npx copyfiles -E src/**/public/*.html src/**/public/*.bundle.js dist",
-    "lint": "tsc --noEmit && eslint **/*.ts && (cd src/site/public && npm run lint)",
+    "start:ts": "DEBUG=puppeteer-extra-plugin:portal* ts-node src/index.ts",
+    "build": "rm -rf dist && tsc",
+    "lint": "tsc --noEmit && eslint **/*.ts",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
-    "docker:build-test": "docker build . -t charlocharlie/epicgames-freegames-test:latest --target deploy"
+    "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy"
   },
   "dependencies": {
     "cookie-parser": "^1.4.5",
@@ -36,7 +36,7 @@
     "pino-pretty": "^3.6.1",
     "puppeteer": "^5.5.0",
     "puppeteer-extra": "^3.1.18",
-    "puppeteer-extra-plugin-portal": "^3.0.0-rc.4",
+    "puppeteer-extra-plugin-portal": "^3.0.0-rc.5",
     "puppeteer-extra-plugin-stealth": "^2.7.8",
     "qs": "^6.9.4",
     "set-cookie-parser": "^2.4.3",
@@ -93,8 +93,7 @@
     "**/*.config.js",
     "**/node_modules/**",
     "dist/**",
-    "**/*.d.ts",
-    "src/site/public/*"
+    "**/*.d.ts"
   ],
   "license": "MIT"
 }

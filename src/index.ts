@@ -6,7 +6,6 @@ import Login from './login';
 import FreeGames from './free-games';
 import Purchase from './purchase';
 import { newCookieJar } from './common/request';
-import './site/app';
 
 async function main(): Promise<void> {
   const accountPromises = config.accounts.map(async (account, index) => {

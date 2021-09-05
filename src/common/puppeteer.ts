@@ -1,9 +1,6 @@
 import puppeteer from 'puppeteer-extra';
 import { Cookie, Page, SetCookie } from 'puppeteer';
-import PortalPlugin, {
-  ChromiumRemoteDebuggingConnectionConfig,
-  WebPortalConnectionConfig,
-} from 'puppeteer-extra-plugin-portal';
+import PortalPlugin, { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { ToughCookieFileStore } from './request';
@@ -16,15 +13,9 @@ const defaultWebPortalConfig: WebPortalConnectionConfig = {
   },
 };
 
-const defaultWebSocketConfig: ChromiumRemoteDebuggingConnectionConfig = {
-  // baseUrl: 'ws://localhost:3001',
-  // port: 3001,
-};
-
 puppeteer.use(
   PortalPlugin({
     webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
-    webSocketConfig: objectAssignDeep(defaultWebSocketConfig, config.webSocketConfig),
   })
 );
 
@@ -86,8 +77,8 @@ export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore
 }
 
 export function getDevtoolsUrl(page: Page): string {
-  // eslint-disable-next-line no-underscore-dangle
-  const targetId = (page as any)._target._targetId as string;
+  // eslint-disable-next-line no-underscore-dangle,@typescript-eslint/no-explicit-any
+  const targetId: string = (page.target() as any)._targetId;
   const wsEndpoint = new URL(page.browser().wsEndpoint());
   // devtools://devtools/bundled/inspector.html?ws=127.0.0.1:35871/devtools/page/2B4E5714B42640A1C61AB9EE7E432730
   return `devtools://devtools/bundled/inspector.html?ws=${wsEndpoint.host}/devtools/page/${targetId}`;
