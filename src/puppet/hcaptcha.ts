@@ -37,14 +37,18 @@ export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
     L.debug('Setting hCaptcha accessibility cookies');
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
-    const portalUrl = await page.openPortal();
-    L.info({ portalUrl });
+
     L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);
-    await Promise.all([page.goto(hcaptchaAccessibilityUrl), page.waitForNavigation()]);
+    await Promise.all([
+      page.goto(hcaptchaAccessibilityUrl),
+      page.waitForNavigation({ waitUntil: 'networkidle0' }),
+    ]);
     L.trace(`Waiting for setAccessibilityCookie button`);
     const setCookieButton = await page.waitForSelector(
       `button[data-cy='setAccessibilityCookie']:not([disabled])`
     );
+    const portalUrl = await page.openPortal();
+    L.info({ portalUrl });
     L.trace(`Clicking setAccessibilityCookie button`);
     await Promise.all([
       await setCookieButton.click({ delay: 100 }),
@@ -53,10 +57,10 @@ export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
 
     await page.closePortal();
     L.trace(`Saving new cookies`);
-    // eslint-disable-next-line no-underscore-dangle,@typescript-eslint/no-explicit-any
-    const currentUrlCookies: { cookies: Cookie[] } = await (page as any)._client.send(
-      'Network.getAllCookies'
-    );
+    const cdpClient = await page.target().createCDPSession();
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Cookie[];
+    };
     await browser.close();
     cookieData = currentUrlCookies.cookies;
     await setCookieCache(cookieData);
