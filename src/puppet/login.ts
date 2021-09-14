@@ -6,11 +6,11 @@ import { Cookie, ElementHandle, Page, Response } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
-  puppeteerCookieToToughCookieFileStore,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
-import { getCookiesRaw, mergeCookiesRaw } from '../common/request';
+import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
 import { getHcaptchaCookies } from './hcaptcha';
+import { EPIC_CLIENT_ID } from '../common/constants';
 
 const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000; // TODO: Add to config
 
@@ -35,7 +35,9 @@ export default class PuppetLogin {
   private async startLogin(page: Page): Promise<void> {
     this.L.trace('Navigating to Epic Games login page');
     await Promise.all([
-      page.goto('https://www.epicgames.com/id/login/epic'),
+      page.goto(
+        `https://www.epicgames.com/id/login/epic?redirect_uri=https://www.epicgames.com/store/en-US/&client_id=${EPIC_CLIENT_ID}`
+      ),
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
     this.L.trace('Waiting for email field');
@@ -89,10 +91,12 @@ export default class PuppetLogin {
     await this.startLogin(page);
 
     this.L.trace('Saving new cookies');
-    const currentUrlCookies = await page.cookies();
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Cookie[];
+    };
+    this.L.trace({ currentUrlCookies });
     await browser.close();
-    const cookieData = puppeteerCookieToToughCookieFileStore(currentUrlCookies);
-    await mergeCookiesRaw(this.email, cookieData);
+    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
   }
 
   private async waitForHCaptcha(page: Page): Promise<ElementHandle<Element>> {
@@ -112,15 +116,15 @@ export default class PuppetLogin {
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
       cookies: Cookie[];
     };
-    writeFileSync('test-cookies.json', JSON.stringify(currentUrlCookies, null, 2));
+    writeFileSync('test-cookies.json', JSON.stringify(currentUrlCookies, null, 2)); // TODO: Remove
     const result = await Promise.race([
       this.waitForHCaptcha(page),
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
     if (!(result as Response).ok) {
       const content = await page.content();
-      writeFileSync('test.html', content);
-      await page.screenshot({ path: 'test.png' });
+      writeFileSync('test.html', content); // TODO: Remove
+      await page.screenshot({ path: 'test.png' }); // TODO: Remove
       this.L.trace('Captcha detected');
       const portalUrl = await page.openPortal();
       this.L.info({ portalUrl }, 'Go to this URL and do something');

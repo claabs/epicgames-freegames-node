@@ -6,6 +6,7 @@ import Login from './login';
 import FreeGames from './free-games';
 import Purchase from './purchase';
 import { newCookieJar } from './common/request';
+import PuppetPurchase from './puppet/purchase';
 
 async function main(): Promise<void> {
   const accountPromises = config.accounts.map(async (account, index) => {
@@ -15,10 +16,12 @@ async function main(): Promise<void> {
       const requestClient = newCookieJar(account.email);
       const login = new Login(requestClient, account.email);
       const freeGames = new FreeGames(requestClient, account.email);
-      const purchase = new Purchase(requestClient, account.email);
+      // const purchase = new Purchase(requestClient, account.email);
+      const purchasePuppeteer = new PuppetPurchase(account.email);
       await login.fullLogin(account.email, account.password, account.totp); // Login
       const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
-      await purchase.purchaseGames(offers); // Purchase games
+      await purchasePuppeteer.purchase(offers[0].productSlug);
+      // await purchase.purchaseGames(offers); // Purchase games
     } catch (e) {
       if (e.response) {
         if (e.response.body) L.error(e.response.body);

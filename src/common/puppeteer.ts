@@ -25,31 +25,36 @@ puppeteer.use(stealth);
 
 export default puppeteer;
 
-export function puppeteerCookieToToughCookieFileStore(
+export function puppeteerCookieToToughCookieFileStore(puppetCookie: Cookie): ToughCookieFileStore {
+  const domain = puppetCookie.domain.replace(/^\./, '');
+  const expires = new Date(puppetCookie.expires * 1000).toISOString();
+  const { path, name } = puppetCookie;
+
+  const tcfsCookie: ToughCookieFileStore = {
+    [domain]: {
+      [path]: {
+        [name]: {
+          key: name,
+          value: puppetCookie.value,
+          expires,
+          domain,
+          path,
+          secure: puppetCookie.secure,
+          httpOnly: puppetCookie.httpOnly,
+          hostOnly: !puppetCookie.domain.startsWith('.'),
+        },
+      },
+    },
+  };
+  return tcfsCookie;
+}
+
+export function puppeteerCookiesToToughCookieFileStore(
   puppetCookies: Cookie[]
 ): ToughCookieFileStore {
   const tcfs: ToughCookieFileStore = {};
   puppetCookies.forEach(puppetCookie => {
-    const domain = puppetCookie.domain.replace(/^\./, '');
-    const expires = new Date(puppetCookie.expires * 1000).toISOString();
-    const { path, name } = puppetCookie;
-
-    const temp: ToughCookieFileStore = {
-      [domain]: {
-        [path]: {
-          [name]: {
-            key: name,
-            value: puppetCookie.value,
-            expires,
-            domain,
-            path,
-            secure: puppetCookie.secure,
-            httpOnly: puppetCookie.httpOnly,
-            hostOnly: !puppetCookie.domain.startsWith('.'),
-          },
-        },
-      },
-    };
+    const temp = puppeteerCookieToToughCookieFileStore(puppetCookie);
     objectAssignDeep(tcfs, temp);
   });
   return tcfs;

@@ -42,7 +42,7 @@
     "set-cookie-parser": "^2.4.3",
     "source-map-support": "^0.5.19",
     "tough-cookie": "^4.0.0",
-    "tough-cookie-file-store": "^2.0.1",
+    "tough-cookie-file-store": "^2.0.2",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
