@@ -4,7 +4,6 @@ import { Logger } from 'pino';
 import logger from './common/logger';
 import {
   OrderPreviewResponse,
-  OfferInfo,
   ConfirmPurcaseError,
   OrderConfirmRequest,
   ConfirmLineOffer,
@@ -164,15 +163,5 @@ export default class Purchase {
       this.L.error(orderPreviewResp.body.orderResponse.message);
     }
     await this.confirmOrder(orderPreviewResp.body, purchaseToken);
-  }
-
-  async purchaseGames(offers: OfferInfo[]): Promise<void> {
-    for (let i = 0; i < offers.length; i += 1) {
-      this.L.info(`Purchasing ${offers[i].productName}`);
-      // Async for-loop as running purchases in parallel may break
-      // eslint-disable-next-line no-await-in-loop
-      await this.purchase(offers[i].offerNamespace, offers[i].offerId);
-      this.L.info(`Done purchasing ${offers[i].productName}`);
-    }
   }
 }

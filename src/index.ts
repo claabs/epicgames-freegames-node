@@ -16,12 +16,22 @@ async function main(): Promise<void> {
       const requestClient = newCookieJar(account.email);
       const login = new Login(requestClient, account.email);
       const freeGames = new FreeGames(requestClient, account.email);
-      // const purchase = new Purchase(requestClient, account.email);
+      const purchase = new Purchase(requestClient, account.email);
       const purchasePuppeteer = new PuppetPurchase(account.email);
       await login.fullLogin(account.email, account.password, account.totp); // Login
       const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
-      await purchasePuppeteer.purchase(offers[0].productSlug);
-      // await purchase.purchaseGames(offers); // Purchase games
+      for (let i = 0; i < offers.length; i += 1) {
+        L.info(`Purchasing ${offers[i].productName}`);
+        // Async for-loop as running purchases in parallel may break
+        try {
+          await purchase.purchase(offers[i].offerNamespace, offers[i].offerId);
+        } catch (err) {
+          L.warn(err);
+          L.warn('API purchase experienced an error, trying puppeteer purchase');
+          await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
+        }
+        L.info(`Done purchasing ${offers[i].productName}`);
+      }
     } catch (e) {
       if (e.response) {
         if (e.response.body) L.error(e.response.body);
