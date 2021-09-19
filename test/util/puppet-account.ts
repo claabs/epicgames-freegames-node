@@ -16,6 +16,13 @@ import Smtp4Dev from './smtp4dev';
 
 config();
 
+export interface AccountManagerProps {
+  username?: string;
+  password?: string;
+  totp?: string;
+  country?: string;
+}
+
 export default class AccountManager {
   private smtp4dev: Smtp4Dev;
 
@@ -33,27 +40,39 @@ export default class AccountManager {
 
   private L: Logger;
 
-  constructor(user?: string, pass?: string, totp?: string, country?: string) {
-    if (user) {
-      this.username = user;
+  constructor(props?: AccountManagerProps) {
+    if (props?.username) {
+      this.username = props?.username;
     } else {
       const randUser = new RandExp(/[0-9a-zA-Z]{8,16}/);
       this.username = randUser.gen();
     }
-    if (pass) {
-      this.password = pass;
+    if (props?.password) {
+      this.password = props?.password;
     } else {
       const randPass = new RandExp(/[a-zA-Z]{4,8}[0-9]{3,8}/);
       this.password = randPass.gen();
     }
-    this.country = country || 'United States';
-    this.totp = totp;
+    this.country = props?.country || 'United States';
+    this.totp = props?.totp;
     this.smtp4dev = new Smtp4Dev({
       apiBaseUrl: process.env.SMTP4DEV_URL || '',
+      requestExtensions: {
+        username: process.env.SMTP4DEV_USER,
+        password: process.env.SMTP4DEV_PASSWORD,
+      },
     });
     this.email = `${this.username}@${this.addressHost}`;
     this.L = logger.child({
-      user,
+      username: this.username,
+    });
+  }
+
+  public logAccountDetails(): void {
+    this.L.info({
+      email: this.email,
+      password: this.password,
+      totp: this.totp,
     });
   }
 

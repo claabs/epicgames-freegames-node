@@ -59,7 +59,7 @@ interface Smtp4DevProps {
   pollInterval?: number;
   timeout?: number;
   apiBaseUrl: string;
-  requestExtensions?: (Got | ExtendOptions)[];
+  requestExtensions?: Got | ExtendOptions;
 }
 
 // https://github.com/rnwood/smtp4dev/tree/master/Rnwood.Smtp4dev/ClientApp/src/ApiClient
