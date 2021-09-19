@@ -200,13 +200,11 @@ Place these variables in a `.env` file in the project root.
 
 ### Optional variables
 
-These variables are not currently necessary due to the plus-sign email exploit.
+These variables support automatic account creation for rapid testing
 
-| Variable                     | Example            | Description                              |
-|------------------------------|--------------------|------------------------------------------|
-| PERMANENT_EMAIL_HOST         | `imap.zoho.com`    | The incoming IMAP server name            |
-| PERMANENT_EMAIL_PORT         | `993`              | The incoming IMAP port                   |
-| PERMANENT_EMAIL_USER         | `example@zoho.com` | The IMAP username                        |
-| PERMANENT_EMAIL_PASS         | `xyz789`           | The IMAP password                        |
-| PERMANENT_EMAIL_ADDRESS      | `example`          | The email address portion before the '@' |
-| PERMANENT_EMAIL_ADDRESS_HOST | `zohomail.com`     | The email address portion after the '@'  |
+| Variable            | Example                     | Description                                                                                               |
+|---------------------|-----------------------------|-----------------------------------------------------------------------------------------------------------|
+| SMTP4DEV_URL        | `http://192.168.1.100:5000` | Web UI address for [smtp4dev](https://github.com/rnwood/smtp4dev) instance for automatic account creation |
+| SMTP4DEV_USER       | `user`                      | A basic auth username for `smtp4dev` if applicable                                                        |
+| SMTP4DEV_PASSWORD   | `abc123`                    | A basic auth password for `smtp4dev` if applicable                                                        |
+| CREATION_EMAIL_HOST | `test.example.com`          | The email suffix for newly created accounts                                                               |

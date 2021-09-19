@@ -52,7 +52,7 @@ export default class PuppetLogin {
     await passElem.type(this.password, { delay: 50 });
     this.L.trace('Waiting for sign-in button');
     const [signInElem] = await Promise.all([
-      page.waitForSelector('#sign-in:not([disabled]'),
+      page.waitForSelector('#sign-in:not([disabled])'),
       page.waitForTimeout(10000), // TODO: why is this required?
     ]);
     // Remember me should be checked by default
