@@ -163,7 +163,7 @@ export default class Login {
   async getStoreToken(): Promise<void> {
     this.L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
     const resp = await this.request.get(STORE_HOMEPAGE, { responseType: 'text' });
-    this.L.trace({ headers: resp.headers }, 'Store homepage response headers');
+    // this.L.trace({ headers: resp.headers }, 'Store homepage response headers');
   }
 
   async refreshAndSid(error: boolean): Promise<boolean> {

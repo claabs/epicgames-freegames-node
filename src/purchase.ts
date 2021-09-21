@@ -81,7 +81,7 @@ export default class Purchase {
           },
         }
       );
-      this.L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
+      this.L.debug(/* { confirmOrderResponse: confirmOrderResp.body }, */ 'confirm order response');
       if (
         confirmOrderResp.body.errorCode &&
         confirmOrderResp.body.errorCode.includes('captcha.challenge')
@@ -155,7 +155,7 @@ export default class Purchase {
         'x-requested-with': purchaseToken,
       },
     });
-    this.L.trace({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
+    this.L.trace(/* { orderPreviewResponse: orderPreviewResp.body }, */ 'Order preview response');
     if (
       orderPreviewResp.body.orderResponse?.error &&
       orderPreviewResp.body.orderResponse?.message
