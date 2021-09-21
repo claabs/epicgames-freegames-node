@@ -29,7 +29,7 @@ const setCookieCache = async (cookies: Cookie[]): Promise<void> => {
 export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {
-    L.debug('hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed');
+    L.warn('hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed');
     return [];
   }
   let cookieData = await getCookieCache();

@@ -2,7 +2,7 @@
 import { writeFileSync } from 'fs';
 import { TOTP } from 'otpauth';
 import { Logger } from 'pino';
-import { Cookie, ElementHandle, Page, Response } from 'puppeteer';
+import { Cookie, ElementHandle, Page } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
@@ -66,8 +66,8 @@ export default class PuppetLogin {
       ]);
     } catch (err) {
       const content = await page.content();
-      writeFileSync('test.html', content);
-      await page.screenshot({ path: 'test.png' });
+      // writeFileSync('test.html', content);
+      // await page.screenshot({ path: 'test.png' });
       throw err;
     }
   }
@@ -94,34 +94,41 @@ export default class PuppetLogin {
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
       cookies: Cookie[];
     };
-    this.L.trace({ currentUrlCookies });
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
   }
 
-  private async waitForHCaptcha(page: Page): Promise<ElementHandle<Element>> {
-    const talonHandle = await page.$('iframe#talon_frame_login_prod');
-    if (!talonHandle) throw new Error('Could not find talon_frame_login_prod');
-    const talonFrame = await talonHandle.contentFrame();
-    if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
-    this.L.trace('Waiting for hcaptcha iframe');
-    const hcaptchaFrame = await talonFrame.waitForSelector(`iframe[src*='hcaptcha']`);
-    return hcaptchaFrame;
+  private async waitForHCaptcha(page: Page): Promise<ElementHandle<Element> | string> {
+    try {
+      const talonHandle = await page.$('iframe#talon_frame_login_prod');
+      if (!talonHandle) throw new Error('Could not find talon_frame_login_prod');
+      const talonFrame = await talonHandle.contentFrame();
+      if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
+      this.L.trace('Waiting for hcaptcha iframe');
+      const hcaptchaFrame = await talonFrame.waitForSelector(
+        `#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`,
+        {
+          visible: true,
+        }
+      );
+      return hcaptchaFrame;
+    } catch (err) {
+      if (err.message.includes('timeout')) {
+        throw err;
+      }
+      this.L.warn(err);
+      return 'nav';
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
   private async handleLoginClick(page: Page): Promise<void> {
     this.L.trace('Waiting for sign-in result');
-    const cdpClient = await page.target().createCDPSession();
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
-    };
-    writeFileSync('test-cookies.json', JSON.stringify(currentUrlCookies, null, 2)); // TODO: Remove
     const result = await Promise.race([
       this.waitForHCaptcha(page),
-      page.waitForNavigation({ waitUntil: 'networkidle0' }),
+      page.waitForNavigation({ waitUntil: 'networkidle0' }).then(() => 'nav'),
     ]);
-    if (!(result as Response).ok) {
+    if (result !== 'nav') {
       const content = await page.content();
       writeFileSync('test.html', content); // TODO: Remove
       await page.screenshot({ path: 'test.png' }); // TODO: Remove
@@ -137,21 +144,24 @@ export default class PuppetLogin {
   private async handleCaptchaSolved(page: Page): Promise<void> {
     this.L.trace('Waiting for MFA possibility');
     const result = await Promise.race([
-      page.waitForSelector(`input[name="code-input-0]`, {
+      page.waitForSelector(`input[name="code-input-0"]`, {
         timeout: NOTIFICATION_TIMEOUT,
       }),
       page.waitForSelector('div[role="alert"] > h6:first-of-type', {
         timeout: NOTIFICATION_TIMEOUT,
         visible: true,
       }),
-      page.waitForNavigation({
-        waitUntil: 'networkidle0',
-        timeout: NOTIFICATION_TIMEOUT,
-      }),
+      page
+        .waitForNavigation({
+          waitUntil: 'networkidle2',
+          timeout: NOTIFICATION_TIMEOUT,
+        })
+        .then(() => 'nav'),
     ]);
-    if (!(result as Response).ok) {
+    if (result !== 'nav') {
       const resultElement = result as ElementHandle<HTMLHeadingElement>;
       if (await resultElement.evaluate(el => el.innerText.includes('refresh'))) {
+        // Refresh the page if the error message prompts
         const errorMessage = await resultElement.evaluate(el => el.innerText);
         this.L.warn(`Login returned error: ${errorMessage}`);
         await this.startLogin(page);
