@@ -3,7 +3,7 @@ import RandExp from 'randexp';
 import { config } from 'dotenv';
 import { Logger } from 'pino';
 import { Page, Cookie, ElementHandle } from 'puppeteer';
-import { writeFileSync } from 'fs-extra';
+// import { writeFileSync } from 'fs-extra';
 import { getCookiesRaw, setPuppeteerCookies } from '../../src/common/request';
 import { EPIC_CLIENT_ID } from '../../src/common/constants';
 import { getHcaptchaCookies } from '../../src/puppet/hcaptcha';
@@ -176,6 +176,13 @@ export default class AccountManager {
     await skipSurveyButton.click({ delay: 100 });
     await page.waitForSelector(`div.account-deletion-request-success-modal`);
     this.L.debug('Account deletion successful');
+
+    this.L.trace('Saving new cookies');
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Cookie[];
+    };
+    await browser.close();
+    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
   }
 
   private async fillSignUpForm(page: Page): Promise<void> {
@@ -238,7 +245,7 @@ export default class AccountManager {
     this.L.debug('Waiting for creation verification email');
     const message = await this.smtp4dev.findNewEmailTo(this.username);
     const emailSource = await this.smtp4dev.getMessageSource(message.id);
-    writeFileSync('email-source.eml', emailSource, 'utf8');
+    // writeFileSync('email-source.eml', emailSource, 'utf8');
     const codeRegexp = /\\t\\t([0-9]{6})\\n/g;
     const matches = codeRegexp.exec(emailSource);
     if (!matches) throw new Error('No code matches');
@@ -251,7 +258,7 @@ export default class AccountManager {
     this.L.debug('Waiting for action verification email');
     const message = await this.smtp4dev.findNewEmailTo(this.username);
     const emailSource = await this.smtp4dev.getMessageSource(message.id);
-    writeFileSync('email-source.eml', emailSource, 'utf8');
+    // writeFileSync('email-source.eml', emailSource, 'utf8');
     const codeRegexp = / +([0-9]{6})<br\/><br\/>/g;
     const matches = codeRegexp.exec(emailSource);
     if (!matches) throw new Error('No code matches');
