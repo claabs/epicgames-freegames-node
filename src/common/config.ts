@@ -50,6 +50,7 @@ export interface PartialConfig {
   email?: PartialEmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
+  puppeteerPurchase?: boolean;
 }
 
 export interface ConfigObject extends PartialConfig {
@@ -64,6 +65,7 @@ export interface ConfigObject extends PartialConfig {
   email: EmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
+  puppeteerPurchase?: boolean;
 }
 
 const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
@@ -111,6 +113,7 @@ function validateConfig(config: PartialConfig): ConfigObject {
       email: (config.email as unknown) as EmailConfig,
       hcaptchaAccessibilityUrl: config.hcaptchaAccessibilityUrl,
       webPortalConfig: config.webPortalConfig,
+      puppeteerPurchase: config.puppeteerPurchase,
     };
     return validConfig;
   } catch (err) {
@@ -160,6 +163,9 @@ const envVarConfig: PartialConfig = {
     },
   },
   hcaptchaAccessibilityUrl: process.env.HCAPTCHA_ACCESSIBILITY_URL,
+  puppeteerPurchase: process.env.PUPPETEER_PURCHASE
+    ? process.env.PUPPETEER_PURCHASE === 'true'
+    : undefined,
 };
 
 partialConfig = {

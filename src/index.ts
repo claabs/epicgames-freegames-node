@@ -20,13 +20,19 @@ export async function redeemAccount(account: Account, index: number): Promise<vo
     await login.fullLogin(account.email, account.password, account.totp); // Login
     const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
     for (let i = 0; i < offers.length; i += 1) {
-      L.info(`Purchasing ${offers[i].productName}`);
       // Async for-loop as running purchases in parallel may break
+      L.info(`Purchasing ${offers[i].productName}`);
+      let { puppeteerPurchase } = config;
       try {
-        await purchase.purchase(offers[i].offerNamespace, offers[i].offerId);
+        if (!puppeteerPurchase) {
+          await purchase.purchase(offers[i].offerNamespace, offers[i].offerId);
+        }
       } catch (err) {
         L.warn(err);
         L.warn('API purchase experienced an error, trying puppeteer purchase');
+        puppeteerPurchase = true;
+      }
+      if (puppeteerPurchase) {
         await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
       }
       L.info(`Done purchasing ${offers[i].productName}`);
