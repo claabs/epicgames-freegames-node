@@ -100,16 +100,17 @@ export default class Smtp4Dev {
   }
 
   public async findNewEmailTo(searchString: string): Promise<MessageSummary> {
-    L.debug('Finding new message to:', { searchString });
+    const lowerSearchString = searchString.toLowerCase();
+    L.debug('Finding new message to:', { searchString: lowerSearchString });
     const startTime = new Date();
     do {
       // eslint-disable-next-line no-await-in-loop
       const messages = await this.getMessages();
       const foundMessage = messages.find(
-        m => new Date(m.receivedDate) > startTime && m.to.includes(searchString)
+        m => new Date(m.receivedDate) > startTime && m.to.toLowerCase().includes(lowerSearchString)
       );
       if (foundMessage) {
-        L.info('Found message', { searchString });
+        L.info('Found message', { lowerSearchString });
         return foundMessage;
       }
       L.trace('No message found, waiting...');

@@ -2,7 +2,7 @@
 import RandExp from 'randexp';
 import { config } from 'dotenv';
 import { Logger } from 'pino';
-import { Page, Cookie } from 'puppeteer';
+import { Page, Cookie, ElementHandle } from 'puppeteer';
 import { writeFileSync } from 'fs-extra';
 import { getCookiesRaw, setPuppeteerCookies } from '../../src/common/request';
 import { EPIC_CLIENT_ID } from '../../src/common/constants';
@@ -132,6 +132,52 @@ export default class AccountManager {
     await continueButton.click({ delay: 100 });
   }
 
+  public async deleteAccount(): Promise<void> {
+    this.L.info({ email: this.email }, 'Deleting account');
+
+    const hCaptchaCookies = await getHcaptchaCookies();
+    const userCookies = await getCookiesRaw(this.email);
+    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
+    this.L.debug('Logging in with puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+    });
+    const page = await browser.newPage();
+    this.L.trace(getDevtoolsUrl(page));
+    const cdpClient = await page.target().createCDPSession();
+    await cdpClient.send('Network.setCookies', {
+      cookies: [...puppeteerCookies, ...hCaptchaCookies],
+    });
+    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+    await page.goto(`https://www.epicgames.com/account/personal`, { waitUntil: 'networkidle0' });
+    this.L.trace('Waiting for deleteButton');
+    const deleteButton: ElementHandle<HTMLButtonElement> = await page.waitForXPath(
+      `//button[contains(., 'Request Account Delete')]`
+    );
+    this.L.trace('Clicking deleteButton');
+    await deleteButton.click({ delay: 100 });
+    this.L.trace('Waiting for securityCodeInput');
+    const securityCodeInput = await page.waitForSelector(`input[name='security-code']`);
+    const code = await this.getActionVerification();
+    this.L.trace('Filling securityCodeInput');
+    await securityCodeInput.type(code);
+    this.L.trace('Waiting for confirmButton');
+    const confirmButton: ElementHandle<HTMLButtonElement> = await page.waitForXPath(
+      `//button[contains(., 'Confirm Delete Request')]`
+    );
+    this.L.trace('Clicking confirmButton');
+    await confirmButton.click({ delay: 100 });
+    this.L.trace('Waiting for skipSurveyButton');
+    const skipSurveyButton: ElementHandle<HTMLButtonElement> = await page.waitForSelector(
+      `button#deletion-reason-skip`
+    );
+    this.L.trace('Clicking skipSurveyButton');
+    await skipSurveyButton.click({ delay: 100 });
+    await page.waitForSelector(`div.account-deletion-request-success-modal`);
+    this.L.debug('Account deletion successful');
+  }
+
   private async fillSignUpForm(page: Page): Promise<void> {
     this.L.trace('Getting sign up fields');
     const randName = new RandExp(/[a-zA-Z]{3,12}/);
@@ -189,11 +235,24 @@ export default class AccountManager {
   }
 
   private async getVerification(): Promise<string> {
-    this.L.debug('Waiting for perm verification email');
+    this.L.debug('Waiting for creation verification email');
     const message = await this.smtp4dev.findNewEmailTo(this.username);
     const emailSource = await this.smtp4dev.getMessageSource(message.id);
     writeFileSync('email-source.eml', emailSource, 'utf8');
     const codeRegexp = /\\t\\t([0-9]{6})\\n/g;
+    const matches = codeRegexp.exec(emailSource);
+    if (!matches) throw new Error('No code matches');
+    const code = matches[1].trim();
+    this.L.debug({ code }, 'Email code');
+    return code;
+  }
+
+  private async getActionVerification(): Promise<string> {
+    this.L.debug('Waiting for action verification email');
+    const message = await this.smtp4dev.findNewEmailTo(this.username);
+    const emailSource = await this.smtp4dev.getMessageSource(message.id);
+    writeFileSync('email-source.eml', emailSource, 'utf8');
+    const codeRegexp = / +([0-9]{6})<br\/><br\/>/g;
     const matches = codeRegexp.exec(emailSource);
     if (!matches) throw new Error('No code matches');
     const code = matches[1].trim();
