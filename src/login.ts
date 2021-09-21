@@ -1,25 +1,12 @@
-import cookieParser from 'set-cookie-parser';
-import { TOTP } from 'otpauth';
 import { Got } from 'got';
 import { Logger } from 'pino';
 import logger from './common/logger';
+import { RedirectResponse, ReputationData } from './interfaces/types';
 import {
-  CSRFSetCookies,
-  LoginBody,
-  RedirectResponse,
-  MFABody,
-  ReputationData,
-} from './interfaces/types';
-import { notifyManualCaptcha } from './captcha';
-import {
-  CSRF_ENDPOINT,
-  LOGIN_ENDPOINT,
   EPIC_CLIENT_ID,
   REDIRECT_ENDPOINT,
   REPUTATION_ENDPOINT,
-  EMAIL_VERIFY,
   STORE_HOMEPAGE,
-  MFA_LOGIN_ENDPOINT,
   SET_SID_ENDPOINT,
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
@@ -40,16 +27,6 @@ export default class Login {
     });
   }
 
-  async getCsrf(): Promise<string> {
-    this.L.debug('Refreshing CSRF');
-    this.L.trace({ url: CSRF_ENDPOINT }, 'CSRF request');
-    const csrfResp = await this.request.get(CSRF_ENDPOINT);
-    const cookies = (cookieParser(csrfResp.headers['set-cookie'] as string[], {
-      map: true,
-    }) as unknown) as CSRFSetCookies;
-    return cookies['XSRF-TOKEN'].value;
-  }
-
   async getReputation(): Promise<ReputationData> {
     this.L.trace({ url: REPUTATION_ENDPOINT }, 'Reputation request');
     const resp = await this.request.get<ReputationData>(REPUTATION_ENDPOINT);
@@ -59,102 +36,6 @@ export default class Login {
   async getLocation(): Promise<void> {
     this.L.trace({ url: LOCATION_ENDPOINT }, 'Location request');
     await this.request.get<ReputationData>(LOCATION_ENDPOINT);
-  }
-
-  async loginMFA(totpSecret?: string): Promise<void> {
-    this.L.debug('Logging in with MFA');
-    if (!totpSecret) throw new Error('TOTP required for MFA login');
-    const csrfToken = await this.getCsrf();
-    const totp = new TOTP({ secret: totpSecret });
-    const mfaRequest: MFABody = {
-      code: totp.generate(),
-      method: 'authenticator',
-      rememberDevice: true,
-    };
-    this.L.trace({ body: mfaRequest, url: MFA_LOGIN_ENDPOINT }, 'MFA request');
-    await this.request.post(MFA_LOGIN_ENDPOINT, {
-      json: mfaRequest,
-      headers: {
-        'x-xsrf-token': csrfToken,
-      },
-    });
-  }
-
-  async sendVerify(code: string): Promise<void> {
-    const csrfToken = await this.getCsrf();
-    const verifyBody = {
-      verificationCode: code,
-    };
-    this.L.trace({ body: verifyBody, url: EMAIL_VERIFY }, 'Verify email request');
-    await this.request.post(EMAIL_VERIFY, {
-      json: verifyBody,
-      headers: {
-        'x-xsrf-token': csrfToken,
-      },
-    });
-  }
-
-  async login(
-    email: string,
-    password: string,
-    captcha = '',
-    totp = '',
-    blob?: string,
-    attempt = 0
-  ): Promise<void> {
-    this.L.debug({ email, captcha, attempt }, 'Attempting login');
-    if (attempt > 5) {
-      throw new Error(
-        'Too many login attempts. This probably because something is wrong with the captcha process.'
-      );
-    }
-    let csrfToken = await this.getCsrf();
-    const loginBody: LoginBody = {
-      password,
-      rememberMe: true,
-      captcha,
-      email,
-    };
-    try {
-      this.L.trace({ body: loginBody, url: LOGIN_ENDPOINT }, 'Login request');
-      await this.request.post(LOGIN_ENDPOINT, {
-        json: loginBody,
-        headers: {
-          'x-xsrf-token': csrfToken,
-        },
-      });
-      this.L.debug('Logged in');
-    } catch (e) {
-      if (e.response && e.response.body && e.response.body.errorCode) {
-        if (e.response.body.errorCode.includes('session_invalidated')) {
-          this.L.debug('Session invalidated, retrying');
-          await this.login(email, password, captcha, totp, blob, attempt + 1);
-        } else if (
-          e.response.body.errorCode === 'errors.com.epicgames.accountportal.captcha_invalid'
-        ) {
-          this.L.debug('Captcha required');
-          let captchaToken: string;
-          if (attempt % 2 === 0) {
-            csrfToken = await this.getCsrf();
-            captchaToken = await notifyManualCaptcha(email, csrfToken);
-          } else {
-            captchaToken = captcha;
-          }
-          await this.login(email, password, captchaToken, totp, blob, attempt + 1);
-        } else if (
-          e.response.body.errorCode ===
-          'errors.com.epicgames.common.two_factor_authentication.required'
-        ) {
-          await this.loginMFA(totp);
-        } else {
-          this.L.error(e.response.body, 'Login failed');
-          throw e;
-        }
-      } else {
-        this.L.error(e, 'Login failed');
-        throw e;
-      }
-    }
   }
 
   /**

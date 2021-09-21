@@ -8,7 +8,6 @@ import {
   OrderConfirmRequest,
   ConfirmLineOffer,
 } from './interfaces/types';
-import { EpicArkosePublicKey, notifyManualCaptcha } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
@@ -86,16 +85,7 @@ export default class Purchase {
         confirmOrderResp.body.errorCode &&
         confirmOrderResp.body.errorCode.includes('captcha.challenge')
       ) {
-        this.L.debug('Captcha required');
-        const newPreview = orderPreview;
-        newPreview.syncToken = confirmOrderResp.body.syncToken;
-        const captchaToken = await notifyManualCaptcha(
-          this.email,
-          '',
-          EpicArkosePublicKey.PURCHASE
-        );
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
-        await this.confirmOrder(newPreview, purchaseToken, captchaToken);
+        throw new Error('Captcha required for purchase');
       } else {
         this.L.debug('Purchase successful');
       }

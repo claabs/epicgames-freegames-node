@@ -23,7 +23,6 @@
     "json5": "^2.2.0",
     "nodemailer": "^6.4.16",
     "object-assign-deep": "^0.4.0",
-    "open": "^8.0.4",
     "otpauth": "^5.0.6",
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
@@ -31,12 +30,10 @@
     "puppeteer-extra": "^3.1.18",
     "puppeteer-extra-plugin-portal": "^3.0.0-rc.5",
     "puppeteer-extra-plugin-stealth": "^2.7.8",
-    "qs": "^6.9.4",
     "set-cookie-parser": "^2.4.3",
     "source-map-support": "^0.5.19",
     "tough-cookie": "^4.0.0",
-    "tough-cookie-file-store": "^2.0.2",
-    "uuid": "^7.0.3"
+    "tough-cookie-file-store": "^2.0.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.12",
@@ -47,10 +44,8 @@
     "@types/nodemailer": "^6.4.0",
     "@types/object-assign-deep": "^0.4.0",
     "@types/pino": "^5.15.5",
-    "@types/qs": "^6.9.7",
     "@types/set-cookie-parser": "0.0.6",
     "@types/tough-cookie-file-store": "^2.0.0",
-    "@types/uuid": "^7.0.0",
     "@types/yargs": "^15.0.4",
     "@typescript-eslint/eslint-plugin": "^2.13.0",
     "@typescript-eslint/parser": "^2.13.0",
