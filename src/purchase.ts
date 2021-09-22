@@ -34,7 +34,7 @@ export default class Purchase {
     purchaseToken: string,
     captcha?: string
   ): Promise<void> {
-    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map(l => ({
+    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map((l) => ({
       offerId: l.offerId,
       title: l.title,
       namespace: l.namespace,

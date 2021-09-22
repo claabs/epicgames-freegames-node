@@ -46,7 +46,6 @@ export interface PartialConfig {
   cronSchedule?: string;
   logLevel?: string;
   baseUrl?: string;
-  serverPort?: number;
   email?: PartialEmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
@@ -61,7 +60,6 @@ export interface ConfigObject extends PartialConfig {
   cronSchedule: string;
   logLevel: string;
   baseUrl: string;
-  serverPort: number;
   email: EmailConfig;
   hcaptchaAccessibilityUrl?: string;
   webPortalConfig?: WebPortalConnectionConfig;
@@ -102,15 +100,14 @@ function validateConfig(config: PartialConfig): ConfigObject {
       throw new Error('Missing pass from email auth config');
 
     const validConfig: ConfigObject = {
-      accounts: (config.accounts as unknown) as Account[], // Native type checking doesn't work through arrays?
+      accounts: config.accounts as unknown as Account[], // Native type checking doesn't work through arrays?
       onlyWeekly: config.onlyWeekly || false,
       runOnStartup: config.runOnStartup || true,
       intervalTime: config.intervalTime || 60,
       cronSchedule: config.cronSchedule || '0 12 * * *',
       logLevel: config.logLevel || 'info',
       baseUrl: config.baseUrl || 'http://localhost:3000',
-      serverPort: config.serverPort || 3000,
-      email: (config.email as unknown) as EmailConfig,
+      email: config.email as unknown as EmailConfig,
       hcaptchaAccessibilityUrl: config.hcaptchaAccessibilityUrl,
       webPortalConfig: config.webPortalConfig,
       puppeteerPurchase: config.puppeteerPurchase,
@@ -123,9 +120,9 @@ function validateConfig(config: PartialConfig): ConfigObject {
   }
 }
 
-const configPaths = EXTENSIONS.map(ext => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.${ext}`));
+const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.${ext}`));
 
-const configPath = configPaths.find(p => fs.existsSync(p));
+const configPath = configPaths.find((p) => fs.existsSync(p));
 
 let partialConfig: PartialConfig = {};
 if (configPath) {
@@ -149,7 +146,6 @@ const envVarConfig: PartialConfig = {
   cronSchedule: process.env.CRON_SCHEDULE,
   logLevel: process.env.LOG_LEVEL,
   baseUrl: process.env.BASE_URL,
-  serverPort: Number(process.env.SERVER_PORT),
   email: {
     smtpHost: process.env.SMTP_HOST,
     smtpPort: Number(process.env.SMTP_PORT),

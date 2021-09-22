@@ -89,7 +89,7 @@ export default class FreeGames {
         json: data,
         pagination: {
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-          transform: response => {
+          transform: (response) => {
             return response.body.data.Catalog.searchStore.elements;
           },
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -107,7 +107,7 @@ export default class FreeGames {
       }
     );
     this.L.debug(`Retrieved catalog data for ${items.length} games`);
-    const freeGames = items.filter(game => {
+    const freeGames = items.filter((game) => {
       return (
         game.promotions?.promotionalOffers[0]?.promotionalOffers[0]?.discountSetting
           ?.discountPercentage === 0
@@ -143,11 +143,11 @@ export default class FreeGames {
       searchParams: freeGamesSearchParams,
     });
     const nowDate = new Date();
-    const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter(offer => {
+    const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter((offer) => {
       let r = false;
       if (offer.promotions) {
-        offer.promotions.promotionalOffers.forEach(innerOffers => {
-          innerOffers.promotionalOffers.forEach(pOffer => {
+        offer.promotions.promotionalOffers.forEach((innerOffers) => {
+          innerOffers.promotionalOffers.forEach((pOffer) => {
             const startDate = new Date(pOffer.startDate);
             const endDate = new Date(pOffer.endDate);
             const isFree = pOffer.discountSetting.discountPercentage === 0;
@@ -209,7 +209,7 @@ export default class FreeGames {
 
   async getPurchasableFreeGames(validOffers: Element[]): Promise<OfferInfo[]> {
     this.L.debug('Checking ownership on available games');
-    const ownsGamePromises = validOffers.map(offer => {
+    const ownsGamePromises = validOffers.map((offer) => {
       return this.ownsGame(offer.namespace, offer.id);
     });
     const ownsGames = await Promise.all(ownsGamePromises);
@@ -217,7 +217,7 @@ export default class FreeGames {
       .filter((_offer, index) => {
         return !ownsGames[index];
       })
-      .map(offer => {
+      .map((offer) => {
         return {
           offerNamespace: offer.namespace,
           offerId: offer.id,
@@ -232,7 +232,7 @@ export default class FreeGames {
     this.L.debug('Mapping IDs to offer');
     const promises = offers
       .map(async (offer, index) => {
-        const productTypes = offer.categories.map(cat => cat.path);
+        const productTypes = offer.categories.map((cat) => cat.path);
         if (productTypes.includes('bundles')) {
           const url = `${STORE_CONTENT}/bundles/${offer.productSlug.split('/')[0]}`;
           this.L.trace({ url }, 'Fetching updated IDs');
@@ -253,7 +253,7 @@ export default class FreeGames {
 
           // Call the catalog with the updated IDs to get price and discounts for all page items
           const offerRequest: (GraphQLBody | null)[] = productsResp.body.pages
-            .map(page => {
+            .map((page) => {
               const query = `query catalogQuery($productNamespace: String!, $offerId: String!, $locale: String, $country: String!) { 
               Catalog { 
                 catalogOffer(namespace: $productNamespace, id: $offerId, locale: $locale) { 
@@ -305,7 +305,7 @@ export default class FreeGames {
 
           // Select the items with a 100% discount
           const freePromoOffers = offersResp.body.filter(
-            promoOffer =>
+            (promoOffer) =>
               promoOffer.data.Catalog.catalogOffer.price.totalPrice.originalPrice ===
               promoOffer.data.Catalog.catalogOffer.price.totalPrice.discount
           );
@@ -315,7 +315,7 @@ export default class FreeGames {
             return null;
           }
 
-          return freePromoOffers.map(promoOffer => ({
+          return freePromoOffers.map((promoOffer) => ({
             ...offers[index],
             id: promoOffer.data.Catalog.catalogOffer.id,
             namespace: promoOffer.data.Catalog.catalogOffer.namespace,
@@ -346,12 +346,15 @@ export default class FreeGames {
     } else {
       validFreeGames = await this.getCatalogFreeGames();
     }
-    this.L.info({ availableGames: validFreeGames.map(game => game.title) }, 'Available free games');
+    this.L.info(
+      { availableGames: validFreeGames.map((game) => game.title) },
+      'Available free games'
+    );
     const updatedOffers = await this.updateIds(validFreeGames);
     this.L.debug({ updatedOffers }, 'Offers with updated IDs');
     const purchasableGames = await this.getPurchasableFreeGames(updatedOffers);
     this.L.info(
-      { purchasableGames: purchasableGames.map(game => game.productName) },
+      { purchasableGames: purchasableGames.map((game) => game.productName) },
       'Unpurchased free games'
     );
     return purchasableGames;
