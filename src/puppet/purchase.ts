@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { Logger } from 'pino';
-import { Cookie, ElementHandle } from 'puppeteer';
+import { Protocol, ElementHandle } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
@@ -45,13 +45,12 @@ export default class PuppetPurchase {
       name: 'HAS_ACCEPTED_AGE_GATE_ONCE',
       domain: 'www.epicgames.com',
       value: 'true',
-      session: true,
     });
     await page.goto(`https://www.epicgames.com/store/en-US/p/${productSlug}`);
     this.L.trace('Waiting for getButton');
-    const getButton = await page.waitForSelector(
+    const getButton = (await page.waitForSelector(
       `button[data-testid='purchase-cta-button']:not([aria-disabled='true'])`
-    );
+    )) as ElementHandle<HTMLButtonElement>;
     // const buttonMessage: ElementHandle<HTMLSpanElement> | null = await getButton.$(
     //   `span[data-component='Message']`
     // );
@@ -77,14 +76,14 @@ export default class PuppetPurchase {
         if (startTime.getTime() + timeout <= new Date().getTime()) {
           throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
         }
-        await new Promise(resolve => setTimeout(resolve, poll));
+        await new Promise((resolve) => setTimeout(resolve, poll));
         return waitForPurchaseButton(startTime);
       }
     };
 
     const [placeOrderButton] = await Promise.all([
       waitForPurchaseButton(),
-      page.waitForResponse('https://talon-service-prod.ak.epicgames.com/v1/phaser/batch'), // Would use waitForNetworkIdle if on modern puppeteer
+      page.waitForNetworkIdle(),
     ]);
     this.L.trace('Clicking placeOrderButton');
     await placeOrderButton.click({ delay: 100 });
@@ -95,7 +94,7 @@ export default class PuppetPurchase {
     this.L.info(`Puppeteer purchase of ${productSlug} complete`);
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
@@ -127,15 +126,17 @@ export default class PuppetPurchase {
       { waitUntil: 'networkidle0' }
     );
     this.L.trace('Waiting for placeOrderButton');
-    const placeOrderButton = await page.waitForSelector(`button.payment-btn`);
+    const placeOrderButton = (await page.waitForSelector(
+      `button.payment-btn`
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking placeOrderButton');
     await placeOrderButton.click({ delay: 100 });
     // TODO: Check for captcha and notify with portal. Currently, no games require a captcha on purchase, so it's not possible to implement.
     try {
-      const euRefundAgreeButton = await page.waitForSelector(
+      const euRefundAgreeButton = (await page.waitForSelector(
         `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
         { timeout: 3000 }
-      );
+      )) as ElementHandle<HTMLButtonElement>;
       this.L.trace('Clicking euRefundAgreeButton');
       await euRefundAgreeButton.click({ delay: 100 });
     } catch (err) {
@@ -152,15 +153,15 @@ export default class PuppetPurchase {
         .then(() => null),
       page
         .waitForSelector('span.payment-alert__content')
-        .then((errorHandle: ElementHandle<HTMLSpanElement>) =>
-          errorHandle.evaluate(el => el.innerText)
+        .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
+          errorHandle ? errorHandle.evaluate((el) => el.innerText) : null
         ),
     ]);
     if (purchaseError) throw new Error(purchaseError);
     this.L.trace(`Puppeteer purchase successful`);
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);

@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import { Cookie } from 'puppeteer';
+import { ElementHandle, Protocol } from 'puppeteer';
 import puppeteer from '../common/puppeteer';
 import { config } from '../common/config';
 import L from '../common/logger';
@@ -8,11 +8,13 @@ const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = './config/hcaptcha-accessibility-cache
 
 const CACHE_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
-const getCookieCache = async (): Promise<Cookie[] | null> => {
+const getCookieCache = async (): Promise<Protocol.Network.Cookie[] | null> => {
   try {
     await fs.access(HCAPTCHA_ACCESSIBILITY_CACHE_FILE, fs.constants.O_RDWR);
-    const cookieData: Cookie[] = await fs.readJSON(HCAPTCHA_ACCESSIBILITY_CACHE_FILE);
-    const cookieExpiryString = cookieData.find(c => c.name === 'hc_accessibility')?.expires;
+    const cookieData: Protocol.Network.Cookie[] = await fs.readJSON(
+      HCAPTCHA_ACCESSIBILITY_CACHE_FILE
+    );
+    const cookieExpiryString = cookieData.find((c) => c.name === 'hc_accessibility')?.expires;
     if (!cookieExpiryString) return null;
     if (new Date(cookieExpiryString * 1000).getTime() < Date.now() + CACHE_BUFFER_MS) return null;
     return cookieData;
@@ -21,12 +23,12 @@ const getCookieCache = async (): Promise<Cookie[] | null> => {
   }
 };
 
-const setCookieCache = async (cookies: Cookie[]): Promise<void> => {
+const setCookieCache = async (cookies: Protocol.Network.Cookie[]): Promise<void> => {
   await fs.writeJSON(HCAPTCHA_ACCESSIBILITY_CACHE_FILE, cookies);
 };
 
 // eslint-disable-next-line import/prefer-default-export
-export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
+export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> => {
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {
     L.warn('hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed');
@@ -44,9 +46,9 @@ export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
     L.trace(`Waiting for setAccessibilityCookie button`);
-    const setCookieButton = await page.waitForSelector(
+    const setCookieButton = (await page.waitForSelector(
       `button[data-cy='setAccessibilityCookie']:not([disabled])`
-    );
+    )) as ElementHandle<HTMLButtonElement>;
     const portalUrl = await page.openPortal();
     L.info({ portalUrl });
     L.trace(`Clicking setAccessibilityCookie button`);
@@ -59,7 +61,7 @@ export const getHcaptchaCookies = async (): Promise<Cookie[]> => {
     L.trace(`Saving new cookies`);
     const cdpClient = await page.target().createCDPSession();
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     cookieData = currentUrlCookies.cookies;

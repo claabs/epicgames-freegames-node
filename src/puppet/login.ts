@@ -2,7 +2,7 @@
 import { writeFileSync } from 'fs';
 import { TOTP } from 'otpauth';
 import { Logger } from 'pino';
-import { Cookie, ElementHandle, Page } from 'puppeteer';
+import { Protocol, ElementHandle, Page } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
@@ -41,18 +41,18 @@ export default class PuppetLogin {
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
     this.L.trace('Waiting for email field');
-    const emailElem = await page.waitForSelector('#email');
+    const emailElem = (await page.waitForSelector('#email')) as ElementHandle<HTMLInputElement>;
     this.L.trace('Filling email field');
     await emailElem.focus();
     await emailElem.type(this.email, { delay: 50 });
     this.L.trace('Waiting for password field');
-    const passElem = await page.waitForSelector('#password');
+    const passElem = (await page.waitForSelector('#password')) as ElementHandle<HTMLInputElement>;
     this.L.trace('Filling password field');
     await passElem.focus();
     await passElem.type(this.password, { delay: 50 });
     this.L.trace('Waiting for sign-in button');
     const [signInElem] = await Promise.all([
-      page.waitForSelector('#sign-in:not([disabled])'),
+      page.waitForSelector('#sign-in:not([disabled])') as Promise<ElementHandle<HTMLInputElement>>,
       page.waitForTimeout(10000), // TODO: why is this required?
     ]);
     // Remember me should be checked by default
@@ -92,7 +92,7 @@ export default class PuppetLogin {
 
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
@@ -105,12 +105,12 @@ export default class PuppetLogin {
       const talonFrame = await talonHandle.contentFrame();
       if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
       this.L.trace('Waiting for hcaptcha iframe');
-      const hcaptchaFrame = await talonFrame.waitForSelector(
+      const hcaptchaFrame = (await talonFrame.waitForSelector(
         `#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`,
         {
           visible: true,
         }
-      );
+      )) as ElementHandle<HTMLIFrameElement>;
       return hcaptchaFrame;
     } catch (err) {
       if (err.message.includes('timeout')) {
@@ -160,9 +160,9 @@ export default class PuppetLogin {
     ]);
     if (result !== 'nav') {
       const resultElement = result as ElementHandle<HTMLHeadingElement>;
-      if (await resultElement.evaluate(el => el.innerText.includes('refresh'))) {
+      if (await resultElement.evaluate((el) => el.innerText.includes('refresh'))) {
         // Refresh the page if the error message prompts
-        const errorMessage = await resultElement.evaluate(el => el.innerText);
+        const errorMessage = await resultElement.evaluate((el) => el.innerText);
         this.L.warn(`Login returned error: ${errorMessage}`);
         await this.startLogin(page);
         return;
@@ -174,7 +174,9 @@ export default class PuppetLogin {
       this.L.trace('Filling MFA field');
       await (result as ElementHandle<Element>).type(mfaCode);
       this.L.trace('Waiting for continue button');
-      const continueButton = await page.waitForSelector(`button#continue`);
+      const continueButton = (await page.waitForSelector(
+        `button#continue`
+      )) as ElementHandle<HTMLButtonElement>;
       this.L.trace('Clicking continue button');
       await Promise.all([
         await continueButton.click({ delay: 100 }),

@@ -2,7 +2,7 @@
 import RandExp from 'randexp';
 import { config } from 'dotenv';
 import { Logger } from 'pino';
-import { Page, Cookie, ElementHandle } from 'puppeteer';
+import { Page, Protocol, ElementHandle } from 'puppeteer';
 // import { writeFileSync } from 'fs-extra';
 import { getCookiesRaw, setPuppeteerCookies } from '../../src/common/request';
 import { EPIC_CLIENT_ID } from '../../src/common/constants';
@@ -104,7 +104,7 @@ export default class AccountManager {
 
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
@@ -114,19 +114,25 @@ export default class AccountManager {
   private async fillDOB(page: Page): Promise<void> {
     this.L.trace('Getting date fields');
     const [monthInput, dayInput, yearInput] = await Promise.all([
-      page.waitForSelector(`#month`),
-      page.waitForSelector(`#day`),
-      page.waitForSelector(`#year`),
+      page.waitForSelector(`#month`) as Promise<ElementHandle<HTMLDivElement>>,
+      page.waitForSelector(`#day`) as Promise<ElementHandle<HTMLDivElement>>,
+      page.waitForSelector(`#year`) as Promise<ElementHandle<HTMLInputElement>>,
     ]);
     await monthInput.click();
-    const month1 = await page.waitForSelector(`ul.MuiList-root > li`);
+    const month1 = (await page.waitForSelector(
+      `ul.MuiList-root > li`
+    )) as ElementHandle<HTMLLIElement>;
     await month1.click();
     await page.waitForTimeout(500); // idk why this is required
     await dayInput.click();
-    const day1 = await page.waitForSelector(`ul.MuiList-root > li`);
+    const day1 = (await page.waitForSelector(
+      `ul.MuiList-root > li`
+    )) as ElementHandle<HTMLLIElement>;
     await day1.click();
     await yearInput.type(this.getRandomInt(1970, 2002).toString());
-    const continueButton = await page.waitForSelector(`#continue:not([disabled])`);
+    const continueButton = (await page.waitForSelector(
+      `#continue:not([disabled])`
+    )) as ElementHandle<HTMLButtonElement>;
     await page.waitForTimeout(500); // idk why this is required
     this.L.trace('Clicking continueButton');
     await continueButton.click({ delay: 100 });
@@ -152,26 +158,28 @@ export default class AccountManager {
     await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
     await page.goto(`https://www.epicgames.com/account/personal`, { waitUntil: 'networkidle0' });
     this.L.trace('Waiting for deleteButton');
-    const deleteButton: ElementHandle<HTMLButtonElement> = await page.waitForXPath(
+    const deleteButton = (await page.waitForXPath(
       `//button[contains(., 'Request Account Delete')]`
-    );
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking deleteButton');
     await deleteButton.click({ delay: 100 });
     this.L.trace('Waiting for securityCodeInput');
-    const securityCodeInput = await page.waitForSelector(`input[name='security-code']`);
+    const securityCodeInput = (await page.waitForSelector(
+      `input[name='security-code']`
+    )) as ElementHandle<HTMLInputElement>;
     const code = await this.getActionVerification();
     this.L.trace('Filling securityCodeInput');
     await securityCodeInput.type(code);
     this.L.trace('Waiting for confirmButton');
-    const confirmButton: ElementHandle<HTMLButtonElement> = await page.waitForXPath(
+    const confirmButton = (await page.waitForXPath(
       `//button[contains(., 'Confirm Delete Request')]`
-    );
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking confirmButton');
     await confirmButton.click({ delay: 100 });
     this.L.trace('Waiting for skipSurveyButton');
-    const skipSurveyButton: ElementHandle<HTMLButtonElement> = await page.waitForSelector(
+    const skipSurveyButton = (await page.waitForSelector(
       `button#deletion-reason-skip`
-    );
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking skipSurveyButton');
     await skipSurveyButton.click({ delay: 100 });
     await page.waitForSelector(`div.account-deletion-request-success-modal`);
@@ -179,7 +187,7 @@ export default class AccountManager {
 
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Cookie[];
+      cookies: Protocol.Network.Cookie[];
     };
     await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
@@ -197,13 +205,13 @@ export default class AccountManager {
       passwordInput,
       tosInput,
     ] = await Promise.all([
-      page.waitForSelector(`#country`),
-      page.waitForSelector(`#name`),
-      page.waitForSelector(`#lastName`),
-      page.waitForSelector(`#displayName`),
-      page.waitForSelector(`#email`),
-      page.waitForSelector(`#password`),
-      page.waitForSelector(`#tos`),
+      page.waitForSelector(`#country`) as Promise<ElementHandle<Element>>,
+      page.waitForSelector(`#name`) as Promise<ElementHandle<HTMLInputElement>>,
+      page.waitForSelector(`#lastName`) as Promise<ElementHandle<HTMLInputElement>>,
+      page.waitForSelector(`#displayName`) as Promise<ElementHandle<HTMLInputElement>>,
+      page.waitForSelector(`#email`) as Promise<ElementHandle<HTMLInputElement>>,
+      page.waitForSelector(`#password`) as Promise<ElementHandle<HTMLInputElement>>,
+      page.waitForSelector(`#tos`) as Promise<ElementHandle<HTMLInputElement>>,
     ]);
     await countryInput.type(this.country);
     await firstNameInput.type(randName.gen());
@@ -212,7 +220,9 @@ export default class AccountManager {
     await emailInput.type(this.email);
     await passwordInput.type(this.password);
     await tosInput.click();
-    const submitButton = await page.waitForSelector(`#btn-submit:not([disabled])`);
+    const submitButton = (await page.waitForSelector(
+      `#btn-submit:not([disabled])`
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking submitButton');
     await submitButton.click({ delay: 100 });
   }
@@ -221,11 +231,15 @@ export default class AccountManager {
     this.L.trace('Working on email verification form');
     const code = await this.getVerification();
     this.L.trace('Waiting for codeInput');
-    const codeInput = await page.waitForSelector(`input[name='code-input-0']`);
+    const codeInput = (await page.waitForSelector(
+      `input[name='code-input-0']`
+    )) as ElementHandle<HTMLInputElement>;
     await codeInput.click({ delay: 100 });
     await page.keyboard.type(code);
     this.L.trace('Waiting for continueButton');
-    const continueButton = await page.waitForSelector(`#continue:not([disabled])`);
+    const continueButton = (await page.waitForSelector(
+      `#continue:not([disabled])`
+    )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking continueButton');
     await continueButton.click();
     await page.waitForNavigation({ waitUntil: 'networkidle2' });

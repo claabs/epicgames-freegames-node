@@ -4,8 +4,52 @@ import { FileCookieStore } from 'tough-cookie-file-store';
 import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
-import { Cookie } from 'puppeteer';
+import { Protocol } from 'puppeteer';
 import L from './logger';
+
+export interface TCFSCookieAttributes {
+  key: string;
+  value: string;
+  expires?: string;
+  maxAge?: number;
+  domain: string;
+  path: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  extensions?: string[];
+  hostOnly: boolean;
+  creation?: string;
+  lastAccessed?: string;
+}
+
+export interface TCFSCookies {
+  [cookieName: string]: TCFSCookieAttributes;
+}
+
+export interface TCFSPaths {
+  [path: string]: TCFSCookies;
+}
+
+export interface ToughCookieFileStore {
+  [site: string]: TCFSPaths;
+}
+
+export interface ETCCookie {
+  domain: string;
+  hostOnly: boolean;
+  httpOnly: boolean;
+  name: string;
+  path: string;
+  sameSite: 'no_restriction' | 'unspecified';
+  secure: boolean;
+  session: boolean;
+  storeId: string;
+  value: string;
+  id: number;
+  expirationDate?: number;
+}
+
+export type EditThisCookie = ETCCookie[];
 
 const cookieJars: Map<string, tough.CookieJar> = new Map();
 
@@ -25,7 +69,7 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
   const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP'];
 
   const tcfs: ToughCookieFileStore = {};
-  etc.forEach(etcCookie => {
+  etc.forEach((etcCookie) => {
     const domain = etcCookie.domain.replace(/^\./, '');
     const expires = etcCookie.expirationDate
       ? new Date(etcCookie.expirationDate * 1000).toISOString()
@@ -114,10 +158,10 @@ export function setCookie(username: string, key: string, value: string): void {
   );
 }
 
-export function setPuppeteerCookies(username: string, newCookies: Cookie[]): void {
+export function setPuppeteerCookies(username: string, newCookies: Protocol.Network.Cookie[]): void {
   const fileSafeUsername = filenamify(username);
   const cookieJar = getCookieJar(fileSafeUsername);
-  newCookies.forEach(cookie => {
+  newCookies.forEach((cookie) => {
     const domain = cookie.domain.replace(/^\./, '');
     const tcfsCookie = new tough.Cookie({
       key: cookie.name,
@@ -139,46 +183,4 @@ export function deleteCookies(username?: string): void {
   } else {
     fs.unlinkSync(`./config/cookies.json`);
   }
-}
-export interface ToughCookieFileStore {
-  [site: string]: TCFSPaths;
-}
-
-export interface TCFSPaths {
-  [path: string]: TCFSCookies;
-}
-
-export interface TCFSCookies {
-  [cookieName: string]: TCFSCookieAttributes;
-}
-
-export interface TCFSCookieAttributes {
-  key: string;
-  value: string;
-  expires?: string;
-  maxAge?: number;
-  domain: string;
-  path: string;
-  secure?: boolean;
-  httpOnly?: boolean;
-  extensions?: string[];
-  hostOnly: boolean;
-  creation?: string;
-  lastAccessed?: string;
-}
-
-export type EditThisCookie = ETCCookie[];
-export interface ETCCookie {
-  domain: string;
-  hostOnly: boolean;
-  httpOnly: boolean;
-  name: string;
-  path: string;
-  sameSite: 'no_restriction' | 'unspecified';
-  secure: boolean;
-  session: boolean;
-  storeId: string;
-  value: string;
-  id: number;
-  expirationDate?: number;
 }

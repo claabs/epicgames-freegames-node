@@ -15,6 +15,8 @@
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy"
   },
   "dependencies": {
+    "convict": "^5.2.1",
+    "convict-format-with-validator": "^6.2.0",
     "dotenv": "^8.2.0",
     "filenamify": "^4.1.0",
     "fs-extra": "^10.0.0",
@@ -26,16 +28,18 @@
     "otpauth": "^5.0.6",
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
-    "puppeteer": "^5.5.0",
-    "puppeteer-extra": "^3.1.18",
+    "puppeteer": "^10.4.0",
+    "puppeteer-extra": "^3.2.1",
     "puppeteer-extra-plugin-portal": "^3.0.0-rc.5",
-    "puppeteer-extra-plugin-stealth": "^2.7.8",
+    "puppeteer-extra-plugin-stealth": "^2.8.1",
     "set-cookie-parser": "^2.4.3",
     "source-map-support": "^0.5.19",
     "tough-cookie": "^4.0.0",
     "tough-cookie-file-store": "^2.0.2"
   },
   "devDependencies": {
+    "@types/convict": "^6.1.1",
+    "@types/convict-format-with-validator": "^6.0.2",
     "@types/fs-extra": "^9.0.12",
     "@types/jest": "^27.0.2",
     "@types/jsdom": "^16.2.13",

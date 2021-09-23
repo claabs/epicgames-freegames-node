@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-extra';
-import { Cookie, Page, SetCookie } from 'puppeteer';
+import { Page, Protocol } from 'puppeteer';
 import PortalPlugin, { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -19,13 +19,13 @@ puppeteer.use(
   })
 );
 
-const stealth = StealthPlugin();
-stealth.enabledEvasions.delete('iframe.contentWindow'); // https://github.com/berstend/puppeteer-extra/issues/543
-puppeteer.use(stealth);
+puppeteer.use(StealthPlugin());
 
 export default puppeteer;
 
-export function puppeteerCookieToToughCookieFileStore(puppetCookie: Cookie): ToughCookieFileStore {
+export function puppeteerCookieToToughCookieFileStore(
+  puppetCookie: Protocol.Network.Cookie
+): ToughCookieFileStore {
   const domain = puppetCookie.domain.replace(/^\./, '');
   const expires = new Date(puppetCookie.expires * 1000).toISOString();
   const { path, name } = puppetCookie;
@@ -50,21 +50,23 @@ export function puppeteerCookieToToughCookieFileStore(puppetCookie: Cookie): Tou
 }
 
 export function puppeteerCookiesToToughCookieFileStore(
-  puppetCookies: Cookie[]
+  puppetCookies: Protocol.Network.Cookie[]
 ): ToughCookieFileStore {
   const tcfs: ToughCookieFileStore = {};
-  puppetCookies.forEach(puppetCookie => {
+  puppetCookies.forEach((puppetCookie) => {
     const temp = puppeteerCookieToToughCookieFileStore(puppetCookie);
     objectAssignDeep(tcfs, temp);
   });
   return tcfs;
 }
 
-export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore): SetCookie[] {
-  const puppetCookies: SetCookie[] = [];
-  Object.values(tcfs).forEach(domain => {
-    Object.values(domain).forEach(path => {
-      Object.values(path).forEach(tcfsCookie => {
+export function toughCookieFileStoreToPuppeteerCookie(
+  tcfs: ToughCookieFileStore
+): Protocol.Network.CookieParam[] {
+  const puppetCookies: Protocol.Network.CookieParam[] = [];
+  Object.values(tcfs).forEach((domain) => {
+    Object.values(domain).forEach((path) => {
+      Object.values(path).forEach((tcfsCookie) => {
         puppetCookies.push({
           name: tcfsCookie.key,
           value: tcfsCookie.value,

@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
 import { config, Account } from './common/config';
-import './common/config2';
+// import './common/config2';
 import L from './common/logger';
 import Login from './login';
 import FreeGames from './free-games';
