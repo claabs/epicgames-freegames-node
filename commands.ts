@@ -54,10 +54,7 @@ const { argv } = usage('$0 <command> [option]')
     'Create a fresh account',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (yargs: any) => {
-      return yargs
-        .usage('$0 create-account')
-        .usage('$0 create')
-        .help();
+      return yargs.usage('$0 create-account').usage('$0 create').help();
     },
     createAccount
   )

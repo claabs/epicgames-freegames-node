@@ -14,7 +14,9 @@
     "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
     "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */
     "rootDir": ".",
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
   },
   "include": [
     "**/*.ts"

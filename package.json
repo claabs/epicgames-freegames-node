@@ -15,8 +15,7 @@
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy"
   },
   "dependencies": {
-    "convict": "^5.2.1",
-    "convict-format-with-validator": "^6.2.0",
+    "class-validator": "^0.13.1",
     "dotenv": "^8.2.0",
     "filenamify": "^4.1.0",
     "fs-extra": "^10.0.0",
@@ -38,8 +37,6 @@
     "tough-cookie-file-store": "^2.0.2"
   },
   "devDependencies": {
-    "@types/convict": "^6.1.1",
-    "@types/convict-format-with-validator": "^6.0.2",
     "@types/fs-extra": "^9.0.12",
     "@types/jest": "^27.0.2",
     "@types/jsdom": "^16.2.13",
