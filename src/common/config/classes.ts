@@ -1,8 +1,8 @@
 /* eslint-disable no-shadow */
 /* eslint-disable max-classes-per-file */
+import { Type } from 'class-transformer';
 import {
   IsEmail,
-  IsPort,
   IsUrl,
   IsString,
   IsBoolean,
@@ -15,6 +15,10 @@ import {
   IsObject,
   Length,
   IsBase32,
+  MinLength,
+  ArrayNotEmpty,
+  IsArray,
+  IsPort,
 } from 'class-validator';
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
@@ -44,7 +48,7 @@ export class EmailConfig {
    * The outgoing SMTP port (SSL or TLS, see secure)
    */
   @IsPort()
-  smtpPort: string;
+  smtpPort: number;
 
   /**
    * The sender of the email you will recieve (can be your email address)
@@ -75,6 +79,7 @@ export class EmailConfig {
    */
   @IsOptional()
   @ValidateNested()
+  @Type(() => EmailAuthConfig)
   auth?: EmailAuthConfig;
 }
 
@@ -82,8 +87,10 @@ export class NotificationConfig {
   /**
    * Settings for basic SMTP server email notifications
    */
+  @IsOptional()
   @ValidateNested()
-  email?: EmailAuthConfig;
+  @Type(() => EmailConfig)
+  email?: EmailConfig;
 
   telegram?: boolean;
 }
@@ -93,7 +100,9 @@ export class WebPortalConfig {
    * The URL base that will be returned when a captcha must be remotely solved
    */
   @IsOptional()
-  @IsUrl()
+  @IsUrl({
+    require_tld: false,
+  })
   baseUrl = process.env.BASE_URL;
 
   /**
@@ -122,6 +131,7 @@ export class AccountConfig {
    * Epic Games login password
    */
   @IsString()
+  @MinLength(7)
   password: string;
 
   /**
@@ -137,6 +147,7 @@ export class AccountConfig {
    */
   @IsOptional()
   @ValidateNested()
+  @Type(() => NotificationConfig)
   notification?: NotificationConfig;
 }
 
@@ -207,6 +218,7 @@ export class Config {
    */
   @IsOptional()
   @ValidateNested()
+  @Type(() => WebPortalConfig)
   webPortalConfig?: WebPortalConfig;
 
   /**
@@ -219,7 +231,10 @@ export class Config {
   /**
    * A list of accounts to work with
    */
-  @ValidateNested()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @ArrayNotEmpty()
+  @Type(() => AccountConfig)
   accounts: AccountConfig[];
 
   /**
@@ -227,6 +242,7 @@ export class Config {
    */
   @IsOptional()
   @ValidateNested()
+  @Type(() => NotificationConfig)
   notification?: NotificationConfig;
 
   /**
@@ -234,13 +250,16 @@ export class Config {
    */
   @IsOptional()
   @ValidateNested()
+  @Type(() => EmailConfig)
   email?: EmailConfig;
 
   /**
    * Deprecated, use `webPortalConfig.baseUrl`
    */
   @IsOptional()
-  @IsUrl()
+  @IsUrl({
+    require_tld: false,
+  })
   baseUrl?: string;
 
   /**
@@ -249,4 +268,16 @@ export class Config {
   @IsOptional()
   @IsBoolean()
   onlyWeekly = process.env.ONLY_WEEKLY?.toLowerCase() === 'true';
+
+  constructor() {
+    // Use environment variables to fill one account if present
+    const { EMAIL, PASSWORD, TOTP } = process.env;
+    if (EMAIL && PASSWORD) {
+      const account = new AccountConfig();
+      account.email = EMAIL;
+      account.password = PASSWORD;
+      account.totp = TOTP;
+      this.accounts = [account];
+    }
+  }
 }

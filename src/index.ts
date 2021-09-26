@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
-import { config, Account } from './common/config';
-// import './common/config2';
+import { config, AccountConfig } from './common/config';
 import L from './common/logger';
 import Login from './login';
 import FreeGames from './free-games';
@@ -9,7 +8,7 @@ import Purchase from './purchase';
 import { newCookieJar } from './common/request';
 import PuppetPurchase from './puppet/purchase';
 
-export async function redeemAccount(account: Account, index: number): Promise<void> {
+export async function redeemAccount(account: AccountConfig, index: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, index * (config.intervalTime || 60) * 1000));
   L.info(`Checking free games for ${account.email} `);
   try {
