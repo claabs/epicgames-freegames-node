@@ -370,7 +370,8 @@ export class Config {
   notification?: NotificationConfig;
 
   /**
-   * Deprecated, use `notifications.email`
+   * Deprecated, use {@link NotificationConfig.email|`notification.email`}
+   * @deprecated
    */
   @IsOptional()
   @ValidateNested()
@@ -378,7 +379,8 @@ export class Config {
   email?: EmailConfig;
 
   /**
-   * Deprecated, use `webPortalConfig.baseUrl`
+   * Deprecated, use {@link WebPortalConfig.baseUrl|`webPortalConfig.baseUrl`}
+   * @deprecated
    */
   @IsOptional()
   @IsUrl({
@@ -387,7 +389,8 @@ export class Config {
   baseUrl?: string;
 
   /**
-   * Deprecated, use `searchStrategy`
+   * Deprecated, use {@link Config.searchStrategy|`searchStrategy`}
+   * @deprecated
    * @env ONLY_WEEKLY
    */
   @IsOptional()
