@@ -28,7 +28,7 @@ jobs:
         node-version: '14'
 
     - name: NPM install
-      run: npm i
+      run: npm ci
 
     # Runs a single command using the runners shell
     - name: Build and lint

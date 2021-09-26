@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
+/* eslint-disable no-useless-constructor */
 /* eslint-disable no-shadow */
 /* eslint-disable max-classes-per-file */
 import 'reflect-metadata';
@@ -40,6 +42,11 @@ export class EmailAuthConfig {
    */
   @IsString()
   pass: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {}
 }
 
 export class EmailConfig {
@@ -101,6 +108,11 @@ export class EmailConfig {
   @ValidateNested()
   @Type(() => EmailAuthConfig)
   auth?: EmailAuthConfig;
+
+  /**
+   * @ignore
+   */
+  constructor() {}
 }
 
 export class NotificationConfig {
@@ -116,6 +128,11 @@ export class NotificationConfig {
    * TODO
    */
   telegram?: boolean;
+
+  /**
+   * @ignore
+   */
+  constructor() {}
 }
 
 export class WebPortalConfig {
@@ -146,6 +163,11 @@ export class WebPortalConfig {
   @IsOptional()
   @IsObject()
   serverOpts?: ServerOptions;
+
+  /**
+   * @ignore
+   */
+  constructor() {}
 }
 
 export class AccountConfig {
@@ -183,11 +205,25 @@ export class AccountConfig {
   @ValidateNested()
   @Type(() => NotificationConfig)
   notification?: NotificationConfig;
+
+  /**
+   * @ignore
+   */
+  constructor() {}
 }
 
 export enum SearchStrategy {
+  /**
+   * Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games
+   */
   WEEKLY = 'weekly',
+  /**
+   * Search the entire Epic Games site for any game with a 100% discount
+   */
   PROMOTION = 'promotion',
+  /**
+   * Redeem any and all free games, regardless of discount. WARNING: this will get a lot of junk and is not recommended!
+   */
   ALL = 'all',
 }
 
@@ -200,6 +236,41 @@ export enum LogLevel {
   TRACE = 'trace',
 }
 
+/**
+ * @example ```json
+ * {
+ *   "searchStrategy": "weekly",
+ *   "runOnStartup": true,
+ *   "cronSchedule": "5 16 * * *",
+ *   "logLevel": "info",
+ *   "hcaptchaAccessibilityUrl": "https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c",
+ *   "webPortalConfig": {
+ *     "baseUrl": "https://epic.exmaple.com",
+ *   },
+ *   "accounts": [
+ *     {
+ *       "email": "example@gmail.com",
+ *       "password": "abc1234",
+ *       "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
+ *     },
+ *   ],
+ *   "notification": {
+ *     "email": {
+ *       "smtpHost": "smtp.gmail.com",
+ *       "smtpPort": 587,
+ *       "emailSenderAddress": "hello@gmail.com",
+ *       "emailSenderName": "Epic Games Captchas",
+ *       "emailRecipientAddress": "hello@gmail.com",
+ *       "secure": false,
+ *       "auth": {
+ *         "user": "hello@gmail.com",
+ *         "pass": "abc123",
+ *       },
+ *     },
+ *   }
+ * }
+ * ```
+ */
 export class Config {
   /**
    * Cron string of when to run the process. If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
@@ -325,6 +396,9 @@ export class Config {
     ? process.env.ONLY_WEEKLY?.toLowerCase() === 'true'
     : undefined;
 
+  /**
+   * @hidden
+   */
   constructor() {
     // Use environment variables to fill one account if present
     const { EMAIL, PASSWORD, TOTP } = process.env;

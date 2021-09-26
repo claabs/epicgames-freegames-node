@@ -1,0 +1,27 @@
+name: Publish Typedoc to Github Pages
+on:
+  push:
+    branches:
+      - master
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js for use with actions
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: NPM install
+        run: npm ci
+
+      # Runs a single command using the runners shell
+      - name: Build and lint
+        run: npm run docs
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs

@@ -65,7 +65,7 @@ The config file is store in the mounted `./config` directory.
 
 #### `config.json` or `config.json5`
 
-```json5
+```jsonc
 {
     "accounts": [
         // Multiple accounts can be configured here
