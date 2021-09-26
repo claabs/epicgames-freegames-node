@@ -1,5 +1,6 @@
 /* eslint-disable no-shadow */
 /* eslint-disable max-classes-per-file */
+import 'reflect-metadata';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
@@ -18,7 +19,7 @@ import {
   MinLength,
   ArrayNotEmpty,
   IsArray,
-  IsPort,
+  Max,
 } from 'class-validator';
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
@@ -26,12 +27,14 @@ import { ListenOptions } from 'net';
 export class EmailAuthConfig {
   /**
    * The SMTP username (if necessary)
+   * @example "hello@gmail.com"
    */
   @IsString()
   user: string;
 
   /**
    * The SMTP password (if necessary)
+   * @example "abc123"
    */
   @IsString()
   pass: string;
@@ -40,36 +43,45 @@ export class EmailAuthConfig {
 export class EmailConfig {
   /**
    * The outgoing SMTP host name
+   * @example "smtp.gmail.com"
    */
   @IsUrl()
   smtpHost: string;
 
   /**
    * The outgoing SMTP port (SSL or TLS, see secure)
+   * @example 587
    */
-  @IsPort()
+  @IsInt()
+  @Min(0)
+  @Max(65535)
   smtpPort: number;
 
   /**
    * The sender of the email you will recieve (can be your email address)
+   * @example "hello@gmail.com"
    */
   @IsEmail()
   emailSenderAddress: string;
 
   /**
    * The name of the email sender
+   * @example "Epic Games Captchas"
    */
   @IsString()
   emailSenderName: string;
 
   /**
    * The recipient of the email (can be your email address)
+   * @example "hello@gmail.com"
    */
   @IsEmail()
   emailRecipientAddress: string;
 
   /**
    * true for SSL (port 465), false for TLS or unsecure
+   * @example true
+   * @default false
    */
   @IsBoolean()
   secure = false;
@@ -92,12 +104,17 @@ export class NotificationConfig {
   @Type(() => EmailConfig)
   email?: EmailConfig;
 
+  /**
+   * TODO
+   */
   telegram?: boolean;
 }
 
 export class WebPortalConfig {
   /**
    * The URL base that will be returned when a captcha must be remotely solved
+   * @example "https://epic.example.com"
+   * @default "http://localhost:3000"
    */
   @IsOptional()
   @IsUrl({
@@ -107,6 +124,7 @@ export class WebPortalConfig {
 
   /**
    * Node Net.listen options: https://nodejs.org/api/net.html#net_server_listen_options_callback
+   * @default { port: 3000 }
    */
   @IsOptional()
   @IsObject()
@@ -123,12 +141,14 @@ export class WebPortalConfig {
 export class AccountConfig {
   /**
    * Epic Games login email
+   * @example "example@gmail.com"
    */
   @IsEmail()
   email: string;
 
   /**
    * Epic Games login password
+   * @example "abc123"
    */
   @IsString()
   @MinLength(7)
@@ -136,6 +156,7 @@ export class AccountConfig {
 
   /**
    * If 2FA is enabled, add your TOTP secret
+   * @example "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
    */
   @IsOptional()
   @Length(52)
@@ -169,6 +190,8 @@ export enum LogLevel {
 export class Config {
   /**
    * Cron string of when to run the process. If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
+   * @example "5 16 * * *"
+   * @default "0 12 * * *"
    */
   @IsOptional()
   @IsString()
@@ -176,6 +199,8 @@ export class Config {
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
+   * @example "promotion"
+   * @default "weekly"
    */
   @IsOptional()
   @IsEnum(SearchStrategy)
@@ -183,6 +208,8 @@ export class Config {
 
   /**
    * If true, the process will run on startup in addition to the scheduled time.
+   * @example true
+   * @default false
    */
   @IsOptional()
   @IsBoolean()
@@ -190,6 +217,8 @@ export class Config {
 
   /**
    * The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)
+   * @example 30
+   * @default 60
    */
   @IsOptional()
   @IsInt()
@@ -198,6 +227,8 @@ export class Config {
 
   /**
    * Log level in lower case. Can be [silent, error, warn, info, debug, trace]
+   * @example "debug"
+   * @default "info"
    */
   @IsOptional()
   @IsEnum(LogLevel)
@@ -205,6 +236,7 @@ export class Config {
 
   /**
    * A unique hCaptcha accessibility URL recieved in your email after signing up here: https://dashboard.hcaptcha.com/signup?type=accessibility
+   * @example "https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c"
    */
   @IsOptional()
   @IsUrl()
@@ -223,6 +255,8 @@ export class Config {
 
   /**
    * Default to purchasing games using browser automation
+   * @example true
+   * @default false
    */
   @IsOptional()
   @IsBoolean()
@@ -267,7 +301,9 @@ export class Config {
    */
   @IsOptional()
   @IsBoolean()
-  onlyWeekly = process.env.ONLY_WEEKLY?.toLowerCase() === 'true';
+  onlyWeekly = process.env.ONLY_WEEKLY
+    ? process.env.ONLY_WEEKLY?.toLowerCase() === 'true'
+    : undefined;
 
   constructor() {
     // Use environment variables to fill one account if present

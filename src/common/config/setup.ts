@@ -1,61 +1,92 @@
 /* eslint-disable no-console, import/prefer-default-export */
-
+import 'reflect-metadata';
 import { config as dotenv } from 'dotenv';
 import json5 from 'json5';
 import path from 'path';
 import fs from 'fs-extra';
-import 'reflect-metadata';
 import { validateSync } from 'class-validator';
 import { plainToClass, classToPlain } from 'class-transformer';
-import { Config } from './classes';
-
-const EXTENSIONS = ['json', 'json5']; // Allow .json or .json5 extension
-const CONFIG_DIR = 'config';
-const CONFIG_FILE_NAME = 'config2';
+import pino from 'pino';
+import { Config, NotificationConfig, WebPortalConfig } from './classes';
 
 dotenv();
 
-const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.${ext}`));
-const configPath = configPaths.find((p) => fs.existsSync(p));
-let parsedConfig = {};
-if (!configPath) {
-  // TODO: Create default config.json
-  console.warn('No config file detected');
-} else {
-  parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
-}
+// Declare pino logger as importing would cause dependency cycle
+const L = pino({
+  prettyPrint: {
+    translateTime: `SYS:standard`,
+  },
+  useLevelLabels: true,
+  level: process.env.LOG_LEVEL || 'info',
+});
 
-export const config = plainToClass(Config, parsedConfig);
+// TODO: Add YAML parser
+const EXTENSIONS = ['.json', '.json5']; // Allow .json or .json5 extension
+
+const removeFileExtension = (filename: string): string => {
+  const ext = path.extname(filename);
+  if (EXTENSIONS.includes(ext)) {
+    return path.basename(filename, ext);
+  }
+  return path.basename(filename);
+};
+
+export const CONFIG_DIR = process.env.CONFIG_DIR || 'config';
+export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
+  ? removeFileExtension(process.env.CONFIG_FILE_NAME)
+  : 'config';
+
+const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}${ext}`));
+const configPath = configPaths.find((p) => fs.existsSync(p));
+// eslint-disable-next-line import/no-mutable-exports
+let config: Config;
+if (!configPath) {
+  L.warn('No config file detected');
+  const newConfigPath = path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.json`);
+  config = new Config();
+  try {
+    L.debug({ newConfigPath }, 'Creating new config file');
+    fs.writeJSONSync(newConfigPath, classToPlain(config), { spaces: 2 });
+    L.info({ newConfigPath }, 'Wrote new default config file');
+  } catch (err) {
+    L.debug(err);
+    L.info('Not allowed to create new config. Continuing...');
+  }
+} else {
+  L.debug({ configPath });
+  const parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
+  config = plainToClass(Config, parsedConfig);
+}
 
 /**
  * Handle deprecated options
  */
 if (config.email) {
-  console.warn(
+  L.warn(
     'WARNING: `email` has been deprecateed. Please update your config to use `notification.email` instead'
   );
-  if (!config.notification?.email) {
-    config.notification = {
-      ...config.notification,
-      email: config.email,
-    };
+  if (!config.notification) {
+    config.notification = new NotificationConfig();
+  }
+  if (!config.notification.email) {
+    config.notification.email = config.email;
   }
 }
 
 if (config.baseUrl) {
-  console.warn(
+  L.warn(
     'WARNING: `baseUrl` has been deprecateed. Please update your config to use `webPortalConfig.baseUrl` instead'
   );
-  if (!config.webPortalConfig?.baseUrl) {
-    config.webPortalConfig = {
-      ...config.webPortalConfig,
-      baseUrl: config.baseUrl,
-    };
+  if (!config.webPortalConfig) {
+    config.webPortalConfig = new WebPortalConfig();
+  }
+  if (!config.webPortalConfig.baseUrl) {
+    config.webPortalConfig.baseUrl = config.baseUrl;
   }
 }
 
 if (config.onlyWeekly) {
-  console.warn(
+  L.warn(
     'WARNING: `onlyWeekly` has been deprecateed. Please update your config to use `searchStrategy` instead'
   );
   if (!config.searchStrategy) {
@@ -70,8 +101,10 @@ const errors = validateSync(config, {
   },
 });
 if (errors.length > 0) {
-  errors.forEach((error) => console.error('Validation error:', JSON.stringify(error, null, 2)));
+  L.error({ errors }, 'Validation error(s)');
   throw new Error('Invalid config');
 }
 
-// console.log('Config:', JSON.stringify(classToPlain(config), null, 2));
+L.debug({ config: classToPlain(config) });
+
+export { config };
