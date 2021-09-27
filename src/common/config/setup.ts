@@ -63,7 +63,7 @@ if (!configPath) {
  */
 if (config.email) {
   L.warn(
-    'WARNING: `email` has been deprecateed. Please update your config to use `notification.email` instead'
+    'WARNING: `email` has been deprecated. Please update your config to use `notification.email` instead'
   );
   if (!config.notification) {
     config.notification = new NotificationConfig();
@@ -75,7 +75,7 @@ if (config.email) {
 
 if (config.baseUrl) {
   L.warn(
-    'WARNING: `baseUrl` has been deprecateed. Please update your config to use `webPortalConfig.baseUrl` instead'
+    'WARNING: `baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead'
   );
   if (!config.webPortalConfig) {
     config.webPortalConfig = new WebPortalConfig();
@@ -87,7 +87,7 @@ if (config.baseUrl) {
 
 if (config.onlyWeekly) {
   L.warn(
-    'WARNING: `onlyWeekly` has been deprecateed. Please update your config to use `searchStrategy` instead'
+    'WARNING: `onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead'
   );
   if (!config.searchStrategy) {
     const newValue = config.onlyWeekly ? 'weekly' : 'promotion';
