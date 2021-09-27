@@ -11,7 +11,7 @@ import {
 } from './common/constants';
 import { BundlesContent } from './interfaces/bundles-content';
 import Login from './login';
-import { config } from './common/config';
+import { config, SearchStrategy } from './common/config';
 import { OffersQueryResponse } from './interfaces/offer-response';
 
 export default class FreeGames {
@@ -341,7 +341,7 @@ export default class FreeGames {
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
     let validFreeGames: Element[];
-    if (config.onlyWeekly) {
+    if (config.searchStrategy === SearchStrategy.WEEKLY) {
       validFreeGames = await this.getWeeklyFreeGames();
     } else {
       validFreeGames = await this.getCatalogFreeGames();
