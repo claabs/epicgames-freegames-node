@@ -1,4 +1,4 @@
-import got, { Got } from 'got';
+import got, { Got, ToughCookieJar } from 'got';
 import * as tough from 'tough-cookie';
 import { FileCookieStore } from 'tough-cookie-file-store';
 import fs from 'fs-extra';
@@ -102,7 +102,7 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
 }
 
 export default got.extend({
-  cookieJar: getCookieJar('default'),
+  cookieJar: getCookieJar('default') as ToughCookieJar,
   responseType: 'json',
 });
 
@@ -120,7 +120,7 @@ export function newCookieJar(username: string): Got {
   }
 
   return got.extend({
-    cookieJar: getCookieJar(fileSafeUsername),
+    cookieJar: getCookieJar(fileSafeUsername) as ToughCookieJar,
     responseType: 'json',
   });
 }

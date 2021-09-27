@@ -9,7 +9,8 @@ import { newCookieJar } from './common/request';
 import PuppetPurchase from './puppet/purchase';
 
 export async function redeemAccount(account: AccountConfig, index: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, index * (config.intervalTime || 60) * 1000));
+  const waitTime = index * config.intervalTime * 1000;
+  await new Promise((resolve) => setTimeout(resolve, waitTime));
   L.info(`Checking free games for ${account.email} `);
   try {
     const requestClient = newCookieJar(account.email);

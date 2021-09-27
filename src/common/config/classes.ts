@@ -222,6 +222,7 @@ export enum SearchStrategy {
    */
   PROMOTION = 'promotion',
   /**
+   * **Currently unimplemented**
    * Redeem any and all free games, regardless of discount. WARNING: this will get a lot of junk and is not recommended!
    */
   ALL = 'all',
