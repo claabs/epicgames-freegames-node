@@ -14,7 +14,6 @@ import {
   Matches,
   IsObject,
   Length,
-  IsBase32,
   MinLength,
   ArrayNotEmpty,
   IsArray,
@@ -267,7 +266,7 @@ export class AccountConfig {
    */
   @IsOptional()
   @Length(52)
-  @IsBase32()
+  @Matches(/^[A-Z2-7]+=*$/) // IsBase32 also checks for mod 8 length, which these aren't
   totp?: string;
 
   /**
