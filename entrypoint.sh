@@ -2,11 +2,13 @@
 
 set +e
 
-ENTRYPOINT_CONFIG=$(LOG_LEVEL=error node dist/src/entrypoint-config.js)
-RUN_ON_STARTUP=$(echo $ENTRYPOINT_CONFIG | jq -r ".runOnStartup")
-CRON_SCHEDULE=$(echo $ENTRYPOINT_CONFIG | jq -r ".cronSchedule")
-RUN_ONCE=$(echo $ENTRYPOINT_CONFIG | jq -r ".runOnce")
-TZ=$(echo $ENTRYPOINT_CONFIG | jq -r ".timezone")
+TEMP_CONFIG="/tmp/config.json"
+
+npm run entrypoint-config
+RUN_ON_STARTUP=$(cat $TEMP_CONFIG | jq -r ".runOnStartup")
+CRON_SCHEDULE=$(cat $TEMP_CONFIG | jq -r ".cronSchedule")
+RUN_ONCE=$(cat $TEMP_CONFIG | jq -r ".runOnce")
+TZ=$(cat $TEMP_CONFIG | jq -r ".timezone")
 
 echo "Run on startup: ${RUN_ON_STARTUP}"
 echo "Run once: ${RUN_ONCE}"
