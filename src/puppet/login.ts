@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import { writeFileSync } from 'fs';
 import { TOTP } from 'otpauth';
 import { Logger } from 'pino';
 import { Protocol, ElementHandle, Page } from 'puppeteer';
@@ -12,6 +11,7 @@ import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
 import { getHcaptchaCookies } from './hcaptcha';
 import { EPIC_CLIENT_ID } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
+import { sendNotification } from '../notify';
 
 const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000; // TODO: Add to config
 
@@ -60,17 +60,7 @@ export default class PuppetLogin {
     this.L.trace('Clicking sign-in button');
     await signInElem.hover();
     await signInElem.focus();
-    try {
-      await Promise.all([
-        await signInElem.click({ delay: 100 }),
-        await this.handleLoginClick(page),
-      ]);
-    } catch (err) {
-      const content = await page.content();
-      // writeFileSync('test.html', content);
-      // await page.screenshot({ path: 'test.png' });
-      throw err;
-    }
+    await Promise.all([await signInElem.click({ delay: 100 }), await this.handleLoginClick(page)]);
   }
 
   async login(): Promise<void> {
@@ -122,7 +112,6 @@ export default class PuppetLogin {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
   private async handleLoginClick(page: Page): Promise<void> {
     this.L.trace('Waiting for sign-in result');
     const result = await Promise.race([
@@ -130,13 +119,10 @@ export default class PuppetLogin {
       page.waitForNavigation({ waitUntil: 'networkidle0' }).then(() => 'nav'),
     ]);
     if (result !== 'nav') {
-      const content = await page.content();
-      writeFileSync('test.html', content); // TODO: Remove
-      await page.screenshot({ path: 'test.png' }); // TODO: Remove
       this.L.trace('Captcha detected');
       const portalUrl = await page.openPortal();
       this.L.info({ portalUrl }, 'Go to this URL and do something');
-      // TODO: Notify with url
+      await sendNotification(portalUrl, this.email, NotificationReason.LOGIN);
       await this.handleCaptchaSolved(page);
       await page.closePortal();
     }
