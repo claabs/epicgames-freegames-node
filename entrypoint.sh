@@ -2,7 +2,7 @@
 
 set +e
 
-ENTRYPOINT_CONFIG=$(LOG_LEVEL=silent node dist/src/entrypoint-config.js)
+ENTRYPOINT_CONFIG=$(LOG_LEVEL=error node dist/src/entrypoint-config.js)
 RUN_ON_STARTUP=$(echo $ENTRYPOINT_CONFIG | jq -r ".runOnStartup")
 CRON_SCHEDULE=$(echo $ENTRYPOINT_CONFIG | jq -r ".cronSchedule")
 RUN_ONCE=$(echo $ENTRYPOINT_CONFIG | jq -r ".runOnce")
