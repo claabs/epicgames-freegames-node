@@ -5,7 +5,9 @@ import fs from 'fs-extra';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
 import { Protocol } from 'puppeteer';
+import path from 'path';
 import L from './logger';
+import { CONFIG_DIR } from './config';
 
 export interface TCFSCookieAttributes {
   key: string;
@@ -51,17 +53,24 @@ export interface ETCCookie {
 
 export type EditThisCookie = ETCCookie[];
 
+const DEFAULT_COOKIE_NAME = 'default';
+
 const cookieJars: Map<string, tough.CookieJar> = new Map();
 
-function getCookieJar(username: string): tough.CookieJar {
+function getCookiePath(username: string): string {
   const fileSafeUsername = filenamify(username);
-  let cookieJar = cookieJars.get(fileSafeUsername);
+  const cookieFilename = path.join(CONFIG_DIR, `${fileSafeUsername}-cookies.json`);
+  return cookieFilename;
+}
+
+function getCookieJar(username: string): tough.CookieJar {
+  let cookieJar = cookieJars.get(username);
   if (cookieJar) {
     return cookieJar;
   }
-  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const cookieFilename = getCookiePath(username);
   cookieJar = new tough.CookieJar(new FileCookieStore(cookieFilename));
-  cookieJars.set(fileSafeUsername, cookieJar);
+  cookieJars.set(username, cookieJar);
   return cookieJar;
 }
 
@@ -74,18 +83,18 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
     const expires = etcCookie.expirationDate
       ? new Date(etcCookie.expirationDate * 1000).toISOString()
       : undefined;
-    const { path, name } = etcCookie;
+    const { path: cookiePath, name } = etcCookie;
 
     if (COOKIE_WHITELIST.includes(name)) {
       const temp: ToughCookieFileStore = {
         [domain]: {
-          [path]: {
+          [cookiePath]: {
             [name]: {
               key: name,
               value: etcCookie.value,
               expires,
               domain,
-              path,
+              path: cookiePath,
               secure: etcCookie.secure,
               httpOnly: etcCookie.httpOnly,
               hostOnly: etcCookie.hostOnly,
@@ -102,13 +111,12 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
 }
 
 export default got.extend({
-  cookieJar: getCookieJar('default') as ToughCookieJar,
+  cookieJar: getCookieJar(DEFAULT_COOKIE_NAME) as ToughCookieJar,
   responseType: 'json',
 });
 
 export function newCookieJar(username: string): Got {
-  const fileSafeUsername = filenamify(username);
-  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const cookieFilename = getCookiePath(username);
   const fileExists = fs.existsSync(cookieFilename);
   if (fileExists) {
     const cookieTest = JSON.parse(fs.readFileSync(cookieFilename, 'utf8'));
@@ -120,14 +128,13 @@ export function newCookieJar(username: string): Got {
   }
 
   return got.extend({
-    cookieJar: getCookieJar(fileSafeUsername) as ToughCookieJar,
+    cookieJar: getCookieJar(username) as ToughCookieJar,
     responseType: 'json',
   });
 }
 
 export function getCookies(username: string): Record<string, string> {
-  const fileSafeUsername = filenamify(username);
-  const cookieJar = getCookieJar(fileSafeUsername);
+  const cookieJar = getCookieJar(username);
   const { cookies } = cookieJar.toJSON();
   return cookies.reduce<Record<string, string>>(
     (accum, cookie) => ({ ...accum, [cookie.key]: cookie.value }),
@@ -136,8 +143,7 @@ export function getCookies(username: string): Record<string, string> {
 }
 
 export async function getCookiesRaw(username: string): Promise<ToughCookieFileStore> {
-  const fileSafeUsername = filenamify(username);
-  const cookieFilename = `./config/${fileSafeUsername}-cookies.json`;
+  const cookieFilename = getCookiePath(username);
   try {
     const existingCookies: ToughCookieFileStore = await fs.readJSON(cookieFilename);
     return existingCookies;
@@ -147,8 +153,7 @@ export async function getCookiesRaw(username: string): Promise<ToughCookieFileSt
 }
 
 export function setCookie(username: string, key: string, value: string): void {
-  const fileSafeUsername = filenamify(username);
-  const cookieJar = getCookieJar(fileSafeUsername);
+  const cookieJar = getCookieJar(username);
   cookieJar.setCookieSync(
     new tough.Cookie({
       key,
@@ -159,8 +164,7 @@ export function setCookie(username: string, key: string, value: string): void {
 }
 
 export function setPuppeteerCookies(username: string, newCookies: Protocol.Network.Cookie[]): void {
-  const fileSafeUsername = filenamify(username);
-  const cookieJar = getCookieJar(fileSafeUsername);
+  const cookieJar = getCookieJar(username);
   newCookies.forEach((cookie) => {
     const domain = cookie.domain.replace(/^\./, '');
     const tcfsCookie = new tough.Cookie({
@@ -179,8 +183,10 @@ export function setPuppeteerCookies(username: string, newCookies: Protocol.Netwo
 
 export function deleteCookies(username?: string): void {
   if (username) {
-    fs.unlinkSync(`./config/${username}-cookies.json`);
+    const cookieFilename = getCookiePath(username);
+    fs.unlinkSync(cookieFilename);
   } else {
-    fs.unlinkSync(`./config/cookies.json`);
+    const cookieFilename = getCookiePath(DEFAULT_COOKIE_NAME);
+    fs.unlinkSync(cookieFilename);
   }
 }

@@ -298,10 +298,11 @@ export class AccountConfig {
 export enum SearchStrategy {
   /**
    * Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games
+   * This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks.
    */
   WEEKLY = 'weekly',
   /**
-   * Search the entire Epic Games site for any game with a 100% discount
+   * Search the entire Epic Games site for any game with a 100% discount. This includes the `weekly` games, plus any uncommon non-weekly temporarily free games.
    */
   PROMOTION = 'promotion',
   /**
@@ -323,7 +324,7 @@ export enum LogLevel {
 /**
  * @example ```jsonc
  * {
- *   "searchStrategy": "weekly",
+ *   "searchStrategy": "promotion",
  *   "runOnStartup": true,
  *   "cronSchedule": "5 16 * * *",
  *   "logLevel": "info",
@@ -370,13 +371,13 @@ export class Config {
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
-   * @example promotion
-   * @default weekly
+   * @example weekly
+   * @default promotion
    * @env SEARCH_STRATEGY
    */
   @IsOptional()
   @IsEnum(SearchStrategy)
-  searchStrategy = process.env.SEARCH_STRATEGY || SearchStrategy.WEEKLY;
+  searchStrategy = process.env.SEARCH_STRATEGY || SearchStrategy.PROMOTION;
 
   /**
    * If true, the process will run on startup in addition to the scheduled time.
@@ -387,6 +388,26 @@ export class Config {
   @IsOptional()
   @IsBoolean()
   runOnStartup = process.env.RUN_ON_STARTUP?.toLowerCase() === 'true' || false;
+
+  /**
+   * If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.
+   * @example true
+   * @default false
+   * @env RUN_ONCE
+   */
+  @IsOptional()
+  @IsBoolean()
+  runOnce = process.env.RUN_ONCE?.toLowerCase() === 'true' || false;
+
+  /**
+   * TZ name from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List
+   * @example America/Chicago
+   * @default UTC
+   * @env TZ
+   */
+  @IsOptional()
+  @IsString()
+  timezone = process.env.TZ;
 
   /**
    * The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)

@@ -1,10 +1,14 @@
 import fs from 'fs-extra';
 import { ElementHandle, Protocol } from 'puppeteer';
+import path from 'path';
 import puppeteer from '../common/puppeteer';
-import { config } from '../common/config';
+import { config, CONFIG_DIR } from '../common/config';
 import L from '../common/logger';
 
-const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = './config/hcaptcha-accessibility-cache.json';
+const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = path.join(
+  CONFIG_DIR,
+  'hcaptcha-accessibility-cache.json'
+);
 
 const CACHE_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
 
