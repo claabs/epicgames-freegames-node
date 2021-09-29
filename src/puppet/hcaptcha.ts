@@ -27,7 +27,6 @@ const setCookieCache = async (cookies: Protocol.Network.Cookie[]): Promise<void>
   await fs.writeJSON(HCAPTCHA_ACCESSIBILITY_CACHE_FILE, cookies);
 };
 
-// eslint-disable-next-line import/prefer-default-export
 export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> => {
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {

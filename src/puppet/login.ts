@@ -11,6 +11,7 @@ import puppeteer, {
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
 import { getHcaptchaCookies } from './hcaptcha';
 import { EPIC_CLIENT_ID } from '../common/constants';
+import { NotificationReason } from '../interfaces/notification-reason';
 
 const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000; // TODO: Add to config
 

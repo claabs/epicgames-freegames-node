@@ -1,4 +1,3 @@
-/* eslint-disable no-console, import/prefer-default-export */
 import 'reflect-metadata';
 import { config as dotenv } from 'dotenv';
 import json5 from 'json5';
@@ -7,7 +6,7 @@ import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
 import { plainToClass, classToPlain } from 'class-transformer';
 import pino from 'pino';
-import { Config, NotificationConfig, WebPortalConfig } from './classes';
+import { Config, EmailConfig, WebPortalConfig } from './classes';
 
 dotenv();
 
@@ -62,20 +61,18 @@ if (!configPath) {
  * Handle deprecated options
  */
 if (config.email) {
-  L.warn(
-    'WARNING: `email` has been deprecated. Please update your config to use `notification.email` instead'
-  );
-  if (!config.notification) {
-    config.notification = new NotificationConfig();
+  L.warn('`email` has been deprecated. Please update your config to use `notifications` instead');
+  if (!config.notifiers) {
+    config.notifiers = [];
   }
-  if (!config.notification.email) {
-    config.notification.email = config.email;
+  if (!config.notifiers.some((notifConfig) => notifConfig instanceof EmailConfig)) {
+    config.notifiers.push(config.email);
   }
 }
 
 if (config.baseUrl) {
   L.warn(
-    'WARNING: `baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead'
+    '`baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead'
   );
   if (!config.webPortalConfig) {
     config.webPortalConfig = new WebPortalConfig();
@@ -87,7 +84,7 @@ if (config.baseUrl) {
 
 if (config.onlyWeekly) {
   L.warn(
-    'WARNING: `onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead'
+    '`onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead'
   );
   if (!config.searchStrategy) {
     const newValue = config.onlyWeekly ? 'weekly' : 'promotion';

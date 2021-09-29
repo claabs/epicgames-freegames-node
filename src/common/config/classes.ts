@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
-/* eslint-disable no-useless-constructor */
-/* eslint-disable no-shadow */
-/* eslint-disable max-classes-per-file */
+/* eslint-disable @typescript-eslint/no-empty-function, no-useless-constructor, max-classes-per-file */
 import 'reflect-metadata';
 import { Type } from 'class-transformer';
 import {
@@ -22,9 +19,82 @@ import {
   ArrayNotEmpty,
   IsArray,
   Max,
+  IsNotEmpty,
 } from 'class-validator';
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
+
+export enum NotificationType {
+  EMAIL = 'email',
+  TELEGRAM = 'telegram',
+  DISCORD = 'discord',
+  LOCAL = 'local',
+}
+
+/**
+ * @ignore
+ */
+export abstract class NotifierConfig {
+  @IsEnum(NotificationType)
+  type: NotificationType;
+
+  constructor(type: NotificationType) {
+    this.type = type;
+  }
+}
+
+export class LocalConfig extends NotifierConfig {
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.LOCAL);
+  }
+}
+
+export class DiscordConfig extends NotifierConfig {
+  /**
+   * Discord channel webhook URL.
+   * Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
+   * @example https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456
+   */
+  @IsUrl()
+  @Matches(/^.*(discord|discordapp)\.com\/api\/webhooks\/([\d]+)\/([a-zA-Z0-9_-]+)$/)
+  webhookUrl: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.DISCORD);
+  }
+}
+
+export class TelegramConfig extends NotifierConfig {
+  /**
+   * Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot
+   * @example 644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k
+   */
+  @IsString()
+  @Matches(/[0-9]{9}:[a-zA-Z0-9_-]{35}/)
+  token: string;
+
+  /**
+   * Unique identifier for the target chat or username of the target channel
+   * @example -987654321
+   * @example @channelusername
+   */
+  @IsString()
+  @IsNotEmpty()
+  chatId: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.TELEGRAM);
+  }
+}
 
 export class EmailAuthConfig {
   /**
@@ -49,7 +119,7 @@ export class EmailAuthConfig {
   constructor() {}
 }
 
-export class EmailConfig {
+export class EmailConfig extends NotifierConfig {
   /**
    * The outgoing SMTP host name
    * @example smtp.gmail.com
@@ -112,7 +182,9 @@ export class EmailConfig {
   /**
    * @ignore
    */
-  constructor() {}
+  constructor() {
+    super(NotificationType.EMAIL);
+  }
 }
 
 export class NotificationConfig {
@@ -203,8 +275,19 @@ export class AccountConfig {
    */
   @IsOptional()
   @ValidateNested()
-  @Type(() => NotificationConfig)
-  notification?: NotificationConfig;
+  @IsArray()
+  @Type(() => NotifierConfig, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { value: EmailConfig, name: NotificationType.EMAIL },
+        { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: LocalConfig, name: NotificationType.LOCAL },
+        { value: TelegramConfig, name: NotificationType.TELEGRAM },
+      ],
+    },
+  })
+  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
 
   /**
    * @ignore
@@ -238,7 +321,7 @@ export enum LogLevel {
 }
 
 /**
- * @example ```json
+ * @example ```jsonc
  * {
  *   "searchStrategy": "weekly",
  *   "runOnStartup": true,
@@ -255,20 +338,22 @@ export enum LogLevel {
  *       "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
  *     },
  *   ],
- *   "notification": {
- *     "email": {
- *       "smtpHost": "smtp.gmail.com",
- *       "smtpPort": 587,
- *       "emailSenderAddress": "hello@gmail.com",
- *       "emailSenderName": "Epic Games Captchas",
- *       "emailRecipientAddress": "hello@gmail.com",
- *       "secure": false,
- *       "auth": {
- *         "user": "hello@gmail.com",
- *         "pass": "abc123",
+ *   "notifiers": [
+ *     {
+ *       "email": {
+ *         "smtpHost": "smtp.gmail.com",
+ *         "smtpPort": 587,
+ *         "emailSenderAddress": "hello@gmail.com",
+ *         "emailSenderName": "Epic Games Captchas",
+ *         "emailRecipientAddress": "hello@gmail.com",
+ *         "secure": false,
+ *         "auth": {
+ *           "user": "hello@gmail.com",
+ *           "pass": "abc123",
+ *         },
  *       },
  *     },
- *   }
+ *   ],
  * }
  * ```
  */
@@ -367,8 +452,19 @@ export class Config {
    */
   @IsOptional()
   @ValidateNested()
-  @Type(() => NotificationConfig)
-  notification?: NotificationConfig;
+  @IsArray()
+  @Type(() => NotifierConfig, {
+    discriminator: {
+      property: 'type',
+      subTypes: [
+        { value: EmailConfig, name: NotificationType.EMAIL },
+        { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: LocalConfig, name: NotificationType.LOCAL },
+        { value: TelegramConfig, name: NotificationType.TELEGRAM },
+      ],
+    },
+  })
+  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
 
   /**
    * Deprecated, use {@link NotificationConfig.email|`notification.email`}
@@ -446,10 +542,10 @@ export class Config {
         auth.pass = SMTP_PASSWORD;
         email.auth = auth;
       }
-      if (!this.notification) {
-        this.notification = new NotificationConfig();
+      if (!this.notifiers) {
+        this.notifiers = [];
       }
-      this.notification.email = email;
+      this.notifiers.push(email);
     }
 
     // Use environment variables to fill webPortalConfig if present

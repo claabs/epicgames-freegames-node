@@ -86,6 +86,12 @@ The config file is store in the mounted `./config` directory.
     "runOnce": false,
     "logLevel": "info",
     "baseUrl": "https://example.com",
+}
+```
+
+Add the following parts under "baseUrl":
+```json5
+    "notificationType": "email",
     "email": {
         "smtpHost": "smtp.gmail.com",
         "smtpPort": 587,
@@ -97,8 +103,21 @@ The config file is store in the mounted `./config` directory.
             "user": "hello@gmail.com",
             "pass": "abc123",
         },
+    },
+```
+
+```json5
+    "notificationType": "telegram",
+    "telegram": {
+        "token": "abcdfghijk:tokenstuff",
+        "chatIds": ["chatid1", "chatid2"]
     }
-}
+```
+```json5
+    "notificationType": "discord",
+    "discord": {
+        "webhookUrl": "https://discord.com/api/webhooks/<Token1>/<Token2>"
+    }
 ```
 
 ### Docker Congifuration

@@ -8,6 +8,7 @@ import puppeteer, {
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
 import { getHcaptchaCookies } from './hcaptcha';
+import { NotificationReason } from '../interfaces/notification-reason';
 
 export default class PuppetPurchase {
   private L: Logger;

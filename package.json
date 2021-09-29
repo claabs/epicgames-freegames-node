@@ -26,6 +26,7 @@
     "json5": "^2.2.0",
     "nodemailer": "^6.4.16",
     "object-assign-deep": "^0.4.0",
+    "open": "^8.2.1",
     "otpauth": "^5.0.6",
     "pino": "^5.17.0",
     "pino-pretty": "^3.6.1",
