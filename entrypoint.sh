@@ -10,12 +10,10 @@ RUN_ON_STARTUP=$(cat $TEMP_CONFIG | jq -r ".runOnStartup")
 RUN_ONCE=$(cat $TEMP_CONFIG | jq -r ".runOnce")
 CRON_SCHEDULE=$(cat $TEMP_CONFIG | jq -r ".cronSchedule")
 
+echo "Setting timezone: $TZ"
+ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+echo "$TZ" > /etc/timezone
 
-if [ ! "$TZ" = "null" ]; then
-    echo "Setting timezone: $TZ"
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
-    echo "$TZ" > /etc/timezone
-fi
 echo "Run on startup: ${RUN_ON_STARTUP}"
 echo "Run once: ${RUN_ONCE}"
 [ "$RUN_ON_STARTUP" = "true" ] && npm start --prefix /usr/app

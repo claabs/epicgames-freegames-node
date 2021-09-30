@@ -406,7 +406,7 @@ export class Config {
    */
   @IsOptional()
   @IsString()
-  timezone = process.env.TZ;
+  timezone = process.env.TZ || 'UTC';
 
   /**
    * The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)
