@@ -38,9 +38,10 @@ jobs:
 
       - name: Build and push master
         if: ${{ github.ref == 'refs/heads/master' }}
-        id: docker_build_master
+        id: docker_build
         uses: docker/build-push-action@v2
         with:
+          target: deploy
           push: true
           tags: |
             charlocharlie/epicgames-freegames:${{ github.sha }}
@@ -51,19 +52,15 @@ jobs:
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
-        id: docker_build_dev
+        id: docker_build
         uses: docker/build-push-action@v2
         with:
+          target: deploy
           push: true
           tags: |
             charlocharlie/epicgames-freegames:dev
             ghcr.io/claabs/epicgames-freegames-node:dev
           platforms: linux/amd64,linux/arm64
 
-      - name: Image digest master
-        if: ${{ github.ref == 'refs/heads/master' }}
-        run: echo ${{ steps.docker_build_master.outputs.digest }}
-
-      - name: Image digest dev
-        if: ${{ github.ref == 'refs/heads/develop' }}
-        run: echo ${{ steps.docker_build_dev.outputs.digest }}
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
