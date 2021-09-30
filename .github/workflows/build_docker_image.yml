@@ -43,11 +43,14 @@ jobs:
           target: deploy
           push: true
           tags: |
-            charlocharlie/epicgames-freegames:${{ github.sha }}
             charlocharlie/epicgames-freegames:latest
+            charlocharlie/epicgames-freegames:${{ github.sha }}
             ghcr.io/claabs/epicgames-freegames-node:latest
             ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${GITHUB_REF#refs/heads/}
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
@@ -59,3 +62,6 @@ jobs:
             charlocharlie/epicgames-freegames:dev
             ghcr.io/claabs/epicgames-freegames-node:dev
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${GITHUB_REF#refs/heads/}
