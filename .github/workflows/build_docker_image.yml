@@ -14,6 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Set environment variables
+        run:  echo "GIT_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
         
@@ -50,7 +53,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
-            BRANCH=${GITHUB_REF#refs/heads/}
+            BRANCH=${{ env.GIT_BRANCH }}
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
@@ -64,4 +67,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
-            BRANCH=${GITHUB_REF#refs/heads/}
+            BRANCH=${{ env.GIT_BRANCH }}
