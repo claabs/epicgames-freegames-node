@@ -19,6 +19,7 @@ import {
   IsArray,
   Max,
   IsNotEmpty,
+  IsNumber,
 } from 'class-validator';
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
@@ -512,6 +513,18 @@ export class Config {
     },
   })
   notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
+
+  /**
+   * Number of hours to wait for a response for a notification.
+   * The notification wait is blocking, so while other accounts will still continue, the process won't exit until all captcha requests are solved.
+   * If the timeout is reached, the process will exit, and the URL in the notification will be inaccessible.
+   * @example 168
+   * @default 24
+   */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  notificationTimeoutHours = 24;
 
   /**
    * Deprecated, use {@link Config.notifiers|`notifiers` with `"type": "email"`}

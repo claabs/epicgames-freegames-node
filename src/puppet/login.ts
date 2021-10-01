@@ -12,8 +12,9 @@ import { getHcaptchaCookies } from './hcaptcha';
 import { EPIC_CLIENT_ID } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
+import { config } from '../common/config';
 
-const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000; // TODO: Add to config
+const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 
 export default class PuppetLogin {
   private L: Logger;
@@ -44,17 +45,15 @@ export default class PuppetLogin {
     this.L.trace('Waiting for email field');
     const emailElem = (await page.waitForSelector('#email')) as ElementHandle<HTMLInputElement>;
     this.L.trace('Filling email field');
-    await emailElem.focus();
-    await emailElem.type(this.email, { delay: 50 });
+    await emailElem.type(this.email);
     this.L.trace('Waiting for password field');
     const passElem = (await page.waitForSelector('#password')) as ElementHandle<HTMLInputElement>;
     this.L.trace('Filling password field');
-    await passElem.focus();
-    await passElem.type(this.password, { delay: 50 });
+    await passElem.type(this.password);
     this.L.trace('Waiting for sign-in button');
     const [signInElem] = await Promise.all([
       page.waitForSelector('#sign-in:not([disabled])') as Promise<ElementHandle<HTMLInputElement>>,
-      page.waitForTimeout(10000), // TODO: why is this required?
+      page.waitForNetworkIdle(),
     ]);
     // Remember me should be checked by default
     this.L.trace('Clicking sign-in button');

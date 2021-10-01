@@ -245,16 +245,6 @@ export default class AccountManager {
     await page.waitForNavigation({ waitUntil: 'networkidle2' });
   }
 
-  private async getOTP(): Promise<string> {
-    this.L.debug('Waiting for OTP email');
-    const message = await this.smtp4dev.findNewEmailTo(this.username);
-    const emailSource = await this.smtp4dev.getMessageSource(message.id);
-    this.L.debug({ emailSource }, 'OTP message');
-    // TODO: Parse the email
-    const otp = emailSource;
-    return otp;
-  }
-
   private async getVerification(): Promise<string> {
     this.L.debug('Waiting for creation verification email');
     const message = await this.smtp4dev.findNewEmailTo(this.username);
