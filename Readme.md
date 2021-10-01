@@ -206,7 +206,7 @@ If you're experiencing issues logging with with username and password, you can i
 * Epic Games may still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
 * Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
 
-## Local Congifuration
+## Running without Docker
 
 If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing [Node.js](https://nodejs.org/).
 
@@ -218,8 +218,11 @@ If for some reason you don't want to use Docker to run this tool you can run it 
 1. Install Node.js
 1. Install Node.js dependecies
     * Start terminal and navigate to cloned/unpacked directory
-    * Run `node ci`
-1. Start application: `./node_modules/.bin/ts-node src/index.ts`
+    * Run `npm i`
+1. Start application: `npm run start:ts`
+1. To update when using Git:
+    * `git pull`
+    * `npm i`
 
 ## Development
 
