@@ -42,6 +42,9 @@ export abstract class NotifierConfig {
   }
 }
 
+/**
+ * For local development only. This just opens the notified URL in your default browser.
+ */
 export class LocalConfig extends NotifierConfig {
   /**
    * @ignore
@@ -51,6 +54,9 @@ export class LocalConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Sends a message to a server text channel using a webhook
+ */
 export class DiscordConfig extends NotifierConfig {
   /**
    * Discord channel webhook URL.
@@ -69,6 +75,9 @@ export class DiscordConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Sends a message to a group chat using a bot you must set up yourself
+ */
 export class TelegramConfig extends NotifierConfig {
   /**
    * Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot
@@ -118,6 +127,13 @@ export class EmailAuthConfig {
   constructor() {}
 }
 
+/**
+ * Configuration for sending notifications via email.
+ *
+ * [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server).
+ *
+ * If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)
+ */
 export class EmailConfig extends NotifierConfig {
   /**
    * The outgoing SMTP host name
@@ -196,11 +212,6 @@ export class NotificationConfig {
   email?: EmailConfig;
 
   /**
-   * TODO
-   */
-  telegram?: boolean;
-
-  /**
    * @ignore
    */
   constructor() {}
@@ -270,7 +281,9 @@ export class AccountConfig {
   totp?: string;
 
   /**
-   * Confiuration options for just this account
+   * Notification options for just this account. This overrides any global notification configs.
+   *
+   * You may configure multiple notifiers, and they will all be triggered simultaneously.
    */
   @IsOptional()
   @ValidateNested()
@@ -297,6 +310,7 @@ export class AccountConfig {
 export enum SearchStrategy {
   /**
    * Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games
+   *
    * This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks.
    */
   WEEKLY = 'weekly',
@@ -306,6 +320,7 @@ export enum SearchStrategy {
   PROMOTION = 'promotion',
   /**
    * **Currently unimplemented**
+   *
    * Redeem any and all free games, regardless of discount. WARNING: this will get a lot of junk and is not recommended!
    */
   ALL = 'all',
@@ -338,22 +353,32 @@ export enum LogLevel {
  *       "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
  *     },
  *   ],
- *   "notifiers": [
- *     {
- *       "email": {
- *         "smtpHost": "smtp.gmail.com",
- *         "smtpPort": 587,
- *         "emailSenderAddress": "hello@gmail.com",
- *         "emailSenderName": "Epic Games Captchas",
- *         "emailRecipientAddress": "hello@gmail.com",
- *         "secure": false,
- *         "auth": {
- *           "user": "hello@gmail.com",
- *           "pass": "abc123",
- *         },
- *       },
- *     },
- *   ],
+ *    "notifiers": [
+ *      // You may configure as many of any notifier as needed
+ *      // Here are some examples of each type
+ *      {
+ *        "type": "email",
+ *        "smtpHost": "smtp.gmail.com",
+ *        "smtpPort": 587,
+ *        "emailSenderAddress": "hello@gmail.com",
+ *        "emailSenderName": "Epic Games Captchas",
+ *        "emailRecipientAddress": "hello@gmail.com",
+ *        "secure": false,
+ *        "auth": {
+ *            "user": "hello@gmail.com",
+ *            "pass": "abc123",
+ *        },
+ *      },
+ *      {
+ *        "type": "discord",
+ *        "webhookUrl": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+ *      },
+ *      {
+ *        "type": "telegram",
+ *        "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
+ *        "chatId": "-987654321",
+ *      }
+ *    ],
  * }
  * ```
  */
@@ -468,7 +493,9 @@ export class Config {
   accounts: AccountConfig[];
 
   /**
-   * Global default notification configuration
+   * Global default notification configuration.
+   *
+   * You may configure multiple notifiers, and they will all be triggered simultaneously.
    */
   @IsOptional()
   @ValidateNested()
