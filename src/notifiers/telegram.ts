@@ -23,7 +23,7 @@ export class TelegramNotifier extends NotifierService {
     const encodedUrl = encodeURI(url);
     const jsonPayload = {
       chat_id: this.config.chatId,
-      text: `*Epicgames-freegames-node*,\nreason: ${reason},\naccount: ${account}, \nurl: [Click me!](${encodedUrl})`,
+      text: `*epicgames-freegames-node*,\nreason: ${reason},\naccount: ${account}, \nurl: [Click me!](${encodedUrl})`,
       disable_web_page_preview: true,
       parse_mode: 'Markdown',
     };

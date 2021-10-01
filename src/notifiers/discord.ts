@@ -20,10 +20,20 @@ export class DiscordNotifier extends NotifierService {
     try {
       await got.post(this.config.webhookUrl, {
         json: {
-          content: `**Epicgames-freegames-node**,\nreason: ${reason},\naccount: ${account}`,
+          content: `epicgames-freegames-node needs a captcha solved.`,
           embeds: [
             {
-              title: 'Captcha',
+              fields: [
+                {
+                  name: 'Account',
+                  value: account,
+                },
+                {
+                  name: 'Reason',
+                  value: reason.toLowerCase(),
+                },
+              ],
+              title: 'Click to view captcha',
               url,
             },
           ],
