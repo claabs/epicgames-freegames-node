@@ -174,6 +174,8 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 1. Activate 2FA by completing the form and clicking activate.
 1. Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.
 
+If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Authenticator App" in your Epic account settings.
+
 ### Docker Run
 
 #### With JSON Config
@@ -203,6 +205,21 @@ If you're experiencing issues logging with with username and password, you can i
 * If you get an email prompting you to solve a captcha to log in, you should repeat the above process.
 * Epic Games may still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
 * Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
+
+## Local Congifuration
+
+If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing [Node.js](https://nodejs.org/).
+
+1. Get this repo from Github
+    * Clone using git (recommended): `git clone https://github.com/claabs/epicgames-freegames-node.git`
+    * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
+1. Create `config` folder in the cloned/unpacked directory
+1. Create [JSON configuration](#json-configuration)
+1. Install Node.js
+1. Install Node.js dependecies
+    * Start terminal and navigate to cloned/unpacked directory
+    * Run `node ci`
+1. Start application: `./node_modules/.bin/ts-node src/index.ts`
 
 ## Development
 
