@@ -114,12 +114,12 @@ If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Au
 
 ### Docker Congifuration
 
-This image is available from both [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames) and [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node):
+This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
 
 * `ghcr.io/claabs/epicgames-freegames-node:latest`
 * `charlocharlie/epicgames-freegames:latest`
 
-If you are using full JSON configuration, the only remaining Docker configurables the [port](#ports) and [volume](#volumes).
+If you are using full JSON configuration, the only remaining Docker configurables are the [port](#ports) and [volume](#volumes).
 
 #### Environment Variables
 
@@ -143,7 +143,7 @@ If for whatever reason you want to change the default config directory or config
 
 #### With JSON Config
 
-`$ docker run -d -e TZ=America/Chicago -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
 
 #### Without JSON Config
 
@@ -170,14 +170,14 @@ If you're experiencing issues logging with with username and password, you can i
 
 ## Running without Docker
 
-If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing [Node.js](https://nodejs.org/).
+If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing Node.js.
 
 1. Get this repo from Github
     * Clone using git (recommended): `git clone https://github.com/claabs/epicgames-freegames-node.git`
     * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
 1. Create `config` folder in the cloned/unpacked directory
 1. Create [JSON configuration](#json-configuration)
-1. Install Node.js
+1. [Install Node.js 14](https://nodejs.org/) or higher
 1. Install Node.js dependecies
     * Start terminal and navigate to cloned/unpacked directory
     * Run `npm i`
