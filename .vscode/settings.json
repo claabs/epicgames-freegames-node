@@ -13,9 +13,10 @@
     "[typescript]": {
         "editor.formatOnSave": false,
     },
-    "eslint.enable": true,
+    "[json]": {
+        "files.insertFinalNewline": true
+    },
     "typescript.tsdk": "node_modules/typescript/lib",
-    "docker.defaultRegistryPath": "charlocharlie",
     "eslint.workingDirectories": [
         "."
     ]
