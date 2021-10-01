@@ -514,7 +514,7 @@ export class Config {
   notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
 
   /**
-   * Deprecated, use {@link NotificationConfig.email|`notification.email`}
+   * Deprecated, use {@link Config.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */
   @IsOptional()

@@ -201,6 +201,91 @@ Place these variables in a `.env` file in the project root. These variables supp
 
 ## Miscellaneous
 
+### v3 to v4 Migration
+
+In v4, three config options have been deprecated and moved: `email`, `baseUrl`, and `onlyWeekly`. The deprecated options will be automatically converted to the new options at runtime, but you will need to change your `config.json` for a stable solution.
+
+#### `email`
+
+Copy the `email` block into the `notifiers` array and add `"type": "email"` to the email config object.
+
+```jsonc
+{
+  "email": {
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": 587,
+    "emailSenderAddress": "hello@gmail.com",
+    "emailSenderName": "Epic Games Captchas",
+    "emailRecipientAddress": "hello@gmail.com",
+    "secure": false,
+    "auth": {
+        "user": "hello@gmail.com",
+        "pass": "abc123",
+    },
+  },
+
+  // ⬇ changes to ⬇
+
+  "notifiers": [
+    {
+      "type": "email", // This indicates the notifier type
+      "smtpHost": "smtp.gmail.com",
+      "smtpPort": 587,
+      "emailSenderAddress": "hello@gmail.com",
+      "emailSenderName": "Epic Games Captchas",
+      "emailRecipientAddress": "hello@gmail.com",
+      "secure": false,
+      "auth": {
+          "user": "hello@gmail.com",
+          "pass": "abc123",
+      },
+    },
+  ],
+}
+```
+
+#### `baseUrl`
+
+Move the `baseUrl` block into the `webPortalConfig` config object.
+
+```jsonc
+{
+  "baseUrl": "https://epic.example.com",
+
+  // ⬇ changes to ⬇
+  
+  "webPortalConfig": {
+    "baseUrl": "https://epic.example.com",
+  },
+}
+```
+
+#### `onlyWeekly`
+
+The `onlyWeekly` boolean has been changed to the `searchStrategy` string.
+
+```jsonc
+{
+  "onlyWeekly": true,
+
+  // ⬇ changes to ⬇
+  
+  "searchStrategy": "weekly"
+}
+```
+
+```jsonc
+{
+  "onlyWeekly": false,
+
+  // ⬇ changes to ⬇
+  
+  "searchStrategy": "promotion"
+}
+```
+
+### Thanks
+
 Thanks to [epicgames-weekly-freegames](https://github.com/Ricardo-Osorio/epicgames-weekly-freegames) for the inspiration.
 
 Thanks to [puppeteer-extra](https://github.com/berstend/puppeteer-extra) for making much of this possible technologically.

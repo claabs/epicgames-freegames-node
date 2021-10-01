@@ -61,7 +61,9 @@ if (!configPath) {
  * Handle deprecated options
  */
 if (config.email) {
-  L.warn('`email` has been deprecated. Please update your config to use `notifications` instead');
+  L.warn(
+    '`email` has been deprecated. Please update your config to use `notifiers` with `"type": "email"` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
+  );
   if (!config.notifiers) {
     config.notifiers = [];
   }
@@ -72,7 +74,7 @@ if (config.email) {
 
 if (config.baseUrl) {
   L.warn(
-    '`baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead'
+    '`baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
   );
   if (!config.webPortalConfig) {
     config.webPortalConfig = new WebPortalConfig();
@@ -84,7 +86,7 @@ if (config.baseUrl) {
 
 if (config.onlyWeekly) {
   L.warn(
-    '`onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead'
+    '`onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
   );
   if (!config.searchStrategy) {
     const newValue = config.onlyWeekly ? 'weekly' : 'promotion';
