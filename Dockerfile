@@ -28,18 +28,6 @@ RUN npm run build
 ########
 FROM base as deploy
 
-ARG COMMIT_SHA="" \
-    BRANCH=""
-
-LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
-    org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \
-    org.opencontainers.image.description="Automatically redeem free games promotions on the Epic Games store" \
-    org.opencontainers.image.name="epicgames-freegames-node" \
-    org.opencontainers.image.revision=${COMMIT_SHA} \
-    org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-alpine" \
-    org.opencontainers.image.version="latest"
-
 # Chromium dependencies https://github.com/Zenika/alpine-chrome/blob/master/Dockerfile
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories \
     && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
@@ -71,12 +59,24 @@ COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # backwards compat (from https://success.docker.com/article/use-a-script-to-initialize-stateful-container-data)
 RUN ln -s /usr/local/bin/docker-entrypoint.sh / 
 
-EXPOSE 3000
+ARG COMMIT_SHA="" \
+    BRANCH=""
+
+LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
+    org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \
+    org.opencontainers.image.description="Automatically redeem free games promotions on the Epic Games store" \
+    org.opencontainers.image.name="epicgames-freegames-node" \
+    org.opencontainers.image.revision=${COMMIT_SHA} \
+    org.opencontainers.image.ref.name=${BRANCH} \
+    org.opencontainers.image.base.name="node:14-alpine" \
+    org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     COMMIT_SHA=${COMMIT_SHA} \
     BRANCH=${BRANCH}
+
+EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 
