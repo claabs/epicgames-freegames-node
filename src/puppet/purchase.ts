@@ -100,8 +100,9 @@ export default class PuppetPurchase {
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
       cookies: Protocol.Network.Cookie[];
     };
-    await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+    this.L.trace('Saved cookies, closing browser');
+    await browser.close();
   }
 
   /**

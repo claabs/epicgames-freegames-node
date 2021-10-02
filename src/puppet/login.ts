@@ -88,90 +88,124 @@ export default class PuppetLogin {
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
       cookies: Protocol.Network.Cookie[];
     };
-    await browser.close();
     setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+    this.L.trace('Saved cookies, closing browser');
+    await browser.close();
   }
 
-  private async waitForHCaptcha(page: Page): Promise<ElementHandle<Element> | string> {
+  private async waitForHCaptcha(page: Page): Promise<string> {
     try {
       const talonHandle = await page.$('iframe#talon_frame_login_prod');
       if (!talonHandle) throw new Error('Could not find talon_frame_login_prod');
       const talonFrame = await talonHandle.contentFrame();
       if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
       this.L.trace('Waiting for hcaptcha iframe');
-      const hcaptchaFrame = (await talonFrame.waitForSelector(
-        `#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`,
-        {
-          visible: true,
-        }
-      )) as ElementHandle<HTMLIFrameElement>;
-      return hcaptchaFrame;
+      await talonFrame.waitForSelector(`#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`, {
+        visible: true,
+      });
+      return 'captcha';
     } catch (err) {
       if (err.message.includes('timeout')) {
         throw err;
       }
-      this.L.warn(err);
+      if (err.message.includes('detached')) {
+        this.L.trace(err);
+      } else {
+        this.L.warn(err);
+      }
       return 'nav';
     }
+  }
+
+  private async waitForRedirectNav(page: Page, startTime = new Date()): Promise<string> {
+    const timeout = NOTIFICATION_TIMEOUT;
+    const poll = 1000;
+    try {
+      const resp = await page.waitForNavigation({
+        waitUntil: 'networkidle2',
+        timeout: poll,
+      });
+      if (resp?.url().includes('/store')) {
+        this.L.trace('Navigated to store page');
+        return 'nav';
+      }
+      return this.waitForRedirectNav(page, startTime);
+    } catch (err) {
+      if (startTime.getTime() + timeout <= new Date().getTime()) {
+        throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
+      }
+      return this.waitForRedirectNav(page, startTime);
+    }
+  }
+
+  private async handleMfa(page: Page, input: ElementHandle<HTMLInputElement>): Promise<void> {
+    this.L.trace('MFA detected');
+    if (!this.totp) throw new Error('TOTP required for MFA login');
+    const totp = new TOTP({ secret: this.totp });
+    const mfaCode = totp.generate();
+    this.L.trace('Filling MFA field');
+    await input.type(mfaCode);
+    this.L.trace('Waiting for continue button');
+    const continueButton = (await page.waitForSelector(
+      `button#continue`
+    )) as ElementHandle<HTMLButtonElement>;
+    this.L.trace('Clicking continue button');
+    await Promise.all([
+      await continueButton.click({ delay: 100 }),
+      await page.waitForNavigation({ waitUntil: 'networkidle0' }),
+    ]);
+  }
+
+  private async waitForError(page: Page): Promise<string> {
+    const errorHeader = (await page.waitForSelector('div[role="alert"] > h6:first-of-type', {
+      timeout: NOTIFICATION_TIMEOUT,
+      visible: true,
+    })) as ElementHandle<HTMLHeadingElement>;
+    return errorHeader.evaluate((el) => el.innerText);
   }
 
   private async handleLoginClick(page: Page): Promise<void> {
     this.L.trace('Waiting for sign-in result');
     const result = await Promise.race([
       this.waitForHCaptcha(page),
-      page.waitForNavigation({ waitUntil: 'networkidle0' }).then(() => 'nav'),
+      this.waitForRedirectNav(page),
+      this.waitForError(page),
+      page.waitForSelector(`input[name="code-input-0"]`) as Promise<
+        ElementHandle<HTMLInputElement>
+      >,
     ]);
-    if (result !== 'nav') {
+    if (result === 'captcha') {
       this.L.trace('Captcha detected');
       const portalUrl = await page.openPortal();
       this.L.info({ portalUrl }, 'Go to this URL and do something');
       await sendNotification(portalUrl, this.email, NotificationReason.LOGIN);
       await this.handleCaptchaSolved(page);
       await page.closePortal();
+    } else if (result === 'nav') {
+      this.L.debug('Redirected to store page, login successful');
+    } else if (typeof result === 'string') {
+      this.L.warn(`Login returned error: ${result}`);
+      await this.startLogin(page);
+    } else {
+      await this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
     }
   }
 
   private async handleCaptchaSolved(page: Page): Promise<void> {
     this.L.trace('Waiting for MFA possibility');
     const result = await Promise.race([
-      page.waitForSelector(`input[name="code-input-0"]`, {
-        timeout: NOTIFICATION_TIMEOUT,
-      }),
-      page.waitForSelector('div[role="alert"] > h6:first-of-type', {
-        timeout: NOTIFICATION_TIMEOUT,
-        visible: true,
-      }),
-      page
-        .waitForNavigation({
-          waitUntil: 'networkidle2',
-          timeout: NOTIFICATION_TIMEOUT,
-        })
-        .then(() => 'nav'),
+      page.waitForSelector(`input[name="code-input-0"]`) as Promise<
+        ElementHandle<HTMLInputElement>
+      >,
+      this.waitForRedirectNav(page),
+      this.waitForError(page),
     ]);
+    if (typeof result === 'string') {
+      this.L.warn(`Login returned error: ${result}`);
+      await this.startLogin(page);
+    }
     if (result !== 'nav') {
-      const resultElement = result as ElementHandle<HTMLHeadingElement>;
-      if (await resultElement.evaluate((el) => el.innerText.includes('refresh'))) {
-        // Refresh the page if the error message prompts
-        const errorMessage = await resultElement.evaluate((el) => el.innerText);
-        this.L.warn(`Login returned error: ${errorMessage}`);
-        await this.startLogin(page);
-        return;
-      }
-      this.L.trace('MFA detected');
-      if (!this.totp) throw new Error('TOTP required for MFA login');
-      const totp = new TOTP({ secret: this.totp });
-      const mfaCode = totp.generate();
-      this.L.trace('Filling MFA field');
-      await (result as ElementHandle<Element>).type(mfaCode);
-      this.L.trace('Waiting for continue button');
-      const continueButton = (await page.waitForSelector(
-        `button#continue`
-      )) as ElementHandle<HTMLButtonElement>;
-      this.L.trace('Clicking continue button');
-      await Promise.all([
-        await continueButton.click({ delay: 100 }),
-        await page.waitForNavigation({ waitUntil: 'networkidle0' }),
-      ]);
+      this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
     }
   }
 }
