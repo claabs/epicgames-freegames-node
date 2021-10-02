@@ -144,7 +144,7 @@ export class EmailConfig extends NotifierConfig {
    * @example smtp.gmail.com
    * @env SMTP_HOST
    */
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   smtpHost: string;
 
   /**
