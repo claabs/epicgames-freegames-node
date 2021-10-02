@@ -112,7 +112,7 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 
 If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Authenticator App" in your Epic account settings.
 
-### Docker Congifuration
+### Docker Configuration
 
 This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
 
@@ -153,7 +153,7 @@ Without JSON config, you can only configure one account.
 
 ### Cookie Import
 
-If you're experiencing issues logging with with username and password, you can import cookies for a temporary session.
+If you're experiencing issues logging in with username and password, you can import cookies for a temporary session.
 
 1. Setup the container per the below instructions
 1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
@@ -178,7 +178,7 @@ If for some reason you don't want to use Docker to run this tool you can run it 
 1. Create `config` folder in the cloned/unpacked directory
 1. Create [JSON configuration](#json-configuration)
 1. [Install Node.js 14](https://nodejs.org/) or higher
-1. Install Node.js dependecies
+1. Install Node.js dependencies
     * Start terminal and navigate to cloned/unpacked directory
     * Run `npm i`
 1. Start application: `npm run start:ts`
