@@ -67,7 +67,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-alpine" \
+    org.opencontainers.image.base.name="node:14-alpine3.14" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
