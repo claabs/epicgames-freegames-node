@@ -386,7 +386,7 @@ export enum LogLevel {
  * }
  * ```
  */
-export class Config {
+export class AppConfig {
   /**
    * Cron string of when to run the process. If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
    * @example 5 16 * * *
@@ -530,7 +530,7 @@ export class Config {
   notificationTimeoutHours = 24;
 
   /**
-   * Deprecated, use {@link Config.notifiers|`notifiers` with `"type": "email"`}
+   * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */
   @IsOptional()
@@ -549,7 +549,7 @@ export class Config {
   baseUrl?: string;
 
   /**
-   * Deprecated, use {@link Config.searchStrategy|`searchStrategy`}
+   * Deprecated, use {@link AppConfig.searchStrategy|`searchStrategy`}
    * @deprecated
    * @env ONLY_WEEKLY
    */

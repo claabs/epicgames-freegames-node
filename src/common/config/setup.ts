@@ -6,7 +6,7 @@ import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
 import { plainToClass, classToPlain } from 'class-transformer';
 import pino from 'pino';
-import { Config, EmailConfig, WebPortalConfig } from './classes';
+import { AppConfig, EmailConfig, WebPortalConfig } from './classes';
 
 dotenv();
 
@@ -38,11 +38,11 @@ export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
 const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}${ext}`));
 const configPath = configPaths.find((p) => fs.existsSync(p));
 // eslint-disable-next-line import/no-mutable-exports
-let config: Config;
+let config: AppConfig;
 if (!configPath) {
   L.warn('No config file detected');
   const newConfigPath = path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.json`);
-  config = new Config();
+  config = new AppConfig();
   try {
     L.debug({ newConfigPath }, 'Creating new config file');
     fs.writeJSONSync(newConfigPath, classToPlain(config), { spaces: 2 });
@@ -54,7 +54,7 @@ if (!configPath) {
 } else {
   L.debug({ configPath });
   const parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
-  config = plainToClass(Config, parsedConfig);
+  config = plainToClass(AppConfig, parsedConfig);
 }
 
 /**

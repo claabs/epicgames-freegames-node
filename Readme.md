@@ -9,7 +9,7 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 
 The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.
 
-For details on each option, its defaults, and environment variable key, see the [config documentation site](https://claabs.github.io/epicgames-freegames-node/classes/Config.html).
+For details on each option, its defaults, and environment variable key, see the [config documentation site](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html).
 
 The config file is stored in the mounted `/usr/app/config` volume and can be named `config.json` or `config.json5`.
 
@@ -84,7 +84,7 @@ To use this requires:
 
 * The ability to expose ports on your machine/local network/internet
   * Where you expose the port limits where you can solve captchas from (the machine running the container/your home network/anywhere, respectively)
-* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers) (Discord, Telegram, email, etc.)
+* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers) (Discord, Telegram, email, etc.)
 
 ##### Webserver setup
 
@@ -95,7 +95,7 @@ To use this requires:
 
 ##### Notification setup
 
-Each notification method has unique setup instructions. Read [its documentation]([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/Config.html) may also help as an example.
+Each notification method has unique setup instructions. Read [its documentation]([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) may also help as an example.
 
 #### Two-factor login
 
@@ -123,7 +123,7 @@ If you are using full JSON configuration, the only remaining Docker configurable
 
 #### Environment Variables
 
-Most configuration options can be set via environment variable. Look for the `env` tag in the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/Config.html) for each option's key.
+Most configuration options can be set via environment variable. Look for the `env` tag in the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) for each option's key.
 
 If for whatever reason you want to change the default config directory or config file name, `CONFIG_DIR` and `CONFIG_FILE_NAME` are available as environment variables.
 
