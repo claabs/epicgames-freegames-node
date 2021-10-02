@@ -40,7 +40,7 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
   let cookieData = await getCookieCache();
   if (!cookieData) {
     L.debug('Setting hCaptcha accessibility cookies');
-    const browser = await puppeteer.launch({ headless: true ,args:['--no-sandbox']});
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);

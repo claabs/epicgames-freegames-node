@@ -69,7 +69,11 @@ export default class PuppetLogin {
     this.L.debug('Logging in with puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process', '--no-sandbox'],
+      args: [
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--no-sandbox',
+      ],
     });
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
