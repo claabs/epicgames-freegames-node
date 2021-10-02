@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - master
+    paths:
+      - Readme.md
+      - src/common/config/classes.ts
+      - .github/workflows/typedoc.yml
 jobs:
   publish:
     runs-on: ubuntu-latest
