@@ -32,7 +32,7 @@ export default class PuppetPurchase {
     this.L.debug('Purchasing with puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+      args: ['--disable-web-security','--sandbox', '--disable-features=IsolateOrigins,site-per-process'],
     });
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
@@ -110,7 +110,7 @@ export default class PuppetPurchase {
     this.L.debug('Purchasing with puppeteer (short)');
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
+      args: ['--disable-web-security','--sandbox', '--disable-features=IsolateOrigins,site-per-process'],
     });
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));

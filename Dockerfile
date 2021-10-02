@@ -44,7 +44,8 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositorie
     wqy-zenhei \
     # App dependencies
     jq \
-    tzdata
+    tzdata \
+    nspr
 
 
 # Copy package.json for version number
