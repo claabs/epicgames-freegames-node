@@ -6,7 +6,6 @@ module.exports = {
   extends: [
     'airbnb-base',
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
     'plugin:prettier/recommended',
     'plugin:jest/recommended',
   ],
@@ -17,7 +16,10 @@ module.exports = {
   },
   plugins: ['@typescript-eslint', 'jest'],
   rules: {
-    'import/extensions': 0
+    'import/extensions': 0,
+    'import/prefer-default-export': 0,
+    'no-shadow': 'off',
+    '@typescript-eslint/no-shadow': ['error'],
   },
   settings: {
     'import/extensions': ['.js', '.ts',],

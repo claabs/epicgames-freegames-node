@@ -397,6 +397,13 @@ export interface ProductInfo {
   pages: Page[];
 }
 
+export interface GraphQLError {
+  message: string;
+  correlationId: string;
+  serviceResponse: string;
+  stack: null;
+}
+
 export interface ItemEntitlementResp {
   errors?: GraphQLError[];
   data: {
@@ -409,13 +416,6 @@ export interface ItemEntitlementResp {
       };
     };
   };
-}
-
-export interface GraphQLError {
-  message: string;
-  correlationId: string;
-  serviceResponse: string;
-  stack: null;
 }
 
 export interface AuthErrorJSON {

@@ -1,150 +1,105 @@
 # Epic Games Store Weekly Free Games
 
-## Purpose
-
-Inspired by [epicgames-weekly-freegames](https://github.com/Ricardo-Osorio/epicgames-weekly-freegames), this project takes a different approach to redeeming free games. Automating game redemption using Selenium had some unavoidable downsides:
-
-1. Fails on any UI updates to the store
-1. Unable to resolve any Captcha requests
-
-I decided to take a different approach by only using the APIs that the Epic Games Store site uses itself. This resolves the above issues by:
-
-1. Using APIs that are more stable than web design
-1. Manually injecting a FunCaptcha session token into the login flow
-
-## Scope
-
-* Login
-  * Captcha
-    * Emails you when a link to solve a Captcha when required
-  * 2FA handing via TOTP token
-  * Session ID
-* Game catalog discovery
-  * Get list of available free games
-  * Filter out games that are already owned
-* Purchase available free games
-  * Order preview
-  * Order confirmation
-* Cookie management
-  * Save to file in case of shutdown
-  * Import cookies from browser
-* Schedule check/purchase via cron string
-* Authentication refresh to reduce login count
-* Support for multiple accounts
-* *TODO:* Proper global store support (Works fine for now)
-* *TODO:* Redeem all free games, not just the weekly promotion
+Automatically login and redeem promotional free games from the Epic Games Store.
+Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and scheduled runs.
 
 ## Setup
 
-### Captcha Emails
+### JSON Configuration
 
-Recent events have removed the ability to easily automate Captcha solving with Google Speech-to-text. This is a workaround that makes **you** solve a captcha by emailing you a link where you can solve it.
+The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.
+
+For details on each option, its defaults, and environment variable key, see the [config documentation site](https://claabs.github.io/epicgames-freegames-node/classes/Config.html).
+
+The config file is stored in the mounted `/usr/app/config` volume and can be named `config.json` or `config.json5`.
+
+#### `config.json` or `config.json5`
+
+```jsonc
+{
+  "searchStrategy": "promotion",
+  "runOnStartup": true,
+  "cronSchedule": "5 16 * * *",
+  "logLevel": "info",
+  "hcaptchaAccessibilityUrl": "https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c",
+  "webPortalConfig": {
+    "baseUrl": "https://epic.exmaple.com",
+  },
+  "accounts": [
+    {
+      "email": "example@gmail.com",
+      "password": "abc1234",
+      "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
+    },
+  ],
+  "notifiers": [
+    // You may configure as many of any notifier as needed
+    // Here are some examples of each type
+    {
+      "type": "email",
+      "smtpHost": "smtp.gmail.com",
+      "smtpPort": 587,
+      "emailSenderAddress": "hello@gmail.com",
+      "emailSenderName": "Epic Games Captchas",
+      "emailRecipientAddress": "hello@gmail.com",
+      "secure": false,
+      "auth": {
+          "user": "hello@gmail.com",
+          "pass": "abc123",
+      },
+    },
+    {
+      "type": "discord",
+      "webhookUrl": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+    },
+    {
+      "type": "telegram",
+      "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
+      "chatId": "-987654321",
+    }
+  ],
+}
+```
+
+### Captchas
+
+Epic Games currently serves captchas and bot detection to its login page. It will likely come to the purchase page as well in the future. This project works around the issue in two ways:
+
+1. hCaptcha accessibility cookies
+1. Sending you captchas
+
+#### hCaptcha accessibility cookies
+
+hCaptcha offers an accessibility tool for vision impaired users that can be used to bypass captchas served by Epic Games. It's very simple to set up:
+
+1. Go [here](https://dashboard.hcaptcha.com/signup?type=accessibility) and enter an email you have access to
+1. In your email inbox find an email titled "Instructions for using hCaptcha Accessibility"
+1. Right-click the "Get Accessibility Cookie" button and copy its link address
+1. Add the link to your config as the `hcaptchaAccessibilityUrl` option
+
+#### Sending you captchas
+
+For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify you and when you have to manually solve a captcha.
 To use this requires:
 
 * The ability to expose ports on your machine/local network/internet
   * Where you expose the port limits where you can solve captchas from (the machine running the container/your home network/anywhere, respectively)
-* Access to an SMTP server for email (Gmail works)
+* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers) (Discord, Telegram, email, etc.)
 
-#### Email Setup
+##### Webserver setup
 
 1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the machine's port 81 to the container's port 3000)
 1. If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS
-    * Hosting over HTTPS may result in better captcha solving success
-1. Set the `baseUrl` in the config
-1. Set the SMTP settings in the email config
-    * [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server)
-    * If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)
+1. Set the `webPortalConfig.baseUrl` in the config
+1. The web portal uses WebSocket to communicate. If you're using a reverse proxy, you may need additional configuration to enable WebSocket. [This guide from Uptime Kuma](https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy) covers most scenarios.
 
-If you want to test the email and webserver, delete an account's `<email>-cookies.json` from your config directory, as this usually forces a fresh login with a captcha. Then just restart the container.
+##### Notification setup
 
-### JSON Configuration
-
-The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value. For details on each property, see the [table below](#environment-variables).
-
-The config file is store in the mounted `./config` directory.
-
-#### `config.json` or `config.json5`
-
-```json5
-{
-    "accounts": [
-        // Multiple accounts can be configured here
-        {
-            "email": "example@gmail.com",
-            "password": "abc123",
-            "totp": "EMNCF83ULU39CYFOPAQW8VHZBC7S7CTWKDXM19C2S2JYI69R39NE"
-        },
-        {
-            "email": "example2@gmail.com",
-            "password": "abc123",
-        },
-    ],
-    "onlyWeekly": false,
-    "runOnStartup": true,
-    "intervalTime": 60,
-    "cronSchedule": "0 12 * * *",
-    "runOnce": false,
-    "logLevel": "info",
-    "baseUrl": "https://example.com",
-    "email": {
-        "smtpHost": "smtp.gmail.com",
-        "smtpPort": 587,
-        "emailSenderAddress": "hello@gmail.com",
-        "emailSenderName": "Epic Games Captchas",
-        "emailRecipientAddress": "hello@gmail.com",
-        "secure": false,
-        "auth": {
-            "user": "hello@gmail.com",
-            "pass": "abc123",
-        },
-    }
-}
-```
-
-### Docker Congifuration
-
-If you are using full JSON configuration, the only remaining Docker configurables are `TZ` and the [volume](#volumes).
-
-#### Environment Variables
-
-| Variable                | Example                    | Default                 | Description                                                                                                                                                              |
-|-------------------------|----------------------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| EMAIL                   | `example@gmail.com`        |                         | Epic Games login email. For multiple accounts, use [JSON Configuration](#json-configuration)                                                                             |
-| PASSWORD                | `abc123`                   |                         | Epic Games login password                                                                                                                                                |
-| BASE_URL                | `https://epic.example.com` | `http://localhost:3000` | The URL you will access to solve Captchas when required. Extra path names are supported                                                                                  |
-| SMTP_HOST               | `smtp.gmail.com`           |                         | The outgoing SMTP host name                                                                                                                                              |
-| SMTP_PORT               | `587`                      |                         | The outgoing SMTP port (SSL or TLS, see `secure`)                                                                                                                        |
-| EMAIL_SENDER_ADDRESS    | `hello@gmail.com`          |                         | The sender of the email you will recieve (can be your email address)                                                                                                     |
-| EMAIL_SENDER_NAME       | `Epic Games Captchas`      |                         | The name of the email sender                                                                                                                                             |
-| EMAIL_RECIPIENT_ADDRESS | `hello@gmail.com`          |                         | The recipient of the email (can be your email address)                                                                                                                   |
-| SMTP_SECURE             | `true`                     |                         | `true` for SSL (port 465), `false` for TLS or unsecure                                                                                                                   |
-| SMTP_USERNAME           | `hello@gmail.com`          |                         | The SMTP username (if necessary)                                                                                                                                         |
-| SMTP_PASSWORD           | `abc123`                   |                         | The SMTP password (if necessary)                                                                                                                                         |
-| TOTP                    | `EMNCF83ULU3...YI69R39NE`  |                         | (**Maybe required**) If 2FA is enabled, add your TOTP secret. [See details below.](#two-factor-login)                                                                    |
-| ONLY_WEEKLY             | `true`                     | `false`                 | (Optional) By default, the script will redeem all free games in the Epic Games catalog. To only redeem the weekly promotions, set to `true`                              |
-| SERVER_PORT             | `3333`                     | `3000`                  | (Optional) Where the Express server listens. Useful for inter-container networks in Docker Compose, otherwise just stick to `-p`                                         |
-| RUN_ON_STARTUP          | `true`                     | `false`                 | (Optional) If true, the process will run on startup in addition to the scheduled time                                                                                    |
-| INTERVAL_TIME           | `60`                       | `60`                    | (Optional) intervalTime controls the script execution interval of multiple accounts in seconds. (Only effective when multiple accounts are configured using config.json) |
-| CRON_SCHEDULE           | `0 12 * * *`               | `0 12 * * *`            | (Optional) Cron string of when to run the process. If using `TZ=UTC`, a value of `5 16 * * *` will run 5 minutes after the new games are available                       |
-| RUN_ONCE                | `true`                     | `false`                 | (Optional) If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.                                                                               |
-| LOG_LEVEL               | `info`                     | `info`                  | (Optional) Log level in lower case. Can be [silent, error, warn, info, debug, trace]                                                                                     |
-| TZ                      | `America/Chicago`          | `UTC`                   | (Optional) [TZ name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)                                                                                       |
-
-#### Ports
-
-| Host port | Container port | Description                                                                   |
-|-----------|----------------|-------------------------------------------------------------------------------|
-| `3000`    | `3000`         | Port mapping on which the web server hosting the Captcha solving page resides |
-
-#### Volumes
-
-| Host location   | Container location | Mode | Description                            |
-|-----------------|--------------------|------|----------------------------------------|
-| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file |
+Each notification method has unique setup instructions. Read [its documentation]([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/Config.html) may also help as an example.
 
 #### Two-factor login
 
-**Epic has begun [enforcing two-factor](https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games) when claiming free games. It is likely necessary when using this tool.**
+Epic has begun [enforcing two-factor](https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games) when claiming some free games. It rarely may be necessary for some free games when using this tool.
 
 If you have two-factor authentication (2FA) enabled on your account, you need to add your TOTP secret as an environment variable. To get your TOTP secret, you may need to redo your 2FA setup:
 
@@ -155,13 +110,44 @@ If you have two-factor authentication (2FA) enabled on your account, you need to
 1. Activate 2FA by completing the form and clicking activate.
 1. Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.
 
+If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Authenticator App" in your Epic account settings.
+
+### Docker Congifuration
+
+This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
+
+* `ghcr.io/claabs/epicgames-freegames-node:latest`
+* `charlocharlie/epicgames-freegames:latest`
+
+If you are using full JSON configuration, the only remaining Docker configurables are the [port](#ports) and [volume](#volumes).
+
+#### Environment Variables
+
+Most configuration options can be set via environment variable. Look for the `env` tag in the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/Config.html) for each option's key.
+
+If for whatever reason you want to change the default config directory or config file name, `CONFIG_DIR` and `CONFIG_FILE_NAME` are available as environment variables.
+
+#### Ports
+
+| Host port | Container port | Description                                                                   |
+|-----------|----------------|-------------------------------------------------------------------------------|
+| `3000`    | `3000`         | Port mapping on which the web server hosting the captcha solving page resides |
+
+#### Volumes
+
+| Host location   | Container location | Mode | Description                               |
+|-----------------|--------------------|------|-------------------------------------------|
+| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file(s) |
+
 ### Docker Run
 
 #### With JSON Config
 
-`$ docker run -d -e TZ=America/Chicago -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
 
 #### Without JSON Config
+
+Without JSON config, you can only configure one account.
 
 `$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest`
 
@@ -175,38 +161,131 @@ If you're experiencing issues logging with with username and password, you can i
 1. While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to `https://www.epicgames.com/id`, and click the export button:
 ![EditThisCookie export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true)
 1. In your mounted `./config` folder, create `<email_address>-cookies.json` (e.g. `me@example.com-cookies.json`), and paste in your cookies.
-1. Start the epicgames-freegames-node container and the cookies will automatically be converted to a new format.
+1. Start the container and the cookies will automatically be converted to a new format.
 
-**Notes:**
+#### Cookie Import Notes
 
-* If you log out of the browser session you copied the cookies from, the container will break.
+* If you click "Log Out" on the browser session you copied the cookies from, the container may break.
 * If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.
-* If you get an email prompting you to solve a captcha to log in, you should repeat the above process.
-* Epic Games may still uses Arkose for purchase captchas, so you still may recieve emails when games are redeemed.
-* Your password is optional when using this, so you can fill it with some junk if you prefer. It just can't be `""`.
+
+## Running without Docker
+
+If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing Node.js.
+
+1. Get this repo from Github
+    * Clone using git (recommended): `git clone https://github.com/claabs/epicgames-freegames-node.git`
+    * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
+1. Create `config` folder in the cloned/unpacked directory
+1. Create [JSON configuration](#json-configuration)
+1. [Install Node.js 14](https://nodejs.org/) or higher
+1. Install Node.js dependecies
+    * Start terminal and navigate to cloned/unpacked directory
+    * Run `npm i`
+1. Start application: `npm run start:ts`
+1. To update when using Git:
+    * `git pull`
+    * `npm i`
 
 ## Development
 
 ### Recommended Dev Environment Variables
 
-Place these variables in a `.env` file in the project root.
+Place these variables in a `.env` file in the project root. These variables support automatic account creation for rapid testing.
 
-| Variable      | Example              | Description                                                                                                      |
-|---------------|----------------------|------------------------------------------------------------------------------------------------------------------|
-| TEST_USER     | `abc123@example.com` | The default user to use when not provided in command options                                                     |
-| TEST_PASSWORD | `xyz789`             | The default password to use when not provided in command options                                                 |
-| TEST_TOTP     | `xyz789`             | The default password to use when not provided in command options                                                 |
-| ENV           | `local`              | When set to 'local', the create account function will ask you to complete a captcha manually when the bot cannot |
+| Variable            | Example                     | Description                                                                                               |
+|---------------------|-----------------------------|-----------------------------------------------------------------------------------------------------------|
+| SMTP4DEV_URL        | `http://192.168.1.100:5000` | Web UI address for [smtp4dev](https://github.com/rnwood/smtp4dev) instance for automatic account creation |
+| SMTP4DEV_USER       | `user`                      | A basic auth username for `smtp4dev` if applicable                                                        |
+| SMTP4DEV_PASSWORD   | `abc123`                    | A basic auth password for `smtp4dev` if applicable                                                        |
+| CREATION_EMAIL_HOST | `test.example.com`          | The email suffix for newly created accounts                                                               |
 
-### Optional variables
+## Miscellaneous
 
-These variables are not currently necessary due to the plus-sign email exploit.
+### v3 to v4 Migration
 
-| Variable                     | Example            | Description                              |
-|------------------------------|--------------------|------------------------------------------|
-| PERMANENT_EMAIL_HOST         | `imap.zoho.com`    | The incoming IMAP server name            |
-| PERMANENT_EMAIL_PORT         | `993`              | The incoming IMAP port                   |
-| PERMANENT_EMAIL_USER         | `example@zoho.com` | The IMAP username                        |
-| PERMANENT_EMAIL_PASS         | `xyz789`           | The IMAP password                        |
-| PERMANENT_EMAIL_ADDRESS      | `example`          | The email address portion before the '@' |
-| PERMANENT_EMAIL_ADDRESS_HOST | `zohomail.com`     | The email address portion after the '@'  |
+In v4, three config options have been deprecated and moved: `email`, `baseUrl`, and `onlyWeekly`. The deprecated options will be automatically converted to the new options at runtime, but you will need to change your `config.json` for a stable solution.
+
+#### `email`
+
+Copy the `email` block into the `notifiers` array and add `"type": "email"` to the email config object.
+
+```jsonc
+{
+  "email": {
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": 587,
+    "emailSenderAddress": "hello@gmail.com",
+    "emailSenderName": "Epic Games Captchas",
+    "emailRecipientAddress": "hello@gmail.com",
+    "secure": false,
+    "auth": {
+        "user": "hello@gmail.com",
+        "pass": "abc123",
+    },
+  },
+
+  // ⬇ changes to ⬇
+
+  "notifiers": [
+    {
+      "type": "email", // This indicates the notifier type
+      "smtpHost": "smtp.gmail.com",
+      "smtpPort": 587,
+      "emailSenderAddress": "hello@gmail.com",
+      "emailSenderName": "Epic Games Captchas",
+      "emailRecipientAddress": "hello@gmail.com",
+      "secure": false,
+      "auth": {
+          "user": "hello@gmail.com",
+          "pass": "abc123",
+      },
+    },
+  ],
+}
+```
+
+#### `baseUrl`
+
+Move the `baseUrl` block into the `webPortalConfig` config object.
+
+```jsonc
+{
+  "baseUrl": "https://epic.example.com",
+
+  // ⬇ changes to ⬇
+  
+  "webPortalConfig": {
+    "baseUrl": "https://epic.example.com",
+  },
+}
+```
+
+#### `onlyWeekly`
+
+The `onlyWeekly` boolean has been changed to the `searchStrategy` string.
+
+```jsonc
+{
+  "onlyWeekly": true,
+
+  // ⬇ changes to ⬇
+  
+  "searchStrategy": "weekly"
+}
+```
+
+```jsonc
+{
+  "onlyWeekly": false,
+
+  // ⬇ changes to ⬇
+  
+  "searchStrategy": "promotion"
+}
+```
+
+### Thanks
+
+Thanks to [epicgames-weekly-freegames](https://github.com/Ricardo-Osorio/epicgames-weekly-freegames) for the inspiration.
+
+Thanks to [puppeteer-extra](https://github.com/berstend/puppeteer-extra) for making much of this possible technologically.

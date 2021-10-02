@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-  workflow_dispatch:
+      - develop
 
 jobs:
   build_multi_arch_image:
@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Set environment variables
+        run:  echo "GIT_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -29,15 +32,39 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        id: docker_build
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1 
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push master
+        if: ${{ github.ref == 'refs/heads/master' }}
         uses: docker/build-push-action@v2
         with:
+          target: deploy
           push: true
           tags: |
-            charlocharlie/epicgames-freegames:${{ github.sha }}
             charlocharlie/epicgames-freegames:latest
-          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
+            charlocharlie/epicgames-freegames:${{ github.sha }}
+            ghcr.io/claabs/epicgames-freegames-node:latest
+            ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${{ env.GIT_BRANCH }}
 
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Build and push dev
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        uses: docker/build-push-action@v2
+        with:
+          target: deploy
+          push: true
+          tags: |
+            charlocharlie/epicgames-freegames:dev
+            ghcr.io/claabs/epicgames-freegames-node:dev
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${{ env.GIT_BRANCH }}

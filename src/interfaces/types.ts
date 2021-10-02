@@ -1,15 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Cookie } from 'set-cookie-parser';
-
-export interface CSRFSetCookies {
-  EPIC_FUNNEL_ID: Cookie;
-  EPIC_DEVICE: Cookie;
-  EPIC_SESSION_ID: Cookie;
-  'XSRF-TOKEN': Cookie;
-  'XSRF-AM-TOKEN': Cookie;
-  EPIC_SESSION_AP: Cookie;
-}
-
 export interface LoginBody {
   password: string;
   rememberMe: boolean;

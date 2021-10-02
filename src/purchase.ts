@@ -4,12 +4,10 @@ import { Logger } from 'pino';
 import logger from './common/logger';
 import {
   OrderPreviewResponse,
-  OfferInfo,
   ConfirmPurcaseError,
   OrderConfirmRequest,
   ConfirmLineOffer,
 } from './interfaces/types';
-import { EpicArkosePublicKey, notifyManualCaptcha } from './captcha';
 import {
   ORDER_CONFIRM_ENDPOINT,
   ORDER_PREVIEW_ENDPOINT,
@@ -36,7 +34,7 @@ export default class Purchase {
     purchaseToken: string,
     captcha?: string
   ): Promise<void> {
-    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map(l => ({
+    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map((l) => ({
       offerId: l.offerId,
       title: l.title,
       namespace: l.namespace,
@@ -82,21 +80,12 @@ export default class Purchase {
           },
         }
       );
-      this.L.debug({ confirmOrderResponse: confirmOrderResp.body }, 'confirm order response');
+      this.L.debug(/* { confirmOrderResponse: confirmOrderResp.body }, */ 'confirm order response');
       if (
         confirmOrderResp.body.errorCode &&
         confirmOrderResp.body.errorCode.includes('captcha.challenge')
       ) {
-        this.L.debug('Captcha required');
-        const newPreview = orderPreview;
-        newPreview.syncToken = confirmOrderResp.body.syncToken;
-        const captchaToken = await notifyManualCaptcha(
-          this.email,
-          '',
-          EpicArkosePublicKey.PURCHASE
-        );
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for two seconds to prevent 400s?
-        await this.confirmOrder(newPreview, purchaseToken, captchaToken);
+        throw new Error('Captcha required for purchase');
       } else {
         this.L.debug('Purchase successful');
       }
@@ -156,7 +145,7 @@ export default class Purchase {
         'x-requested-with': purchaseToken,
       },
     });
-    this.L.trace({ orderPreviewResponse: orderPreviewResp.body }, 'Order preview response');
+    this.L.trace(/* { orderPreviewResponse: orderPreviewResp.body }, */ 'Order preview response');
     if (
       orderPreviewResp.body.orderResponse?.error &&
       orderPreviewResp.body.orderResponse?.message
@@ -164,15 +153,5 @@ export default class Purchase {
       this.L.error(orderPreviewResp.body.orderResponse.message);
     }
     await this.confirmOrder(orderPreviewResp.body, purchaseToken);
-  }
-
-  async purchaseGames(offers: OfferInfo[]): Promise<void> {
-    for (let i = 0; i < offers.length; i += 1) {
-      this.L.info(`Purchasing ${offers[i].productName}`);
-      // Async for-loop as running purchases in parallel may break
-      // eslint-disable-next-line no-await-in-loop
-      await this.purchase(offers[i].offerNamespace, offers[i].offerId);
-      this.L.info(`Done purchasing ${offers[i].productName}`);
-    }
   }
 }
