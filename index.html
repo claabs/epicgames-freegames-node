@@ -1,0 +1,280 @@
+<!DOCTYPE html><html class="default no-js"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>epicgames-freegames-node</title><meta name="description" content="Documentation for epicgames-freegames-node"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">epicgames-freegames-node</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label><input type="checkbox" id="tsd-filter-externals" checked/><label class="tsd-widget" for="tsd-filter-externals">Externals</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1>epicgames-freegames-node</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography">
+<a href="#epic-games-store-weekly-free-games" id="epic-games-store-weekly-free-games" style="color: inherit; text-decoration: none;">
+  <h1>Epic Games Store Weekly Free Games</h1>
+</a>
+<p>Automatically login and redeem promotional free games from the Epic Games Store.
+Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and scheduled runs.</p>
+
+<a href="#setup" id="setup" style="color: inherit; text-decoration: none;">
+  <h2>Setup</h2>
+</a>
+
+<a href="#json-configuration" id="json-configuration" style="color: inherit; text-decoration: none;">
+  <h3>JSON Configuration</h3>
+</a>
+<p>The tool can be configured with a combination of JSON and environment variables. The config file supports <a href="https://json5.org/">JSON5</a> syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.</p>
+<p>For details on each option, its defaults, and environment variable key, see the <a href="https://claabs.github.io/epicgames-freegames-node/classes/Config.html">config documentation site</a>.</p>
+<p>The config file is stored in the mounted <code>/usr/app/config</code> volume and can be named <code>config.json</code> or <code>config.json5</code>.</p>
+
+<a href="#configjson-or-configjson5" id="configjson-or-configjson5" style="color: inherit; text-decoration: none;">
+  <h4><code>config.json</code> or <code>config.json5</code></h4>
+</a>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;searchStrategy&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;promotion&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;runOnStartup&quot;</span><span class="hl-0">: </span><span class="hl-3">true</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;cronSchedule&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;5 16 * * *&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;logLevel&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;info&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;hcaptchaAccessibilityUrl&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;webPortalConfig&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;baseUrl&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;https://epic.exmaple.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  },</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;accounts&quot;</span><span class="hl-0">: [</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;example@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;abc1234&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;totp&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE&quot;</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">  ],</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;notifiers&quot;</span><span class="hl-0">: [</span><br/><span class="hl-0">    </span><span class="hl-4">// You may configure as many of any notifier as needed</span><br/><span class="hl-0">    </span><span class="hl-4">// Here are some examples of each type</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;type&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;email&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;smtpHost&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;smtp.gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;smtpPort&quot;</span><span class="hl-0">: </span><span class="hl-5">587</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailSenderAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailSenderName&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Epic Games Captchas&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailRecipientAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;secure&quot;</span><span class="hl-0">: </span><span class="hl-3">false</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;auth&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">          </span><span class="hl-1">&quot;user&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">          </span><span class="hl-1">&quot;pass&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;abc123&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      },</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;type&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;discord&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;webhookUrl&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;type&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;telegram&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;token&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;chatId&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;-987654321&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">  ],</span><br/><span class="hl-0">}</span>
+</code></pre>
+
+<a href="#captchas" id="captchas" style="color: inherit; text-decoration: none;">
+  <h3>Captchas</h3>
+</a>
+<p>Epic Games currently serves captchas and bot detection to its login page. It will likely come to the purchase page as well in the future. This project works around the issue in two ways:</p>
+<ol>
+<li>hCaptcha accessibility cookies</li>
+<li>Sending you captchas</li>
+</ol>
+
+<a href="#hcaptcha-accessibility-cookies" id="hcaptcha-accessibility-cookies" style="color: inherit; text-decoration: none;">
+  <h4>hCaptcha accessibility cookies</h4>
+</a>
+<p>hCaptcha offers an accessibility tool for vision impaired users that can be used to bypass captchas served by Epic Games. It&#39;s very simple to set up:</p>
+<ol>
+<li>Go <a href="https://dashboard.hcaptcha.com/signup?type=accessibility">here</a> and enter an email you have access to</li>
+<li>In your email inbox find an email titled &quot;Instructions for using hCaptcha Accessibility&quot;</li>
+<li>Right-click the &quot;Get Accessibility Cookie&quot; button and copy its link address</li>
+<li>Add the link to your config as the <code>hcaptchaAccessibilityUrl</code> option</li>
+</ol>
+
+<a href="#sending-you-captchas" id="sending-you-captchas" style="color: inherit; text-decoration: none;">
+  <h4>Sending you captchas</h4>
+</a>
+<p>For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify you and when you have to manually solve a captcha.
+To use this requires:</p>
+<ul>
+<li>The ability to expose ports on your machine/local network/internet<ul>
+<li>Where you expose the port limits where you can solve captchas from (the machine running the container/your home network/anywhere, respectively)</li>
+</ul>
+</li>
+<li>Access to one of the <a href="https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers">notification methods</a> (Discord, Telegram, email, etc.)</li>
+</ul>
+
+<a href="#webserver-setup" id="webserver-setup" style="color: inherit; text-decoration: none;">
+  <h5>Webserver setup</h5>
+</a>
+<ol>
+<li>Expose port 3000 in your Docker run config (e.g. <code>-p 81:3000</code> maps the machine&#39;s port 81 to the container&#39;s port 3000)</li>
+<li>If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS</li>
+<li>Set the <code>webPortalConfig.baseUrl</code> in the config</li>
+<li>The web portal uses WebSocket to communicate. If you&#39;re using a reverse proxy, you may need additional configuration to enable WebSocket. <a href="https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy">This guide from Uptime Kuma</a> covers most scenarios.</li>
+</ol>
+
+<a href="#notification-setup" id="notification-setup" style="color: inherit; text-decoration: none;">
+  <h5>Notification setup</h5>
+</a>
+<p>Each notification method has unique setup instructions. Read [its documentation](<a href="https://claabs.github.io/epicgames-freegames-node/classes/Config.html#notifiers">notification methods</a>) on the config site for exact details and instructions. The <a href="https://claabs.github.io/epicgames-freegames-node/classes/Config.html">example config</a> may also help as an example.</p>
+
+<a href="#two-factor-login" id="two-factor-login" style="color: inherit; text-decoration: none;">
+  <h4>Two-factor login</h4>
+</a>
+<p>Epic has begun <a href="https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games">enforcing two-factor</a> when claiming some free games. It rarely may be necessary for some free games when using this tool.</p>
+<p>If you have two-factor authentication (2FA) enabled on your account, you need to add your TOTP secret as an environment variable. To get your TOTP secret, you may need to redo your 2FA setup:</p>
+<ol>
+<li>Go <a href="https://www.epicgames.com/account/password">here</a> to enable 2FA.</li>
+<li>Click &quot;enable authenticator app.&quot;</li>
+<li>In the section labeled &quot;manual entry key,&quot; copy the key.</li>
+<li>Use your authenticator app to add scan the QR code.</li>
+<li>Activate 2FA by completing the form and clicking activate.</li>
+<li>Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.</li>
+</ol>
+<p>If you can&#39;t get 2FA working with this tool, try enabling <code>MAKE PRIMARY</code> for &quot;Authenticator App&quot; in your Epic account settings.</p>
+
+<a href="#docker-congifuration" id="docker-congifuration" style="color: inherit; text-decoration: none;">
+  <h3>Docker Congifuration</h3>
+</a>
+<p>This image is available from both <a href="https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node">GitHub Container Registry</a> and <a href="https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames">Docker Hub</a>:</p>
+<ul>
+<li><code>ghcr.io/claabs/epicgames-freegames-node:latest</code></li>
+<li><code>charlocharlie/epicgames-freegames:latest</code></li>
+</ul>
+<p>If you are using full JSON configuration, the only remaining Docker configurables are the <a href="#ports">port</a> and <a href="#volumes">volume</a>.</p>
+
+<a href="#environment-variables" id="environment-variables" style="color: inherit; text-decoration: none;">
+  <h4>Environment Variables</h4>
+</a>
+<p>Most configuration options can be set via environment variable. Look for the <code>env</code> tag in the <a href="https://claabs.github.io/epicgames-freegames-node/classes/Config.html">config docs</a> for each option&#39;s key.</p>
+<p>If for whatever reason you want to change the default config directory or config file name, <code>CONFIG_DIR</code> and <code>CONFIG_FILE_NAME</code> are available as environment variables.</p>
+
+<a href="#ports" id="ports" style="color: inherit; text-decoration: none;">
+  <h4>Ports</h4>
+</a>
+<table>
+<thead>
+<tr>
+<th>Host port</th>
+<th>Container port</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>3000</code></td>
+<td><code>3000</code></td>
+<td>Port mapping on which the web server hosting the captcha solving page resides</td>
+</tr>
+</tbody></table>
+
+<a href="#volumes" id="volumes" style="color: inherit; text-decoration: none;">
+  <h4>Volumes</h4>
+</a>
+<table>
+<thead>
+<tr>
+<th>Host location</th>
+<th>Container location</th>
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/my/host/dir/</code></td>
+<td><code>/usr/app/config</code></td>
+<td><code>rw</code></td>
+<td>Location of the config and cookie file(s)</td>
+</tr>
+</tbody></table>
+
+<a href="#docker-run" id="docker-run" style="color: inherit; text-decoration: none;">
+  <h3>Docker Run</h3>
+</a>
+
+<a href="#with-json-config" id="with-json-config" style="color: inherit; text-decoration: none;">
+  <h4>With JSON Config</h4>
+</a>
+<p><code>$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest</code></p>
+
+<a href="#without-json-config" id="without-json-config" style="color: inherit; text-decoration: none;">
+  <h4>Without JSON Config</h4>
+</a>
+<p>Without JSON config, you can only configure one account.</p>
+<p><code>$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME=&quot;Epic Games Captchas&quot; -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest</code></p>
+
+<a href="#cookie-import" id="cookie-import" style="color: inherit; text-decoration: none;">
+  <h3>Cookie Import</h3>
+</a>
+<p>If you&#39;re experiencing issues logging with with username and password, you can import cookies for a temporary session.</p>
+<ol>
+<li>Setup the container per the below instructions</li>
+<li>In your web browser, log in to the Epic Games Store with &quot;Remember me&quot; checked.</li>
+<li>Install the <a href="http://www.editthiscookie.com/">EditThisCookie</a> browser extension.</li>
+<li>While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to <code>https://www.epicgames.com/id</code>, and click the export button:
+<img src="https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true" alt="EditThisCookie export button"></li>
+<li>In your mounted <code>./config</code> folder, create <code>&lt;email_address&gt;-cookies.json</code> (e.g. <code>me@example.com-cookies.json</code>), and paste in your cookies.</li>
+<li>Start the container and the cookies will automatically be converted to a new format.</li>
+</ol>
+
+<a href="#cookie-import-notes" id="cookie-import-notes" style="color: inherit; text-decoration: none;">
+  <h4>Cookie Import Notes</h4>
+</a>
+<ul>
+<li>If you click &quot;Log Out&quot; on the browser session you copied the cookies from, the container may break.</li>
+<li>If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.</li>
+</ul>
+
+<a href="#running-without-docker" id="running-without-docker" style="color: inherit; text-decoration: none;">
+  <h2>Running without Docker</h2>
+</a>
+<p>If for some reason you don&#39;t want to use Docker to run this tool you can run it from source by cloning this repo and installing Node.js.</p>
+<ol>
+<li>Get this repo from Github<ul>
+<li>Clone using git (recommended): <code>git clone https://github.com/claabs/epicgames-freegames-node.git</code></li>
+<li>Or download and unpack ZIP archive: <a href="https://github.com/claabs/epicgames-freegames-node/archive/master.zip">epicgames-freegames-node</a></li>
+</ul>
+</li>
+<li>Create <code>config</code> folder in the cloned/unpacked directory</li>
+<li>Create <a href="#json-configuration">JSON configuration</a></li>
+<li><a href="https://nodejs.org/">Install Node.js 14</a> or higher</li>
+<li>Install Node.js dependecies<ul>
+<li>Start terminal and navigate to cloned/unpacked directory</li>
+<li>Run <code>npm i</code></li>
+</ul>
+</li>
+<li>Start application: <code>npm run start:ts</code></li>
+<li>To update when using Git:<ul>
+<li><code>git pull</code></li>
+<li><code>npm i</code></li>
+</ul>
+</li>
+</ol>
+
+<a href="#development" id="development" style="color: inherit; text-decoration: none;">
+  <h2>Development</h2>
+</a>
+
+<a href="#recommended-dev-environment-variables" id="recommended-dev-environment-variables" style="color: inherit; text-decoration: none;">
+  <h3>Recommended Dev Environment Variables</h3>
+</a>
+<p>Place these variables in a <code>.env</code> file in the project root. These variables support automatic account creation for rapid testing.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SMTP4DEV_URL</td>
+<td><code>http://192.168.1.100:5000</code></td>
+<td>Web UI address for <a href="https://github.com/rnwood/smtp4dev">smtp4dev</a> instance for automatic account creation</td>
+</tr>
+<tr>
+<td>SMTP4DEV_USER</td>
+<td><code>user</code></td>
+<td>A basic auth username for <code>smtp4dev</code> if applicable</td>
+</tr>
+<tr>
+<td>SMTP4DEV_PASSWORD</td>
+<td><code>abc123</code></td>
+<td>A basic auth password for <code>smtp4dev</code> if applicable</td>
+</tr>
+<tr>
+<td>CREATION_EMAIL_HOST</td>
+<td><code>test.example.com</code></td>
+<td>The email suffix for newly created accounts</td>
+</tr>
+</tbody></table>
+
+<a href="#miscellaneous" id="miscellaneous" style="color: inherit; text-decoration: none;">
+  <h2>Miscellaneous</h2>
+</a>
+
+<a href="#v3-to-v4-migration" id="v3-to-v4-migration" style="color: inherit; text-decoration: none;">
+  <h3>v3 to v4 Migration</h3>
+</a>
+<p>In v4, three config options have been deprecated and moved: <code>email</code>, <code>baseUrl</code>, and <code>onlyWeekly</code>. The deprecated options will be automatically converted to the new options at runtime, but you will need to change your <code>config.json</code> for a stable solution.</p>
+
+<a href="#email" id="email" style="color: inherit; text-decoration: none;">
+  <h4><code>email</code></h4>
+</a>
+<p>Copy the <code>email</code> block into the <code>notifiers</code> array and add <code>&quot;type&quot;: &quot;email&quot;</code> to the email config object.</p>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;smtpHost&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;smtp.gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;smtpPort&quot;</span><span class="hl-0">: </span><span class="hl-5">587</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;emailSenderAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;emailSenderName&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Epic Games Captchas&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;emailRecipientAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;secure&quot;</span><span class="hl-0">: </span><span class="hl-3">false</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;auth&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">        </span><span class="hl-1">&quot;user&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">        </span><span class="hl-1">&quot;pass&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;abc123&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">  },</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// ⬇ changes to ⬇</span><br/><br/><span class="hl-0">  </span><span class="hl-1">&quot;notifiers&quot;</span><span class="hl-0">: [</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;type&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;email&quot;</span><span class="hl-0">, </span><span class="hl-4">// This indicates the notifier type</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;smtpHost&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;smtp.gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;smtpPort&quot;</span><span class="hl-0">: </span><span class="hl-5">587</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailSenderAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailSenderName&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Epic Games Captchas&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;emailRecipientAddress&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;secure&quot;</span><span class="hl-0">: </span><span class="hl-3">false</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-1">&quot;auth&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">          </span><span class="hl-1">&quot;user&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;hello@gmail.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">          </span><span class="hl-1">&quot;pass&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;abc123&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      },</span><br/><span class="hl-0">    },</span><br/><span class="hl-0">  ],</span><br/><span class="hl-0">}</span>
+</code></pre>
+
+<a href="#baseurl" id="baseurl" style="color: inherit; text-decoration: none;">
+  <h4><code>baseUrl</code></h4>
+</a>
+<p>Move the <code>baseUrl</code> block into the <code>webPortalConfig</code> config object.</p>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;baseUrl&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;https://epic.example.com&quot;</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// ⬇ changes to ⬇</span><br/><span class="hl-0">  </span><br/><span class="hl-0">  </span><span class="hl-1">&quot;webPortalConfig&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;baseUrl&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;https://epic.example.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  },</span><br/><span class="hl-0">}</span>
+</code></pre>
+
+<a href="#onlyweekly" id="onlyweekly" style="color: inherit; text-decoration: none;">
+  <h4><code>onlyWeekly</code></h4>
+</a>
+<p>The <code>onlyWeekly</code> boolean has been changed to the <code>searchStrategy</code> string.</p>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;onlyWeekly&quot;</span><span class="hl-0">: </span><span class="hl-3">true</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// ⬇ changes to ⬇</span><br/><span class="hl-0">  </span><br/><span class="hl-0">  </span><span class="hl-1">&quot;searchStrategy&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;weekly&quot;</span><br/><span class="hl-0">}</span>
+</code></pre>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;onlyWeekly&quot;</span><span class="hl-0">: </span><span class="hl-3">false</span><span class="hl-0">,</span><br/><br/><span class="hl-0">  </span><span class="hl-4">// ⬇ changes to ⬇</span><br/><span class="hl-0">  </span><br/><span class="hl-0">  </span><span class="hl-1">&quot;searchStrategy&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;promotion&quot;</span><br/><span class="hl-0">}</span>
+</code></pre>
+
+<a href="#thanks" id="thanks" style="color: inherit; text-decoration: none;">
+  <h3>Thanks</h3>
+</a>
+<p>Thanks to <a href="https://github.com/Ricardo-Osorio/epicgames-weekly-freegames">epicgames-weekly-freegames</a> for the inspiration.</p>
+<p>Thanks to <a href="https://github.com/berstend/puppeteer-extra">puppeteer-extra</a> for making much of this possible technologically.</p>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/LogLevel.html" class="tsd-kind-icon">Log<wbr/>Level</a></li><li class="tsd-kind-enum"><a href="enums/NotificationType.html" class="tsd-kind-icon">Notification<wbr/>Type</a></li><li class="tsd-kind-enum"><a href="enums/SearchStrategy.html" class="tsd-kind-icon">Search<wbr/>Strategy</a></li><li class="tsd-kind-class"><a href="classes/AccountConfig.html" class="tsd-kind-icon">Account<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/Config.html" class="tsd-kind-icon">Config</a></li><li class="tsd-kind-class"><a href="classes/DiscordConfig.html" class="tsd-kind-icon">Discord<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/EmailAuthConfig.html" class="tsd-kind-icon">Email<wbr/>Auth<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/EmailConfig.html" class="tsd-kind-icon">Email<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/LocalConfig.html" class="tsd-kind-icon">Local<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/NotificationConfig.html" class="tsd-kind-icon">Notification<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/TelegramConfig.html" class="tsd-kind-icon">Telegram<wbr/>Config</a></li><li class="tsd-kind-class"><a href="classes/WebPortalConfig.html" class="tsd-kind-icon">Web<wbr/>Portal<wbr/>Config</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
