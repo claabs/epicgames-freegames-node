@@ -24,9 +24,9 @@ COPY src src
 RUN npm run build
 
 ########
-# DEPLOY
+# DEPS
 ########
-FROM base as deploy
+FROM base as deps
 
 # Chromium dependencies https://github.com/Zenika/alpine-chrome/blob/master/Dockerfile
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories \
@@ -45,6 +45,10 @@ RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositorie
     jq \
     tzdata
 
+########
+# DEPLOY
+########
+FROM deps as deploy
 
 # Copy package.json for version number
 COPY package*.json ./
