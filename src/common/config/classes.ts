@@ -63,6 +63,7 @@ export class DiscordConfig extends NotifierConfig {
    * Discord channel webhook URL.
    * Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
    * @example https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456
+   * @env DISCORD_WEBHOOK
    */
   @IsUrl()
   @Matches(/^.*(discord|discordapp)\.com\/api\/webhooks\/([\d]+)\/([a-zA-Z0-9_-]+)$/)
@@ -83,6 +84,7 @@ export class TelegramConfig extends NotifierConfig {
   /**
    * Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot
    * @example 644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k
+   * @env TELEGRAM_TOKEN
    */
   @IsString()
   @Matches(/[0-9]{9}:[a-zA-Z0-9_-]{35}/)
@@ -92,6 +94,7 @@ export class TelegramConfig extends NotifierConfig {
    * Unique identifier for the target chat or username of the target channel
    * @example -987654321
    * @example @channelusername
+   * @env TELEGRAM_CHAT_ID
    */
   @IsString()
   @IsNotEmpty()
@@ -605,7 +608,36 @@ export class Config {
       if (!this.notifiers) {
         this.notifiers = [];
       }
-      this.notifiers.push(email);
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof EmailConfig)) {
+        this.notifiers.push(email);
+      }
+    }
+
+    // Use environment variables to fill discord notification config if present
+    const { DISCORD_WEBHOOK } = process.env;
+    if (DISCORD_WEBHOOK) {
+      const discord = new DiscordConfig();
+      discord.webhookUrl = DISCORD_WEBHOOK;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof DiscordConfig)) {
+        this.notifiers.push(discord);
+      }
+    }
+
+    // Use environment variables to fill telegram notification config if present
+    const { TELEGRAM_TOKEN, TELEGRAM_CHAT_ID } = process.env;
+    if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
+      const telegram = new TelegramConfig();
+      telegram.token = TELEGRAM_TOKEN;
+      telegram.chatId = TELEGRAM_CHAT_ID;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof TelegramConfig)) {
+        this.notifiers.push(telegram);
+      }
     }
 
     // Use environment variables to fill webPortalConfig if present
