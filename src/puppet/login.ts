@@ -93,7 +93,7 @@ export default class PuppetLogin {
     await browser.close();
   }
 
-  private async waitForHCaptcha(page: Page): Promise<string> {
+  private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
     try {
       const talonHandle = await page.$('iframe#talon_frame_login_prod');
       if (!talonHandle) throw new Error('Could not find talon_frame_login_prod');
@@ -117,24 +117,26 @@ export default class PuppetLogin {
     }
   }
 
-  private async waitForRedirectNav(page: Page, startTime = new Date()): Promise<string> {
-    const timeout = NOTIFICATION_TIMEOUT;
-    const poll = 1000;
+  private async waitForRedirectNav(
+    page: Page,
+    timeout = NOTIFICATION_TIMEOUT,
+    startTime = new Date()
+  ): Promise<'nav'> {
     try {
       const resp = await page.waitForNavigation({
         waitUntil: 'networkidle2',
-        timeout: poll,
+        timeout,
       });
       if (resp?.url().includes('/store')) {
         this.L.trace('Navigated to store page');
         return 'nav';
       }
-      return this.waitForRedirectNav(page, startTime);
+      return this.waitForRedirectNav(page, timeout, startTime);
     } catch (err) {
       if (startTime.getTime() + timeout <= new Date().getTime()) {
         throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
       }
-      return this.waitForRedirectNav(page, startTime);
+      return this.waitForRedirectNav(page, timeout, startTime);
     }
   }
 
@@ -156,12 +158,21 @@ export default class PuppetLogin {
     ]);
   }
 
-  private async waitForError(page: Page): Promise<string> {
+  private async waitForError(page: Page, timeout = NOTIFICATION_TIMEOUT): Promise<string> {
     const errorHeader = (await page.waitForSelector('div[role="alert"] > h6:first-of-type', {
-      timeout: NOTIFICATION_TIMEOUT,
+      timeout,
       visible: true,
     })) as ElementHandle<HTMLHeadingElement>;
     return errorHeader.evaluate((el) => el.innerText);
+  }
+
+  private async waitForMfaInput(
+    page: Page,
+    timeout = NOTIFICATION_TIMEOUT
+  ): Promise<ElementHandle<HTMLInputElement>> {
+    return page.waitForSelector(`input[name="code-input-0"]`, {
+      timeout,
+    }) as Promise<ElementHandle<HTMLInputElement>>;
   }
 
   private async handleLoginClick(page: Page): Promise<void> {
@@ -170,9 +181,7 @@ export default class PuppetLogin {
       this.waitForHCaptcha(page),
       this.waitForRedirectNav(page),
       this.waitForError(page),
-      page.waitForSelector(`input[name="code-input-0"]`) as Promise<
-        ElementHandle<HTMLInputElement>
-      >,
+      this.waitForMfaInput(page),
     ]);
     if (result === 'captcha') {
       this.L.trace('Captcha detected');
@@ -194,18 +203,18 @@ export default class PuppetLogin {
   private async handleCaptchaSolved(page: Page): Promise<void> {
     this.L.trace('Waiting for MFA possibility');
     const result = await Promise.race([
-      page.waitForSelector(`input[name="code-input-0"]`) as Promise<
-        ElementHandle<HTMLInputElement>
-      >,
+      this.waitForMfaInput(page),
       this.waitForRedirectNav(page),
       this.waitForError(page),
     ]);
-    if (typeof result === 'string') {
+    if (typeof result !== 'string') {
+      // result is an ElementHandle
+      this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
+    } else if (result !== 'nav') {
+      // result is an error message
       this.L.warn(`Login returned error: ${result}`);
       await this.startLogin(page);
     }
-    if (result !== 'nav') {
-      this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
-    }
+    // result is 'nav', success
   }
 }
