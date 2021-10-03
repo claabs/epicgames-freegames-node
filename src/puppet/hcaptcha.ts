@@ -34,7 +34,9 @@ const setCookieCache = async (cookies: Protocol.Network.Cookie[]): Promise<void>
 export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> => {
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {
-    L.warn('hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed');
+    L.warn(
+      'hcaptchaAccessibilityUrl not configured, captchas are less likely to be bypassed. Follow this guide to set it up: https://github.com/claabs/epicgames-freegames-node#hcaptcha-accessibility-cookies'
+    );
     return [];
   }
   let cookieData = await getCookieCache();
