@@ -15,7 +15,7 @@ export class DiscordNotifier extends NotifierService {
 
   async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
     const L = logger.child({ user: account, reason });
-    L.trace('Sending telegram notification');
+    L.trace('Sending discord notification');
 
     try {
       await got.post(this.config.webhookUrl, {
