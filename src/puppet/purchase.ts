@@ -34,8 +34,8 @@ export default class PuppetPurchase {
       headless: true,
       args: [
         '--disable-web-security',
-        '--sandbox',
         '--disable-features=IsolateOrigins,site-per-process',
+        '--no-sandbox',
       ],
     });
     const page = await browser.newPage();
@@ -117,8 +117,8 @@ export default class PuppetPurchase {
       headless: true,
       args: [
         '--disable-web-security',
-        '--sandbox',
         '--disable-features=IsolateOrigins,site-per-process',
+        '--no-sandbox',
       ],
     });
     const page = await browser.newPage();
