@@ -14,7 +14,7 @@
     "create": "ts-node commands.ts create",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy",
-    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3000:3000 charlocharlie/epicgames-freegames-node:latest",
+    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3000:3000 -p 3001:3001 charlocharlie/epicgames-freegames-node:latest",
     "docs": "typedoc --out docs src/common/config/classes.ts"
   },
   "dependencies": {

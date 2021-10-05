@@ -73,6 +73,9 @@ export default class PuppetLogin {
         '--disable-web-security',
         '--disable-features=IsolateOrigins,site-per-process',
         '--no-sandbox',
+        // For debugging in Docker
+        // '--remote-debugging-port=3001',
+        // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
       ],
     });
     const page = await browser.newPage();
@@ -209,7 +212,7 @@ export default class PuppetLogin {
     ]);
     if (typeof result !== 'string') {
       // result is an ElementHandle
-      this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
+      await this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
     } else if (result !== 'nav') {
       // result is an error message
       this.L.warn(`Login returned error: ${result}`);
