@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { ElementHandle, Protocol } from 'puppeteer';
 import path from 'path';
-import puppeteer from '../common/puppeteer';
+import puppeteer, { getDevtoolsUrl } from '../common/puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
 import L from '../common/logger';
 
@@ -41,36 +41,49 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
   }
   let cookieData = await getCookieCache();
   if (!cookieData) {
-    L.debug('Setting hCaptcha accessibility cookies');
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
+    try {
+      L.debug('Setting hCaptcha accessibility cookies');
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const page = await browser.newPage();
 
-    L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);
-    await Promise.all([
-      page.goto(hcaptchaAccessibilityUrl),
-      page.waitForNavigation({ waitUntil: 'networkidle0' }),
-    ]);
-    L.trace(`Waiting for setAccessibilityCookie button`);
-    const setCookieButton = (await page.waitForSelector(
-      `button[data-cy='setAccessibilityCookie']:not([disabled])`
-    )) as ElementHandle<HTMLButtonElement>;
-    const portalUrl = await page.openPortal();
-    L.info({ portalUrl });
-    L.trace(`Clicking setAccessibilityCookie button`);
-    await Promise.all([
-      await setCookieButton.click({ delay: 100 }),
-      await page.waitForSelector(`span[data-cy='fetchStatus']`),
-    ]);
+      L.trace(getDevtoolsUrl(page));
+      L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);
+      await Promise.all([
+        page.goto(hcaptchaAccessibilityUrl),
+        page.waitForNavigation({ waitUntil: 'networkidle0' }),
+      ]);
+      L.trace(`Waiting for setAccessibilityCookie button`);
+      const setCookieButton = (await page.waitForSelector(
+        `button[data-cy='setAccessibilityCookie']:not([disabled])`
+      )) as ElementHandle<HTMLButtonElement>;
+      L.trace(`Clicking setAccessibilityCookie button`);
+      const [statusAlert] = await Promise.all([
+        page.waitForSelector(`span[data-cy='fetchStatus']`) as Promise<
+          ElementHandle<HTMLSpanElement>
+        >,
+        setCookieButton.click({ delay: 100 }),
+      ]);
+      const setCookieMessage = await statusAlert.evaluate((el) => el.innerText);
+      L.trace({ setCookieMessage }, 'hCaptcha set cookie response');
+      if (setCookieMessage !== 'Cookie set.') {
+        L.warn({ setCookieMessage }, 'Unexpected set cookie response from hCaptcha');
+      }
 
-    await page.closePortal();
-    L.trace(`Saving new cookies`);
-    const cdpClient = await page.target().createCDPSession();
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Protocol.Network.Cookie[];
-    };
-    await browser.close();
-    cookieData = currentUrlCookies.cookies;
-    await setCookieCache(cookieData);
+      L.trace(`Saving new cookies`);
+      const cdpClient = await page.target().createCDPSession();
+      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+        cookies: Protocol.Network.Cookie[];
+      };
+      await browser.close();
+      cookieData = currentUrlCookies.cookies;
+      await setCookieCache(cookieData);
+    } catch (err) {
+      L.warn(err);
+      L.warn(
+        'Setting the hCaptcha accessibility cookies encountered an error. Continuing without them...'
+      );
+      return [];
+    }
   }
   return cookieData;
 };
