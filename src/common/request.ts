@@ -177,7 +177,12 @@ export function setPuppeteerCookies(username: string, newCookies: Protocol.Netwo
       httpOnly: cookie.httpOnly,
       hostOnly: !cookie.domain.startsWith('.'),
     });
-    cookieJar.setCookieSync(tcfsCookie, `https://${domain}`);
+    try {
+      cookieJar.setCookieSync(tcfsCookie, `https://${domain}`);
+    } catch (err) {
+      L.error({ tcfsCookie }, 'Error setting cookie');
+      throw err;
+    }
   });
 }
 
