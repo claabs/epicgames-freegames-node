@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
+import { exit } from 'process';
 import { config, AccountConfig } from './common/config';
 import L from './common/logger';
 import Login from './login';
@@ -54,4 +55,7 @@ export async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => L.error(err));
+main().catch((err) => {
+  L.error(err);
+  exit(1);
+});
