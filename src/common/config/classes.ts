@@ -530,6 +530,18 @@ export class AppConfig {
   notificationTimeoutHours = 24;
 
   /**
+   * When true, the process will send test notifications with a test page to all configured accounts.
+   * **Be sure to disable this after a successful test.**
+   * This test will block normal operation until the test link is accessed and the `Close page` button is pressed. The test page can only be interacted with once.
+   * @example true
+   * @default false
+   * @env TEST_NOTIFIERS
+   */
+  @IsOptional()
+  @IsBoolean()
+  testNotifiers = process.env.TEST_NOTIFIERS?.toLowerCase() === 'true' || false;
+
+  /**
    * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */

@@ -9,24 +9,7 @@ import {
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
-
-const notificationTypesArray = Object.values(NotificationType);
-
-export function isNotificationType(
-  notificationTypeString?: string
-): notificationTypeString is NotificationType {
-  if (!notificationTypeString) {
-    return false;
-  }
-  return notificationTypesArray.includes(notificationTypeString as NotificationType);
-}
-
-export function toSafeNotificationType(notificationType?: string): NotificationType {
-  if (isNotificationType(notificationType)) {
-    return notificationType;
-  }
-  throw new Error(`Cannot cast string "${notificationType}" to a NotificationType`);
-}
+import puppeteer, { getDevtoolsUrl } from './common/puppeteer';
 
 export async function sendNotification(
   url: string,
@@ -64,4 +47,35 @@ export async function sendNotification(
   await Promise.all(
     notifiers.map((notifier) => notifier.sendNotification(url, accountEmail, reason))
   );
+}
+
+export async function testNotifiers(): Promise<void> {
+  L.info('Testing all configured notifiers');
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--disable-web-security',
+      '--disable-features=IsolateOrigins,site-per-process',
+      '--no-sandbox',
+    ],
+  });
+  const page = await browser.newPage();
+  L.trace(getDevtoolsUrl(page));
+  await page.goto('https://claabs.github.io/epicgames-freegames-node/test.html');
+  const url = await page.openPortal();
+  const accountEmails = config.accounts.map((acct) =>
+    sendNotification(url, acct.email, NotificationReason.TEST)
+  );
+  await Promise.all(accountEmails);
+  L.info('Test notifications sent. Waiting for test page interaction...');
+  try {
+    await page.waitForSelector('#complete', {
+      visible: true,
+      timeout: config.notificationTimeoutHours * 60 * 60 * 1000,
+    });
+    L.info('Notification test complete');
+  } catch (err) {
+    L.warn('Test notification timed out. Continuing...');
+  }
+  await browser.close();
 }

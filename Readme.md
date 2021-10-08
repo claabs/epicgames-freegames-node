@@ -97,6 +97,16 @@ To use this requires:
 
 Each notification method has unique setup instructions. Read [its documentation]([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) may also help as an example.
 
+##### Testing notification and webserver
+
+Since captcas may not always appear, the notification methods and webserver can be manually tested. Essentially, you just need to add:
+
+```jsonc
+  "testNotifiers": true,
+```
+
+to the root of your `config.json`. For more details check out the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#testNotifiers).
+
 #### Two-factor login
 
 Epic has begun [enforcing two-factor](https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games) when claiming some free games. It rarely may be necessary for some free games when using this tool.
