@@ -26,7 +26,7 @@ echo "Run once: ${RUN_ONCE}"
 if [ "$RUN_ONCE" = "false" ]; then
     echo "Setting cron schedule as ${CRON_SCHEDULE}"
     # Add the command to the crontab
-    echo "${CRON_SCHEDULE} node /usr/app/dist/src/index.js" | crontab -
+    echo "${CRON_SCHEDULE} cd /usr/app && node /usr/app/dist/src/index.js" | crontab -
     # Run the cron process. The container should halt here and wait for the schedule.
     /usr/sbin/crond -f -l 8
 fi
