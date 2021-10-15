@@ -251,6 +251,16 @@ export class WebPortalConfig {
   serverOpts?: ServerOptions;
 
   /**
+   * If true, provide a remotely accessible web address via [localtunnel](https://localtunnel.me) without the need to port forward or reverse proxy
+   * @example true
+   * @default false
+   * @env LOCAL_TUNNEL
+   */
+  @IsOptional()
+  @IsBoolean()
+  localtunnel? = process.env.LOCAL_TUNNEL?.toLowerCase() === 'true' || false;
+
+  /**
    * @ignore
    */
   constructor() {}

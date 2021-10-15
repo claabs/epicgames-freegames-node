@@ -14,6 +14,7 @@ import { EPIC_CLIENT_ID } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
 import { config } from '../common/config';
+import { getLocaltunnelUrl } from '../common/localtunnel';
 
 const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 
@@ -179,9 +180,12 @@ export default class PuppetLogin {
     ]);
     if (result === 'captcha') {
       this.L.trace('Captcha detected');
-      const portalUrl = await page.openPortal();
-      this.L.info({ portalUrl }, 'Go to this URL and do something');
-      await sendNotification(portalUrl, this.email, NotificationReason.LOGIN);
+      let url = await page.openPortal();
+      if (config.webPortalConfig?.localtunnel) {
+        url = await getLocaltunnelUrl(url);
+      }
+      this.L.info({ url }, 'Go to this URL and do something');
+      await sendNotification(url, this.email, NotificationReason.LOGIN);
       await this.handleCaptchaSolved(page);
       await page.closePortal();
     } else if (result === 'nav') {

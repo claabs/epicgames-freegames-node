@@ -79,19 +79,35 @@ hCaptcha offers an accessibility tool for vision impaired users that can be used
 
 #### Sending you captchas
 
-For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify you and when you have to manually solve a captcha.
-To use this requires:
+For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify and have you manually solve a captcha. To use this requires:
 
-* The ability to expose ports on your machine/local network/internet
-  * Where you expose the port limits where you can solve captchas from (the machine running the container/your home network/anywhere, respectively)
 * Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers) (Discord, Telegram, email, etc.)
+* Configuring the captcha solving page webserver
+  * Either via local IP or reverse proxy/port forwarding (if you don't know what this means, use the next option)
+  * Or by using [localtunnel](https://localtunnel.me) to very easily remotely tunnel the webserver
+
+See below for detailed instructions on each requirement.
 
 ##### Webserver setup
 
-1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the machine's port 81 to the container's port 3000)
+1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the host machine's port 81 to the container's port 3000)
 1. If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS
 1. Set the `webPortalConfig.baseUrl` in the config
 1. The web portal uses WebSocket to communicate. If you're using a reverse proxy, you may need additional configuration to enable WebSocket. [This guide from Uptime Kuma](https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy) covers most scenarios.
+
+##### Localtunnel setup
+
+If you don't have the ability to port forward/reverse proxy on your network, you can still access captcha remotely by setting:
+
+```jsonc
+{
+  "webPortalConfig": {
+    "localtunnel": true,
+  },
+}
+```
+
+in your `config.json`.
 
 ##### Notification setup
 

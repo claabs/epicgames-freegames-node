@@ -10,6 +10,7 @@ import {
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
 import puppeteer, { getDevtoolsUrl, launchArgs } from './common/puppeteer';
+import { getLocaltunnelUrl } from './common/localtunnel';
 
 export async function sendNotification(
   url: string,
@@ -55,7 +56,10 @@ export async function testNotifiers(): Promise<void> {
   const page = await browser.newPage();
   L.trace(getDevtoolsUrl(page));
   await page.goto('https://claabs.github.io/epicgames-freegames-node/test.html');
-  const url = await page.openPortal();
+  let url = await page.openPortal();
+  if (config.webPortalConfig?.localtunnel) {
+    url = await getLocaltunnelUrl(url);
+  }
   const accountEmails = config.accounts.map((acct) =>
     sendNotification(url, acct.email, NotificationReason.TEST)
   );
