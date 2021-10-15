@@ -45,25 +45,34 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 <a href="#sending-you-captchas" id="sending-you-captchas" style="color: inherit; text-decoration: none;">
   <h4>Sending you captchas</h4>
 </a>
-<p>For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify you and when you have to manually solve a captcha.
-To use this requires:</p>
+<p>For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify and have you manually solve a captcha. To use this requires:</p>
 <ul>
-<li>The ability to expose ports on your machine/local network/internet<ul>
-<li>Where you expose the port limits where you can solve captchas from (the machine running the container/your home network/anywhere, respectively)</li>
+<li>Access to one of the <a href="https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers">notification methods</a> (Discord, Telegram, email, etc.)</li>
+<li>Configuring the captcha solving page webserver<ul>
+<li>Either via local IP or reverse proxy/port forwarding (if you don&#39;t know what this means, use the next option)</li>
+<li>Or by using <a href="https://localtunnel.me">localtunnel</a> to very easily remotely tunnel the webserver</li>
 </ul>
 </li>
-<li>Access to one of the <a href="https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers">notification methods</a> (Discord, Telegram, email, etc.)</li>
 </ul>
+<p>See below for detailed instructions on each requirement.</p>
 
 <a href="#webserver-setup" id="webserver-setup" style="color: inherit; text-decoration: none;">
   <h5>Webserver setup</h5>
 </a>
 <ol>
-<li>Expose port 3000 in your Docker run config (e.g. <code>-p 81:3000</code> maps the machine&#39;s port 81 to the container&#39;s port 3000)</li>
+<li>Expose port 3000 in your Docker run config (e.g. <code>-p 81:3000</code> maps the host machine&#39;s port 81 to the container&#39;s port 3000)</li>
 <li>If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS</li>
 <li>Set the <code>webPortalConfig.baseUrl</code> in the config</li>
 <li>The web portal uses WebSocket to communicate. If you&#39;re using a reverse proxy, you may need additional configuration to enable WebSocket. <a href="https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy">This guide from Uptime Kuma</a> covers most scenarios.</li>
 </ol>
+
+<a href="#localtunnel-setup" id="localtunnel-setup" style="color: inherit; text-decoration: none;">
+  <h5>Localtunnel setup</h5>
+</a>
+<p>If you don&#39;t have the ability to port forward/reverse proxy on your network, you can still access captcha remotely by setting:</p>
+<pre><code class="language-jsonc"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;webPortalConfig&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-1">&quot;localtunnel&quot;</span><span class="hl-0">: </span><span class="hl-3">true</span><span class="hl-0">,</span><br/><span class="hl-0">  },</span><br/><span class="hl-0">}</span>
+</code></pre>
+<p>in your <code>config.json</code>.</p>
 
 <a href="#notification-setup" id="notification-setup" style="color: inherit; text-decoration: none;">
   <h5>Notification setup</h5>
