@@ -28,19 +28,18 @@ RUN npm run build
 ########
 FROM base as deps
 
-# Chromium dependencies https://github.com/Zenika/alpine-chrome/blob/master/Dockerfile
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories \
-    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
-    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-    && apk add --no-cache \
-    libstdc++ \
-    chromium \
-    harfbuzz \
+# Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-on-alpine
+# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v10.4.0/src/revisions.ts,
+# select the correct tag for the puppeteer version, and note the chromium revision number. Then go
+# to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
+# ensure that version is published at https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium
+RUN apk add --no-cache \
+    'chromium=~93' \
     nss \
     freetype \
+    harfbuzz \
+    ca-certificates \
     ttf-freefont \
-    font-noto-emoji \
-    wqy-zenhei \
     # App dependencies
     jq \
     tzdata
