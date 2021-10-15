@@ -5,6 +5,7 @@ import { Protocol, ElementHandle, Page } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
+  launchArgs,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -67,17 +68,7 @@ export default class PuppetLogin {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--no-sandbox',
-        // For debugging in Docker
-        // '--remote-debugging-port=3001',
-        // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
-      ],
-    });
+    const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();

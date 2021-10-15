@@ -4,6 +4,7 @@ import { Protocol, ElementHandle } from 'puppeteer';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
+  launchArgs,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -30,14 +31,7 @@ export default class PuppetPurchase {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--no-sandbox',
-      ],
-    });
+    const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
@@ -113,14 +107,7 @@ export default class PuppetPurchase {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer (short)');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--no-sandbox',
-      ],
-    });
+    const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();

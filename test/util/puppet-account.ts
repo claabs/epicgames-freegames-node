@@ -10,6 +10,7 @@ import { getHcaptchaCookies } from '../../src/puppet/hcaptcha';
 import puppeteer, {
   toughCookieFileStoreToPuppeteerCookie,
   getDevtoolsUrl,
+  launchArgs,
 } from '../../src/common/puppeteer';
 import logger from '../../src/common/logger';
 import Smtp4Dev from './smtp4dev';
@@ -83,10 +84,7 @@ export default class AccountManager {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
-    });
+    const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
@@ -145,10 +143,7 @@ export default class AccountManager {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--disable-web-security', '--disable-features=IsolateOrigins,site-per-process'],
-    });
+    const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();

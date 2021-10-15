@@ -9,7 +9,7 @@ import {
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
-import puppeteer, { getDevtoolsUrl } from './common/puppeteer';
+import puppeteer, { getDevtoolsUrl, launchArgs } from './common/puppeteer';
 
 export async function sendNotification(
   url: string,
@@ -51,14 +51,7 @@ export async function sendNotification(
 
 export async function testNotifiers(): Promise<void> {
   L.info('Testing all configured notifiers');
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--disable-web-security',
-      '--disable-features=IsolateOrigins,site-per-process',
-      '--no-sandbox',
-    ],
-  });
+  const browser = await puppeteer.launch(launchArgs);
   const page = await browser.newPage();
   L.trace(getDevtoolsUrl(page));
   await page.goto('https://claabs.github.io/epicgames-freegames-node/test.html');

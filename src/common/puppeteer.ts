@@ -90,3 +90,16 @@ export function getDevtoolsUrl(page: Page): string {
   // devtools://devtools/bundled/inspector.html?ws=127.0.0.1:35871/devtools/page/2B4E5714B42640A1C61AB9EE7E432730
   return `devtools://devtools/bundled/inspector.html?ws=${wsEndpoint.host}/devtools/page/${targetId}`;
 }
+
+export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
+  headless: true,
+  args: [
+    '--disable-web-security', // For accessing iframes
+    '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes
+    '--no-sandbox', // For Docker root user
+    '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
+    // For debugging in Docker
+    // '--remote-debugging-port=3001',
+    // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
+  ],
+};
