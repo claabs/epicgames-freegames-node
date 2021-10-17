@@ -57,18 +57,27 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
         `button[data-cy='setAccessibilityCookie']:not([disabled])`
       )) as ElementHandle<HTMLButtonElement>;
       L.trace(`Clicking setAccessibilityCookie button`);
-      const [statusAlert] = await Promise.all([
-        page.waitForSelector(`span[data-cy='fetchStatus']`) as Promise<
-          ElementHandle<HTMLSpanElement>
-        >,
-        setCookieButton.click({ delay: 100 }),
-      ]);
-      const setCookieMessage = await statusAlert.evaluate((el) => el.innerText);
-      L.trace({ setCookieMessage }, 'hCaptcha set cookie response');
-      if (setCookieMessage !== 'Cookie set.') {
-        L.warn({ setCookieMessage }, 'Unexpected set cookie response from hCaptcha');
+      await setCookieButton.click({ delay: 100 });
+      try {
+        const getCookieResp = await page.waitForResponse(
+          (res) =>
+            res.url() === 'https://accounts.hcaptcha.com/accessibility/get_cookie' &&
+            res.request().method() === 'POST'
+        );
+        const getCookieStatus = getCookieResp.status();
+        if (getCookieStatus !== 200) {
+          const errorBody = await getCookieResp.json();
+          L.warn(
+            { status: getCookieStatus, errorBody },
+            'Error from hCaptcha get_cookie request, continuing without hCaptcha accessibility cookies'
+          );
+        }
+      } catch (err) {
+        L.debug(err);
+        L.warn(
+          'No get cookie response recieved, continuing without hCaptcha accessibility cookies'
+        );
       }
-
       L.trace(`Saving new cookies`);
       const cdpClient = await page.target().createCDPSession();
       const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
