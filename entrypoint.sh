@@ -25,9 +25,18 @@ fi
 echo "Run once: ${RUN_ONCE}"
 if [ "$RUN_ONCE" = "false" ]; then
     echo "Setting cron schedule as ${CRON_SCHEDULE}"
-    # Add the command to the crontab
-    echo "${CRON_SCHEDULE} cd /usr/app && node /usr/app/dist/src/index.js" | crontab -
-    # Run the cron process. The container should halt here and wait for the schedule.
-    /usr/sbin/crond -f -l 8
+    if [ "$DISTRO" = "alpine" ]; then
+        # Add the command to the crontab
+        echo "${CRON_SCHEDULE} cd /usr/app && node /usr/app/dist/src/index.js" | crontab -
+        # Run the cron process. The container should halt here and wait for the schedule.
+        /usr/sbin/crond -f -l 8
+    else
+        # Debian cron wipes the environment, so we save it to a script to load in cron
+        printenv | sed 's/^\(.*\)$/export \1/g' > /root/project_env.sh
+        # Add the command to the crontab
+        echo "${CRON_SCHEDULE} . /root/project_env.sh && cd /usr/app && node /usr/app/dist/src/index.js > /proc/1/fd/1 2>/proc/1/fd/2" | crontab -
+        # Run the cron process. The container should halt here and wait for the schedule.
+        cron -f
+    fi
 fi
 echo "Exiting..."

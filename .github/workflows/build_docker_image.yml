@@ -39,7 +39,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push master
+      - name: Build and push master (Alpine)
         if: ${{ github.ref == 'refs/heads/master' }}
         uses: docker/build-push-action@v2
         with:
@@ -51,6 +51,21 @@ jobs:
             ghcr.io/claabs/epicgames-freegames-node:latest
             ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${{ env.GIT_BRANCH }}
+
+      - name: Build and push master (Debian)
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: docker/build-push-action@v2
+        with:
+          target: deploy
+          push: true
+          file: Dockerfile.debian
+          tags: |
+            charlocharlie/epicgames-freegames:bullseye-slim
+            ghcr.io/claabs/epicgames-freegames-node:bullseye-slim
+          platforms: linux/amd64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}

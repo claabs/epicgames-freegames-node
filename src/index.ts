@@ -56,6 +56,7 @@ export async function main(): Promise<void> {
     }
     const accountPromises = config.accounts.map(redeemAccount);
     await Promise.all(accountPromises);
+    exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
 }
 
