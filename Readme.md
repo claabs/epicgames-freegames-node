@@ -145,6 +145,11 @@ This image is available from both [GitHub Container Registry](https://github.com
 * `ghcr.io/claabs/epicgames-freegames-node:latest`
 * `charlocharlie/epicgames-freegames:latest`
 
+If you're [experiencing issues with Chromium starting](https://github.com/claabs/epicgames-freegames-node/issues/164) (hangs on login/notification), you can try the Debian image:
+
+* `ghcr.io/claabs/epicgames-freegames-node:bullseye-slim`
+* `charlocharlie/epicgames-freegames:bullseye-slim`
+
 If you are using full JSON configuration, the only remaining Docker configurables are the [port](#ports) and [volume](#volumes).
 
 #### Environment Variables
