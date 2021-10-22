@@ -333,9 +333,7 @@ export enum SearchStrategy {
    */
   PROMOTION = 'promotion',
   /**
-   * **Currently unimplemented**
-   *
-   * Redeem any and all free games, regardless of discount. WARNING: this will get a lot of junk and is not recommended!
+   * Combines the results from `weekly` and `promotion`. The downside being if either API fails, the program crashes.
    */
   ALL = 'all',
 }
@@ -409,7 +407,7 @@ export class AppConfig {
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
-   * @example weekly
+   * @example all
    * @default promotion
    * @env SEARCH_STRATEGY
    */

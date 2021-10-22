@@ -242,8 +242,16 @@ export default class FreeGames {
     } else if (config.searchStrategy === SearchStrategy.PROMOTION) {
       validFreeGames = await this.getCatalogFreeGames();
     } else {
-      this.L.warn('searchStrategy of `all` is currently unimplemented. Defaulting to `promotion`');
-      validFreeGames = await this.getCatalogFreeGames();
+      this.L.info('searchStrategy is `all`: searching for weekly and promotional games');
+      validFreeGames = [
+        ...(await this.getWeeklyFreeGames()),
+        ...(await this.getCatalogFreeGames()),
+      ];
+      this.L.trace({ dupedFreeGames: validFreeGames });
+      // dedupe
+      validFreeGames = validFreeGames.filter(
+        (e, i) => validFreeGames.findIndex((a) => a.offerId === e.offerId) === i
+      );
     }
     this.L.info(
       { availableGames: validFreeGames.map((game) => game.productName) },
