@@ -550,6 +550,16 @@ export class AppConfig {
   testNotifiers = process.env.TEST_NOTIFIERS?.toLowerCase() === 'true' || false;
 
   /**
+   * Skip the call to api.github.com that checks for the latest version on launch
+   * @example true
+   * @default false
+   * @env SKIP_VERSION_CHECK
+   */
+  @IsOptional()
+  @IsBoolean()
+  skipVersionCheck = process.env.SKIP_VERSION_CHECK?.toLowerCase() === 'true' || false;
+
+  /**
    * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */

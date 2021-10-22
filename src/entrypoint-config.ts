@@ -8,7 +8,7 @@ const PROJECT_NAME = 'epicgames-freegames-node';
 
 async function checkForUpdate(): Promise<void> {
   const { COMMIT_SHA, BRANCH } = process.env;
-  if (!(COMMIT_SHA && BRANCH)) {
+  if (!(COMMIT_SHA && BRANCH) || config.skipVersionCheck) {
     return;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
