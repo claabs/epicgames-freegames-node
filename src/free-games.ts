@@ -1,5 +1,6 @@
 import { Got } from 'got';
 import { Logger } from 'pino';
+// import { outputJsonSync } from 'fs-extra';
 import logger from './common/logger';
 import { OfferInfo } from './interfaces/types';
 import { ItemEntitlementResp, AuthErrorJSON } from './interfaces/product-info';
@@ -28,20 +29,20 @@ export default class FreeGames {
     });
   }
 
-  async getCatalogFreeGames(): Promise<OfferInfo[]> {
+  async getCatalogFreeGames(onSale = true): Promise<OfferInfo[]> {
     this.L.debug('Getting global free games');
     const pageLimit = 1000;
     const nowTimestamp = new Date().toISOString();
     // variables and extensions can be found at https://www.epicgames.com/store/en-US/browse
     const variables = {
       allowCountries: 'US',
-      category: 'games/edition/base|software/edition/base|editors|bundles/games|games',
+      category: 'games/edition/base|software/edition/base|editors|bundles/games',
       count: pageLimit,
       country: 'US',
-      effectiveDate: `[,${nowTimestamp}]`,
+      effectiveDate: onSale ? `[,${nowTimestamp}]` : undefined,
       keywords: '',
       locale: 'en-US',
-      onSale: true,
+      onSale: onSale ? true : undefined,
       releaseDate: `[,${nowTimestamp}]`,
       sortBy: 'releaseDate',
       sortDir: 'DESC',
@@ -52,7 +53,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '2e6ccea7014369002b60316358237b67eac979196633e53f8702143d076c91ef',
+        sha256Hash: 'f45c217481a66dd17324fbb288509bac7a2d81762e72518cb9d448a0aec43350',
       },
     };
     this.L.trace(
@@ -93,6 +94,7 @@ export default class FreeGames {
       }
     );
     this.L.debug(`Retrieved catalog data for ${items.length} games`);
+    // outputJsonSync('hars/catalog.json', items);
     const freeGames = items.filter((game) => {
       return game.price?.totalPrice?.discountPrice === 0;
     });
