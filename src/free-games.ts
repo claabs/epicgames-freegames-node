@@ -73,6 +73,8 @@ export default class FreeGames {
         pagination: {
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           transform: (response) => {
+            if (!response.body.data)
+              throw new Error(`Error paginating catalog data: ${JSON.stringify(response.body)}`);
             return response.body.data.Catalog.searchStore.elements;
           },
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
