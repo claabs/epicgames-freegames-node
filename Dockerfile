@@ -43,7 +43,8 @@ RUN apk add --no-cache \
     ttf-freefont \
     # App dependencies
     jq \
-    tzdata
+    tzdata \
+    tini
 
 ########
 # DEPLOY
@@ -83,4 +84,4 @@ EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "docker-entrypoint.sh"]

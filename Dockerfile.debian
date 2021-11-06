@@ -48,6 +48,7 @@ RUN apt-get update \
     jq \
     tzdata \
     cron \
+    tini \
     && rm -rf /var/lib/apt/lists/*
 
 ########
@@ -88,4 +89,4 @@ EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "docker-entrypoint.sh"]
