@@ -40,10 +40,11 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
     return [];
   }
   let cookieData = await getCookieCache();
+  let browser;
   if (!cookieData) {
     try {
       L.debug('Setting hCaptcha accessibility cookies');
-      const browser = await puppeteer.launch(launchArgs);
+      browser = await puppeteer.launch(launchArgs);
       const page = await browser.newPage();
 
       L.trace(getDevtoolsUrl(page));
@@ -91,6 +92,7 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
       L.warn(
         'Setting the hCaptcha accessibility cookies encountered an error. Continuing without them...'
       );
+      if (browser) await browser.close();
       return [];
     }
   }
