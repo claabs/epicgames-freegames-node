@@ -119,11 +119,19 @@ export function newCookieJar(username: string): Got {
   const cookieFilename = getCookiePath(username);
   const fileExists = fs.existsSync(cookieFilename);
   if (fileExists) {
-    const cookieTest = JSON.parse(fs.readFileSync(cookieFilename, 'utf8'));
-    if (Array.isArray(cookieTest)) {
-      L.info(`Converting ${cookieFilename} cookie format`);
-      const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
-      fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+    let cookieData;
+    try {
+      cookieData = fs.readFileSync(cookieFilename, 'utf8');
+      const cookieTest = JSON.parse(cookieData);
+      if (Array.isArray(cookieTest)) {
+        L.info(`Converting ${cookieFilename} cookie format`);
+        const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
+        fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+      }
+    } catch (err) {
+      L.warn(err);
+      L.warn({ cookieData }, `Could not parse ${cookieFilename}, deleting it`);
+      fs.rmSync(cookieFilename, { force: true });
     }
   }
 
