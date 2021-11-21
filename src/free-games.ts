@@ -34,6 +34,7 @@ export default class FreeGames {
     const pageLimit = 1000;
     const nowTimestamp = new Date().toISOString();
     // variables and extensions can be found at https://www.epicgames.com/store/en-US/browse
+    // Search for "searchStoreQuery" in source HTML
     const variables = {
       allowCountries: 'US',
       category: 'games/edition/base|software/edition/base|editors|bundles/games',
@@ -53,7 +54,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: 'f45c217481a66dd17324fbb288509bac7a2d81762e72518cb9d448a0aec43350',
+        sha256Hash: '0304d711e653a2914f3213a6d9163cc17153c60aef0ef52279731b02779231d2',
       },
     };
     this.L.trace(
@@ -160,6 +161,7 @@ export default class FreeGames {
   async ownsGame(offerId: string, namespace: string): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting product ownership info');
     // variables and extensions can be found at https://www.epicgames.com/store/en-US
+    // Search for "getEntitledOfferItems" in source HTML
     const variables = {
       offerId,
       sandboxId: namespace,
@@ -210,6 +212,7 @@ export default class FreeGames {
   async getCatalogOffer(offerId: string, namespace: string): Promise<OfferInfo> {
     this.L.debug('Mapping IDs to offer');
     // variables and extensions can be found at https://www.epicgames.com/store/en-US
+    // Search for "getCatalogOffer" in source HTML
     const variables = {
       locale: 'en-US',
       country: 'US',
@@ -219,7 +222,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '65c7fcd01d12a92b9a6977a2f802f3d4caf5038a4bf212ea2a029bebb94dbc86',
+        sha256Hash: 'd40b3d68a05348726db04fd6df3e29739c94eba516c9442374d96811c441b915',
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for catalog offer');
