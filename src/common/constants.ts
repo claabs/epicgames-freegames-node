@@ -18,6 +18,7 @@ export const SETUP_MFA =
 export const FREE_GAMES_PROMOTIONS_ENDPOINT =
   'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
 export const STORE_HOMEPAGE = 'https://www.epicgames.com/store/';
+export const STORE_HOMEPAGE_EN = 'https://www.epicgames.com/store/en-US/';
 export const ORDER_CONFIRM_ENDPOINT =
   'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order';
 export const ORDER_PREVIEW_ENDPOINT =

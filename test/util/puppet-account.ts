@@ -5,7 +5,7 @@ import { Logger } from 'pino';
 import { Page, Protocol, ElementHandle } from 'puppeteer';
 // import { writeFileSync } from 'fs-extra';
 import { getCookiesRaw, setPuppeteerCookies } from '../../src/common/request';
-import { EPIC_CLIENT_ID } from '../../src/common/constants';
+import { EPIC_CLIENT_ID, STORE_HOMEPAGE_EN } from '../../src/common/constants';
 import { getHcaptchaCookies } from '../../src/puppet/hcaptcha';
 import puppeteer, {
   toughCookieFileStoreToPuppeteerCookie,
@@ -93,7 +93,7 @@ export default class AccountManager {
     });
     await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
     await page.goto(
-      `https://www.epicgames.com/id/register/epic?redirect_uri=https://www.epicgames.com/store/en-US/&client_id=${EPIC_CLIENT_ID}`,
+      `https://www.epicgames.com/id/register/epic?redirect_uri=${STORE_HOMEPAGE_EN}&client_id=${EPIC_CLIENT_ID}`,
       { waitUntil: 'networkidle0' }
     );
     await this.fillDOB(page);

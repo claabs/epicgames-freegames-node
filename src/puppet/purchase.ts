@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { Logger } from 'pino';
 import { Protocol, ElementHandle } from 'puppeteer';
+import { STORE_HOMEPAGE_EN } from '../common/constants';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
@@ -44,7 +45,7 @@ export default class PuppetPurchase {
       domain: 'www.epicgames.com',
       value: 'true',
     });
-    await page.goto(`https://www.epicgames.com/store/en-US/p/${productSlug}`);
+    await page.goto(`${STORE_HOMEPAGE_EN}p/${productSlug}`);
     this.L.trace('Waiting for getButton');
     const getButton = (await page.waitForSelector(
       `button[data-testid='purchase-cta-button']:not([aria-disabled='true'])`

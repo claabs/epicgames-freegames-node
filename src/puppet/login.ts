@@ -10,7 +10,7 @@ import puppeteer, {
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
 import { getHcaptchaCookies } from './hcaptcha';
-import { EPIC_CLIENT_ID } from '../common/constants';
+import { EPIC_CLIENT_ID, STORE_HOMEPAGE_EN } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
 import { config } from '../common/config';
@@ -40,7 +40,7 @@ export default class PuppetLogin {
     this.L.trace('Navigating to Epic Games login page');
     await Promise.all([
       page.goto(
-        `https://www.epicgames.com/id/login/epic?redirect_uri=https://www.epicgames.com/store/en-US/&client_id=${EPIC_CLIENT_ID}`
+        `https://www.epicgames.com/id/login/epic?redirect_uri=${STORE_HOMEPAGE_EN}&client_id=${EPIC_CLIENT_ID}`
       ),
       page.waitForNavigation({ waitUntil: 'networkidle0' }),
     ]);
@@ -112,27 +112,10 @@ export default class PuppetLogin {
     }
   }
 
-  private async waitForRedirectNav(
-    page: Page,
-    timeout = NOTIFICATION_TIMEOUT,
-    startTime = new Date()
-  ): Promise<'nav'> {
-    try {
-      const resp = await page.waitForNavigation({
-        waitUntil: 'networkidle2',
-        timeout,
-      });
-      if (resp?.url().includes('/store')) {
-        this.L.trace('Navigated to store page');
-        return 'nav';
-      }
-      return this.waitForRedirectNav(page, timeout, startTime);
-    } catch (err) {
-      if (startTime.getTime() + timeout <= new Date().getTime()) {
-        throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
-      }
-      return this.waitForRedirectNav(page, timeout, startTime);
-    }
+  private async waitForRedirectNav(page: Page, timeout = NOTIFICATION_TIMEOUT): Promise<'nav'> {
+    return page
+      .waitForResponse((res) => res.url() === STORE_HOMEPAGE_EN, { timeout })
+      .then(() => 'nav');
   }
 
   private async handleMfa(page: Page, input: ElementHandle<HTMLInputElement>): Promise<void> {
