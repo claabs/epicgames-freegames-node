@@ -139,74 +139,80 @@ export default class PuppetPurchase {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer (short)');
     const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
-    this.L.trace(getDevtoolsUrl(page));
-    const cdpClient = await page.target().createCDPSession();
-    await cdpClient.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
-    });
-    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-    this.L.trace('Loading purchase page');
-    // https://www.epicgames.com/store/purchase?namespace=d3f34b351df646e0ab932fd8d8e5dfc2&showNavigation=true&highlightColor=0078f2&offers=d89d1ecf209d42688d82909e522f2ec1
-    await page.goto(
-      `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`,
-      { waitUntil: 'networkidle0' }
-    );
-    this.L.trace('Waiting for placeOrderButton');
-    const placeOrderButton = (await page.waitForSelector(
-      `button.payment-btn`
-    )) as ElementHandle<HTMLButtonElement>;
-    this.L.trace('Clicking placeOrderButton');
-    await placeOrderButton.click({ delay: 100 });
-    // TODO: Check for captcha and notify with portal. Currently, no games require a captcha on purchase, so it's not possible to implement.
     try {
-      const euRefundAgreeButton = (await page.waitForSelector(
-        `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
-        { timeout: 3000 }
+      const page = await browser.newPage();
+      this.L.trace(getDevtoolsUrl(page));
+      const cdpClient = await page.target().createCDPSession();
+      await cdpClient.send('Network.setCookies', {
+        cookies: [...puppeteerCookies, ...hCaptchaCookies],
+      });
+      await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+      this.L.trace('Loading purchase page');
+      // https://www.epicgames.com/store/purchase?namespace=d3f34b351df646e0ab932fd8d8e5dfc2&showNavigation=true&highlightColor=0078f2&offers=d89d1ecf209d42688d82909e522f2ec1
+      await page.goto(
+        `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`,
+        { waitUntil: 'networkidle0' }
+      );
+      this.L.trace('Waiting for placeOrderButton');
+      const placeOrderButton = (await page.waitForSelector(
+        `button.payment-btn`
       )) as ElementHandle<HTMLButtonElement>;
-      this.L.trace('Clicking euRefundAgreeButton');
-      await euRefundAgreeButton.click({ delay: 100 });
+      this.L.trace('Clicking placeOrderButton');
+      await placeOrderButton.click({ delay: 100 });
+      // TODO: Check for captcha and notify with portal. Currently, no games require a captcha on purchase, so it's not possible to implement.
+      try {
+        const euRefundAgreeButton = (await page.waitForSelector(
+          `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
+          { timeout: 3000 }
+        )) as ElementHandle<HTMLButtonElement>;
+        this.L.trace('Clicking euRefundAgreeButton');
+        await euRefundAgreeButton.click({ delay: 100 });
+      } catch (err) {
+        if (!err.message.includes('timeout')) {
+          throw err;
+        }
+        this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
+      }
+      this.L.trace('Waiting for receipt');
+      const purchaseEvent = await Promise.race([
+        page
+          .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
+          .then(() => 'nav'),
+        page
+          .waitForSelector('span.payment-alert__content')
+          .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
+            errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
+          ),
+        this.waitForHCaptcha(page),
+      ]);
+      if (purchaseEvent === 'captcha') {
+        this.L.trace('Captcha detected');
+        let url = await page.openPortal();
+        if (config.webPortalConfig?.localtunnel) {
+          url = await getLocaltunnelUrl(url);
+        }
+        this.L.info({ url }, 'Go to this URL and do something');
+        await sendNotification(url, this.email, NotificationReason.PURCHASE);
+        await page
+          .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
+            timeout: NOTIFICATION_TIMEOUT,
+          })
+          .then(() => 'nav');
+        await page.closePortal();
+      } else if (purchaseEvent !== 'nav') {
+        throw new Error(purchaseEvent);
+      }
+      this.L.trace(`Puppeteer purchase successful`);
+      this.L.trace('Saving new cookies');
+      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+        cookies: Protocol.Network.Cookie[];
+      };
+      setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+      this.L.trace('Saved cookies, closing browser');
+      await browser.close();
     } catch (err) {
-      if (!err.message.includes('timeout')) {
-        throw err;
-      }
-      this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
+      if (browser) await browser.close();
+      throw err;
     }
-    this.L.trace('Waiting for receipt');
-    const purchaseEvent = await Promise.race([
-      page
-        .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
-        .then(() => 'nav'),
-      page
-        .waitForSelector('span.payment-alert__content')
-        .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
-          errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
-        ),
-      this.waitForHCaptcha(page),
-    ]);
-    if (purchaseEvent === 'captcha') {
-      this.L.trace('Captcha detected');
-      let url = await page.openPortal();
-      if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(url);
-      }
-      this.L.info({ url }, 'Go to this URL and do something');
-      await sendNotification(url, this.email, NotificationReason.PURCHASE);
-      await page
-        .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
-          timeout: NOTIFICATION_TIMEOUT,
-        })
-        .then(() => 'nav');
-      await page.closePortal();
-    } else if (purchaseEvent !== 'nav') {
-      throw new Error(purchaseEvent);
-    }
-    this.L.trace(`Puppeteer purchase successful`);
-    this.L.trace('Saving new cookies');
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Protocol.Network.Cookie[];
-    };
-    await browser.close();
-    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
   }
 }

@@ -70,22 +70,27 @@ export default class PuppetLogin {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
     const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
-    this.L.trace(getDevtoolsUrl(page));
-    const cdpClient = await page.target().createCDPSession();
-    await cdpClient.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
-    });
-    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-    await this.startLogin(page);
+    try {
+      const page = await browser.newPage();
+      this.L.trace(getDevtoolsUrl(page));
+      const cdpClient = await page.target().createCDPSession();
+      await cdpClient.send('Network.setCookies', {
+        cookies: [...puppeteerCookies, ...hCaptchaCookies],
+      });
+      await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+      await this.startLogin(page);
 
-    this.L.trace('Saving new cookies');
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Protocol.Network.Cookie[];
-    };
-    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
-    this.L.trace('Saved cookies, closing browser');
-    await browser.close();
+      this.L.trace('Saving new cookies');
+      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+        cookies: Protocol.Network.Cookie[];
+      };
+      setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+      this.L.trace('Saved cookies, closing browser');
+      await browser.close();
+    } catch (err) {
+      if (browser) await browser.close();
+      throw err;
+    }
   }
 
   private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
