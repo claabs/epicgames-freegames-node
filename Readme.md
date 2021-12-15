@@ -63,12 +63,14 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 
 ### Captchas
 
-Epic Games currently serves captchas and bot detection to its login page. It will likely come to the purchase page as well in the future. This project works around the issue in two ways:
+Epic Games currently serves captchas and bot detection to its login and checkout pages. This project works around the issue in two ways:
 
 1. hCaptcha accessibility cookies
 1. Sending you captchas
 
 #### hCaptcha accessibility cookies
+
+**This is currently unavailable. See [#178](https://github.com/claabs/epicgames-freegames-node/issues/178) for details.**
 
 hCaptcha offers an accessibility tool for vision impaired users that can be used to bypass captchas served by Epic Games. It's very simple to set up:
 

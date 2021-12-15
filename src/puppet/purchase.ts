@@ -1,7 +1,9 @@
 /* eslint-disable class-methods-use-this */
 import { Logger } from 'pino';
-import { Protocol, ElementHandle } from 'puppeteer';
+import { Protocol, ElementHandle, Page } from 'puppeteer';
+import { config } from '../common/config';
 import { STORE_HOMEPAGE_EN } from '../common/constants';
+import { getLocaltunnelUrl } from '../common/localtunnel';
 import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
@@ -9,7 +11,11 @@ import puppeteer, {
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
+import { NotificationReason } from '../interfaces/notification-reason';
+import { sendNotification } from '../notify';
 import { getHcaptchaCookies } from './hcaptcha';
+
+const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 
 export default class PuppetPurchase {
   private L: Logger;
@@ -100,6 +106,30 @@ export default class PuppetPurchase {
     await browser.close();
   }
 
+  private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
+    try {
+      const talonHandle = await page.$('iframe#talon_frame_checkout_free_prod');
+      if (!talonHandle) throw new Error('Could not find talon_frame_checkout_free_prod');
+      const talonFrame = await talonHandle.contentFrame();
+      if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
+      this.L.trace('Waiting for hcaptcha iframe');
+      await talonFrame.waitForSelector(`#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`, {
+        visible: true,
+      });
+      return 'captcha';
+    } catch (err) {
+      if (err.message.includes('timeout')) {
+        throw err;
+      }
+      if (err.message.includes('detached')) {
+        this.L.trace(err);
+      } else {
+        this.L.warn(err);
+      }
+      return 'nav';
+    }
+  }
+
   /**
    * Completes a purchase starting from the purchase iframe using its namespace and offerId
    */
@@ -143,18 +173,34 @@ export default class PuppetPurchase {
       this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
     }
     this.L.trace('Waiting for receipt');
-    const purchaseError = await Promise.race([
+    const purchaseEvent = await Promise.race([
       page
-        // eslint-disable-next-line no-undef
         .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
-        .then(() => null),
+        .then(() => 'nav'),
       page
         .waitForSelector('span.payment-alert__content')
         .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
-          errorHandle ? errorHandle.evaluate((el) => el.innerText) : null
+          errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
         ),
+      this.waitForHCaptcha(page),
     ]);
-    if (purchaseError) throw new Error(purchaseError);
+    if (purchaseEvent === 'captcha') {
+      this.L.trace('Captcha detected');
+      let url = await page.openPortal();
+      if (config.webPortalConfig?.localtunnel) {
+        url = await getLocaltunnelUrl(url);
+      }
+      this.L.info({ url }, 'Go to this URL and do something');
+      await sendNotification(url, this.email, NotificationReason.PURCHASE);
+      await page
+        .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
+          timeout: NOTIFICATION_TIMEOUT,
+        })
+        .then(() => 'nav');
+      await page.closePortal();
+    } else if (purchaseEvent !== 'nav') {
+      throw new Error(purchaseEvent);
+    }
     this.L.trace(`Puppeteer purchase successful`);
     this.L.trace('Saving new cookies');
     const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
