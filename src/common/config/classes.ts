@@ -87,7 +87,7 @@ export class TelegramConfig extends NotifierConfig {
    * @env TELEGRAM_TOKEN
    */
   @IsString()
-  @Matches(/[0-9]{9}:[a-zA-Z0-9_-]{35}/)
+  @Matches(/[0-9]+:[a-zA-Z0-9_-]{35}/)
   token: string;
 
   /**
