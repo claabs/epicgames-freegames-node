@@ -1,7 +1,8 @@
 /* eslint-disable class-methods-use-this */
+import path from 'path';
 import { Logger } from 'pino';
 import { Protocol, ElementHandle, Page } from 'puppeteer';
-import { config } from '../common/config';
+import { config, CONFIG_DIR } from '../common/config';
 import { STORE_HOMEPAGE_EN } from '../common/constants';
 import { getLocaltunnelUrl } from '../common/localtunnel';
 import logger from '../common/logger';
@@ -139,27 +140,23 @@ export default class PuppetPurchase {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer (short)');
     const browser = await puppeteer.launch(launchArgs);
+    const page = await browser.newPage();
     try {
-      const page = await browser.newPage();
       this.L.trace(getDevtoolsUrl(page));
       const cdpClient = await page.target().createCDPSession();
       await cdpClient.send('Network.setCookies', {
         cookies: [...puppeteerCookies, ...hCaptchaCookies],
       });
       await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-      this.L.trace('Loading purchase page');
-      // https://www.epicgames.com/store/purchase?namespace=d3f34b351df646e0ab932fd8d8e5dfc2&showNavigation=true&highlightColor=0078f2&offers=d89d1ecf209d42688d82909e522f2ec1
-      await page.goto(
-        `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`,
-        { waitUntil: 'networkidle0' }
-      );
+      const purchaseUrl = `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`;
+      this.L.debug({ purchaseUrl }, 'Loading purchase page');
+      await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
       this.L.trace('Waiting for placeOrderButton');
       const placeOrderButton = (await page.waitForSelector(
         `button.payment-btn`
       )) as ElementHandle<HTMLButtonElement>;
       this.L.trace('Clicking placeOrderButton');
       await placeOrderButton.click({ delay: 100 });
-      // TODO: Check for captcha and notify with portal. Currently, no games require a captcha on purchase, so it's not possible to implement.
       try {
         const euRefundAgreeButton = (await page.waitForSelector(
           `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
@@ -173,7 +170,7 @@ export default class PuppetPurchase {
         }
         this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
       }
-      this.L.trace('Waiting for receipt');
+      this.L.debug('Waiting for receipt');
       const purchaseEvent = await Promise.race([
         page
           .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
@@ -186,7 +183,7 @@ export default class PuppetPurchase {
         this.waitForHCaptcha(page),
       ]);
       if (purchaseEvent === 'captcha') {
-        this.L.trace('Captcha detected');
+        this.L.debug('Captcha detected');
         let url = await page.openPortal();
         if (config.webPortalConfig?.localtunnel) {
           url = await getLocaltunnelUrl(url);
@@ -211,6 +208,16 @@ export default class PuppetPurchase {
       this.L.trace('Saved cookies, closing browser');
       await browser.close();
     } catch (err) {
+      if (page) {
+        const errorFile = `error-${new Date().toISOString()}.png`;
+        await page.screenshot({
+          path: path.join(CONFIG_DIR, errorFile),
+        });
+        this.L.error(
+          { errorFile },
+          'Encountered an error during browser automation. Saved a screenshot for debugging purposes.'
+        );
+      }
       if (browser) await browser.close();
       throw err;
     }

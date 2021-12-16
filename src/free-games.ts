@@ -73,9 +73,11 @@ export default class FreeGames {
         pagination: {
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           transform: (response) => {
-            if (!response.body.data)
+            const elements = response.body?.data?.Catalog?.searchStore?.elements;
+            if (!elements) {
               throw new Error(`Error paginating catalog data: ${JSON.stringify(response.body)}`);
-            return response.body.data.Catalog.searchStore.elements;
+            }
+            return elements;
           },
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           paginate: (_response, _allItems, currentItems) => {
@@ -133,7 +135,11 @@ export default class FreeGames {
       searchParams,
     });
     const nowDate = new Date();
-    const freeOfferedGames = resp.body.data.Catalog.searchStore.elements.filter((offer) => {
+    const elements = resp.body?.data?.Catalog?.searchStore?.elements;
+    if (!elements) {
+      throw new Error(`Error paginating catalog data: ${JSON.stringify(resp.body)}`);
+    }
+    const freeOfferedGames = elements.filter((offer) => {
       let r = false;
       if (offer.promotions) {
         offer.promotions.promotionalOffers.forEach((innerOffers) => {
