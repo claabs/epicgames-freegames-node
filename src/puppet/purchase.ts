@@ -152,6 +152,19 @@ export default class PuppetPurchase {
       const purchaseUrl = `${EPIC_PURCHASE_ENDPOINT}?highlightColor=0078f2&offers=1-${namespace}-${offer}&orderId&purchaseToken&showNavigation=true`;
       this.L.info({ purchaseUrl }, 'Loading purchase page');
       await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
+      try {
+        this.L.trace('Waiting for cookieDialog');
+        const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
+          timeout: 3000,
+        })) as ElementHandle<HTMLButtonElement>;
+        this.L.trace('Clicking cookieDialog');
+        await cookieDialog.click({ delay: 100 });
+      } catch (err) {
+        if (!err.message.includes('timeout')) {
+          throw err;
+        }
+        this.L.trace('No cookie dialog presented');
+      }
       this.L.trace('Waiting for placeOrderButton');
       const placeOrderButton = (await page.waitForSelector(
         `button.payment-btn`
@@ -210,7 +223,7 @@ export default class PuppetPurchase {
       await browser.close();
     } catch (err) {
       if (page) {
-        const errorPrefix = `error-${new Date().toISOString()}`;
+        const errorPrefix = `error-${new Date().toISOString()}`.replace(':', '-');
         const errorImage = path.join(CONFIG_DIR, `${errorPrefix}.png`);
         await page.screenshot({ path: errorImage });
         const errorHtml = path.join(CONFIG_DIR, `${errorPrefix}.html`);
