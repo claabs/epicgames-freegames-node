@@ -211,11 +211,9 @@ export default class PuppetPurchase {
     } catch (err) {
       if (page) {
         const errorPrefix = `error-${new Date().toISOString()}`;
-        const errorImage = `${errorPrefix}.png`;
-        await page.screenshot({
-          path: path.join(CONFIG_DIR, errorImage),
-        });
-        const errorHtml = `${errorPrefix}.html`;
+        const errorImage = path.join(CONFIG_DIR, `${errorPrefix}.png`);
+        await page.screenshot({ path: errorImage });
+        const errorHtml = path.join(CONFIG_DIR, `${errorPrefix}.html`);
         const htmlContent = await page.content();
         outputFileSync(errorHtml, htmlContent, 'utf8');
         this.L.error(
