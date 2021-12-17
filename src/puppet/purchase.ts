@@ -152,6 +152,7 @@ export default class PuppetPurchase {
       const purchaseUrl = `${EPIC_PURCHASE_ENDPOINT}?highlightColor=0078f2&offers=1-${namespace}-${offer}&orderId&purchaseToken&showNavigation=true`;
       this.L.info({ purchaseUrl }, 'Loading purchase page');
       await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
+      await page.waitForNetworkIdle({ idleTime: 2000 });
       try {
         this.L.trace('Waiting for cookieDialog');
         const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
