@@ -51,6 +51,7 @@ export async function redeemAccount(account: AccountConfig, index: number): Prom
       else L.error(e.response);
     }
     L.error(e);
+    logVersionOnError();
   }
 }
 

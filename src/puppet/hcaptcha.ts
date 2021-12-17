@@ -68,7 +68,7 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
         const getCookieStatus = getCookieResp.status();
         if (getCookieStatus !== 200) {
           const errorBody = await getCookieResp.json();
-          L.warn(
+          L.debug(
             { status: getCookieStatus, errorBody },
             'Error from hCaptcha get_cookie request, continuing without hCaptcha accessibility cookies'
           );
