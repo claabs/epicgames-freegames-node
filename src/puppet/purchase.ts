@@ -150,7 +150,7 @@ export default class PuppetPurchase {
       });
       await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
       const purchaseUrl = `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`;
-      this.L.debug({ purchaseUrl }, 'Loading purchase page');
+      this.L.info({ purchaseUrl }, 'Loading purchase page');
       await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
       this.L.trace('Waiting for placeOrderButton');
       const placeOrderButton = (await page.waitForSelector(
