@@ -2,7 +2,7 @@
 import { outputFileSync } from 'fs-extra';
 import path from 'path';
 import { Logger } from 'pino';
-import { Protocol, ElementHandle, Page } from 'puppeteer';
+import { Browser, CDPSession, Protocol, ElementHandle, Page } from 'puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
 import { EPIC_PURCHASE_ENDPOINT, STORE_HOMEPAGE_EN } from '../common/constants';
 import { getLocaltunnelUrl } from '../common/localtunnel';
@@ -142,9 +142,9 @@ export default class PuppetPurchase {
     this.L.debug('Purchasing with puppeteer (short)');
     const browser = await puppeteer.launch(launchArgs);
     const page = await browser.newPage();
+    this.L.trace(getDevtoolsUrl(page));
+    const cdpClient = await page.target().createCDPSession();
     try {
-      this.L.trace(getDevtoolsUrl(page));
-      const cdpClient = await page.target().createCDPSession();
       await cdpClient.send('Network.setCookies', {
         cookies: [...puppeteerCookies, ...hCaptchaCookies],
       });
@@ -213,15 +213,9 @@ export default class PuppetPurchase {
       } else if (purchaseEvent !== 'nav') {
         throw new Error(purchaseEvent);
       }
-      this.L.trace(`Puppeteer purchase successful`);
-      this.L.trace('Saving new cookies');
-      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-        cookies: Protocol.Network.Cookie[];
-      };
-      setPuppeteerCookies(this.email, currentUrlCookies.cookies);
-      this.L.trace('Saved cookies, closing browser');
-      await browser.close();
+      await this.finishPurchase(browser, cdpClient);
     } catch (err) {
+      let success = false;
       if (page) {
         const errorPrefix = `error-${new Date().toISOString()}`.replace(/:/g, '-');
         const errorImage = path.join(CONFIG_DIR, `${errorPrefix}.png`);
@@ -233,9 +227,48 @@ export default class PuppetPurchase {
           { errorImage, errorHtml },
           'Encountered an error during browser automation. Saved a screenshot and page HTML for debugging purposes.'
         );
+        if (!config.noHumanErrorHelp)
+          success = await this.sendErrorManualHelpNotification(page, browser, cdpClient);
       }
       if (browser) await browser.close();
-      throw err;
+      if (!success) throw err;
+    }
+  }
+
+  private async finishPurchase(browser: Browser, cdpClient: CDPSession): Promise<void> {
+    this.L.trace(`Puppeteer purchase successful`);
+    this.L.trace('Saving new cookies');
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Protocol.Network.Cookie[];
+    };
+    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+    this.L.trace('Saved cookies, closing browser');
+    await browser.close();
+  }
+
+  private async sendErrorManualHelpNotification(
+    page: Page,
+    browser: Browser,
+    cdpClient: CDPSession
+  ): Promise<boolean> {
+    this.L.info('Asking a human for help...');
+    try {
+      let url = await page.openPortal();
+      if (config.webPortalConfig?.localtunnel) {
+        url = await getLocaltunnelUrl(url);
+      }
+      this.L.info({ url }, 'Go to this URL and purchase the game');
+      await sendNotification(url, this.email, NotificationReason.PURCHASE_ERROR);
+      await page.waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
+        timeout: NOTIFICATION_TIMEOUT,
+      });
+      await page.closePortal();
+      await this.finishPurchase(browser, cdpClient);
+      return true;
+    } catch (err) {
+      this.L.error('Encountered an error when asking a human for help');
+      this.L.error(err);
+      return false;
     }
   }
 }
