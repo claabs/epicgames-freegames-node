@@ -54,6 +54,8 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
 
       - name: Build and push master (Debian)
         if: ${{ github.ref == 'refs/heads/master' }}
@@ -69,6 +71,8 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
+          cache-from: type=gha,scope=${{ github.workflow }}-Debian
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}-Debian
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
@@ -83,3 +87,5 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
