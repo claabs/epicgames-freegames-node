@@ -167,7 +167,7 @@ export default class PuppetPurchase {
       }
       this.L.trace('Waiting for placeOrderButton');
       const placeOrderButton = (await page.waitForSelector(
-        `button.payment-btn`
+        `button.payment-btn:not([disabled])`
       )) as ElementHandle<HTMLButtonElement>;
       this.L.trace('Clicking placeOrderButton');
       await placeOrderButton.click({ delay: 100 });
