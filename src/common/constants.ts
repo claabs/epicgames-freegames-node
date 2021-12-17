@@ -11,7 +11,7 @@ export const USER_INFO_ENDPOINT = 'https://www.epicgames.com/account/v2/personal
 export const RESEND_VERIFICATION_ENDPOINT =
   'https://www.epicgames.com/account/v2/resendEmailVerification';
 export const REPUTATION_ENDPOINT = 'https://www.epicgames.com/id/api/reputation';
-export const STORE_CONTENT = 'https://store-content.ak.epicgames.com/api/en-US/content';
+export const STORE_CONTENT = 'https://store-content-ipv4.ak.epicgames.com/api/en-US/content';
 export const EMAIL_VERIFY = 'https://www.epicgames.com/id/api/email/verify';
 export const SETUP_MFA =
   'https://www.epicgames.com/account/v2/security/ajaxUpdateTwoFactorAuthSettings';

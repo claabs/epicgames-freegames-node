@@ -3,8 +3,12 @@ import { Logger } from 'pino';
 // import { outputJsonSync } from 'fs-extra';
 import logger from './common/logger';
 import { OfferInfo } from './interfaces/types';
-import { ItemEntitlementResp, AuthErrorJSON } from './interfaces/product-info';
-import { GRAPHQL_ENDPOINT, FREE_GAMES_PROMOTIONS_ENDPOINT } from './common/constants';
+import { ItemEntitlementResp, AuthErrorJSON, Offer, ProductInfo } from './interfaces/product-info';
+import {
+  GRAPHQL_ENDPOINT,
+  FREE_GAMES_PROMOTIONS_ENDPOINT,
+  STORE_CONTENT,
+} from './common/constants';
 import Login from './login';
 import { config, SearchStrategy } from './common/config';
 import {
@@ -137,7 +141,7 @@ export default class FreeGames {
     const nowDate = new Date();
     const elements = resp.body?.data?.Catalog?.searchStore?.elements;
     if (!elements) {
-      throw new Error(`Error paginating catalog data: ${JSON.stringify(resp.body)}`);
+      throw new Error(`Error parsing free games data: ${JSON.stringify(resp.body)}`);
     }
     const freeOfferedGames = elements.filter((offer) => {
       let r = false;
@@ -155,10 +159,49 @@ export default class FreeGames {
       }
       return r;
     });
-    const offersPromises: Promise<OfferInfo>[] = freeOfferedGames.map((game) =>
-      this.getCatalogOffer(game.id, game.namespace)
-    );
-    const offers = await Promise.all(offersPromises);
+    // The id/namespace we have here is not necessarily the actual product on sale.
+    // We need to lookup the product by its slug to get all its offers
+    const allProductOffers: OfferInfo[] = (
+      await Promise.all(
+        freeOfferedGames.map(async (game) => {
+          if (!game.productSlug) {
+            return [
+              {
+                offerNamespace: game.namespace,
+                offerId: game.id,
+                productName: game.title,
+                productSlug: game.productSlug,
+              },
+            ];
+          }
+          const productOffers = await this.getProduct(game.productSlug);
+          return productOffers.map((o) => ({
+            offerNamespace: o.namespace,
+            offerId: o.id,
+            productName: game.title,
+            productSlug: game.productSlug,
+          }));
+        })
+      )
+    ).flat();
+    // Then we need to query each offer for its details so we can find its discount
+    // Then we filter to only the free offers
+    const freeOffers: OfferInfo[] = (
+      await Promise.all(
+        allProductOffers.map(async (offer) =>
+          this.getFreeCatalogOffer(offer.offerId, offer.offerNamespace)
+        )
+      )
+    ).filter((offer): offer is OfferInfo => offer !== undefined);
+    return freeOffers;
+  }
+
+  async getProduct(productSlug: string): Promise<Offer[]> {
+    this.L.debug({ productSlug }, 'Getting product info using productSlug');
+    const url = `${STORE_CONTENT}/products/${productSlug}`;
+    this.L.trace({ url }, 'Getting product info');
+    const entitlementResp = await this.request.get<ProductInfo>(url);
+    const offers = entitlementResp.body.pages.map((page) => page.offer);
     return offers;
   }
 
@@ -214,8 +257,11 @@ export default class FreeGames {
     return purchasableGames;
   }
 
-  async getCatalogOffer(offerId: string, namespace: string): Promise<OfferInfo> {
-    this.L.debug('Mapping IDs to offer');
+  /**
+   * Gets the details of an offer, only returns if it's free
+   */
+  async getFreeCatalogOffer(offerId: string, namespace: string): Promise<OfferInfo | undefined> {
+    this.L.trace({ offerId, namespace }, 'Getting offer details');
     // variables and extensions can be found at https://www.epicgames.com/store/en-US
     // Search for "getCatalogOffer" in source HTML
     const variables = {
@@ -227,7 +273,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: 'd40b3d68a05348726db04fd6df3e29739c94eba516c9442374d96811c441b915',
+        sha256Hash: '3fe02aae98bea508d894173f8bcd8a379f0959ff4b3e1bd2c31183260578922a',
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for catalog offer');
@@ -239,6 +285,11 @@ export default class FreeGames {
       },
     });
     const offer = offerResponse.body.data.Catalog.catalogOffer;
+    const isFree = offer.price?.totalPrice?.discountPrice === 0;
+    this.L.trace({ offerId, namespace, isFree });
+    if (!isFree) {
+      return undefined;
+    }
     return {
       offerId: offer.id,
       offerNamespace: offer.namespace,
