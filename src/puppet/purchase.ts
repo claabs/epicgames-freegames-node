@@ -223,7 +223,7 @@ export default class PuppetPurchase {
       await browser.close();
     } catch (err) {
       if (page) {
-        const errorPrefix = `error-${new Date().toISOString()}`.replace(':', '-');
+        const errorPrefix = `error-${new Date().toISOString()}`.replace(/:/g, '-');
         const errorImage = path.join(CONFIG_DIR, `${errorPrefix}.png`);
         await page.screenshot({ path: errorImage });
         const errorHtml = path.join(CONFIG_DIR, `${errorPrefix}.html`);
