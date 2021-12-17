@@ -4,7 +4,7 @@ import path from 'path';
 import { Logger } from 'pino';
 import { Protocol, ElementHandle, Page } from 'puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
-import { STORE_HOMEPAGE_EN } from '../common/constants';
+import { EPIC_PURCHASE_ENDPOINT, STORE_HOMEPAGE_EN } from '../common/constants';
 import { getLocaltunnelUrl } from '../common/localtunnel';
 import logger from '../common/logger';
 import puppeteer, {
@@ -149,7 +149,7 @@ export default class PuppetPurchase {
         cookies: [...puppeteerCookies, ...hCaptchaCookies],
       });
       await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-      const purchaseUrl = `https://www.epicgames.com/store/purchase?namespace=${namespace}&showNavigation=true&highlightColor=0078f2&offers=${offer}`;
+      const purchaseUrl = `${EPIC_PURCHASE_ENDPOINT}?highlightColor=0078f2&offers=1-${namespace}-${offer}&orderId&purchaseToken&showNavigation=true`;
       this.L.info({ purchaseUrl }, 'Loading purchase page');
       await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
       this.L.trace('Waiting for placeOrderButton');
