@@ -28,7 +28,11 @@ export async function redeemAccount(account: AccountConfig, index: number): Prom
       let { puppeteerPurchase } = config;
       try {
         if (!puppeteerPurchase) {
-          await purchase.purchase(offers[i].offerNamespace, offers[i].offerId);
+          await purchase.purchase(
+            offers[i].offerNamespace,
+            offers[i].offerId,
+            offers[i].productName
+          );
         }
       } catch (err) {
         L.warn(err);

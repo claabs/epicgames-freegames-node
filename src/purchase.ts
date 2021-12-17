@@ -4,9 +4,9 @@ import { Logger } from 'pino';
 import logger from './common/logger';
 import {
   OrderPreviewResponse,
-  ConfirmPurcaseError,
+  ConfirmPurchaseError,
   OrderConfirmRequest,
-  ConfirmLineOffer,
+  OrderPreviewRequest,
 } from './interfaces/types';
 import {
   ORDER_CONFIRM_ENDPOINT,
@@ -30,48 +30,30 @@ export default class Purchase {
   }
 
   async confirmOrder(
-    orderPreview: OrderPreviewResponse,
-    purchaseToken: string,
-    captcha?: string
+    orderPreviewReq: OrderPreviewRequest,
+    orderPreviewRes: OrderPreviewResponse,
+    purchaseToken: string
   ): Promise<void> {
-    const lineOffers: ConfirmLineOffer[] = orderPreview.orderResponse.lineOffers.map((l) => ({
-      offerId: l.offerId,
-      title: l.title,
-      namespace: l.namespace,
-      upgradePathId: null,
-    }));
-
-    // TODO: Can probably just use a spread operator here?
     const confirmOrderRequest: OrderConfirmRequest = {
-      captchaToken: captcha,
-      useDefault: true,
-      setDefault: false,
-      namespace: orderPreview.namespace,
-      country: orderPreview.country,
-      countryName: orderPreview.countryName,
-      orderId: orderPreview.orderId,
-      orderComplete: orderPreview.orderComplete || false,
-      orderError: orderPreview.orderError || false,
-      orderPending: orderPreview.orderPending || false,
-      offers: orderPreview.offers,
-      includeAccountBalance: false,
+      eulaId: null,
+      useDefaultBillingAccount: false,
+      country: orderPreviewReq.country,
+      offers: orderPreviewReq.offers,
+      lineOffers: orderPreviewReq.lineOffers,
       totalAmount: 0,
+      setDefault: orderPreviewReq.setDefault,
+      syncToken: orderPreviewRes.syncToken,
+      canQuickPurchase: true,
+      locale: orderPreviewReq.locale,
       affiliateId: '',
       creatorSource: '',
-      threeDSToken: '',
-      voucherCode: null,
-      syncToken: orderPreview.syncToken,
-      eulaId: null,
-      lineOffers,
-      useDefaultBillingAccount: true,
-      canQuickPurchase: true,
     };
     this.L.trace(
       { body: confirmOrderRequest, url: ORDER_CONFIRM_ENDPOINT },
       'Confirm order request'
     );
     try {
-      const confirmOrderResp = await this.request.post<ConfirmPurcaseError>(
+      const confirmOrderResp = await this.request.post<ConfirmPurchaseError>(
         ORDER_CONFIRM_ENDPOINT,
         {
           json: confirmOrderRequest,
@@ -80,7 +62,7 @@ export default class Purchase {
           },
         }
       );
-      this.L.debug(/* { confirmOrderResponse: confirmOrderResp.body }, */ 'confirm order response');
+      this.L.debug({ confirmation: confirmOrderResp.body.confirmation }, 'confirm order response');
       if (
         confirmOrderResp.body.errorCode &&
         confirmOrderResp.body.errorCode.includes('captcha.challenge')
@@ -94,16 +76,22 @@ export default class Purchase {
         // This still means that you may need to solve a captcha.
         // TODO: Check ownership before purchasing?
         this.L.debug('Item already owned');
-      } else {
-        throw e;
+        return;
       }
+      if (e.response?.body) {
+        this.L.error(
+          { errorBody: e.response.body, code: e.response?.statusCode },
+          'Error encountered during purchase'
+        );
+      }
+      throw e;
     }
   }
 
-  async purchase(linkedOfferNs: string, linkedOfferId: string): Promise<void> {
+  async purchase(namespace: string, offerId: string, title: string): Promise<void> {
     const purchaseSearchParams = {
-      namespace: linkedOfferNs,
-      offers: linkedOfferId,
+      namespace,
+      offers: offerId,
     };
     this.L.trace(
       { searchParams: purchaseSearchParams, url: EPIC_PURCHASE_ENDPOINT },
@@ -122,18 +110,26 @@ export default class Purchase {
       throw new Error('Missing purchase token');
     }
     this.L.debug({ purchaseToken }, 'purchaseToken');
-    const orderPreviewRequest = {
-      useDefault: true,
+
+    const orderPreviewRequest: OrderPreviewRequest = {
+      canQuickPurchase: false,
+      country: 'US',
+      eulaId: null,
+      lineOffers: [
+        {
+          appliedNsOfferIds: [],
+          namespace,
+          offerId,
+          quantity: 1,
+          title,
+          upgradePathId: null,
+        },
+      ],
+      locale: 'en_US',
+      offers: null,
       setDefault: false,
-      namespace: linkedOfferNs,
-      country: null,
-      countryName: null,
-      orderId: null,
-      orderComplete: null,
-      orderError: null,
-      orderPending: null,
-      offers: [linkedOfferId],
-      offerPrice: '',
+      syncToken: '',
+      useDefaultBillingAccount: true,
     };
     this.L.trace(
       { body: orderPreviewRequest, url: ORDER_PREVIEW_ENDPOINT },
@@ -152,6 +148,6 @@ export default class Purchase {
     ) {
       this.L.error(orderPreviewResp.body.orderResponse.message);
     }
-    await this.confirmOrder(orderPreviewResp.body, purchaseToken);
+    await this.confirmOrder(orderPreviewRequest, orderPreviewResp.body, purchaseToken);
   }
 }

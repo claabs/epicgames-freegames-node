@@ -40,51 +40,36 @@ export interface CatalogResponse {
   paymentCurrency: string;
 }
 
-export interface OrderPreviewResponse {
-  affiliation: null;
-  catalogResponse: any;
-  country: string;
-  countryName: string;
-  message: null;
+export interface PurchaseLineOffer {
+  appliedNsOfferIds: string[];
   namespace: string;
-  offers: string[];
-  orderComplete: boolean | null;
-  orderError: boolean | null;
-  orderId: null | null;
-  orderPending: boolean | null;
-  orderResponse: PreviewOrderResponse;
-  paypalError: null;
-  showCurrencyChangeMessage: boolean;
-  syncToken: string;
-  voucherList: null;
+  offerId: string;
+  quantity: number;
+  title: string;
+  upgradePathId: null;
 }
 
-export interface OrderConfirmRequest {
-  useDefault: boolean;
-  setDefault: boolean;
-  namespace: string;
+export interface OrderPreviewRequest {
+  eulaId: string | null;
+  useDefaultBillingAccount: boolean;
   country: string;
-  countryName: string;
-  orderId: string | null;
-  orderComplete: boolean;
-  orderError: boolean;
-  orderPending: boolean;
-  offers: string[];
-  includeAccountBalance: boolean;
+  offers: string[] | null;
+  lineOffers: PurchaseLineOffer[];
+  setDefault: boolean;
+  syncToken: string;
+  canQuickPurchase: boolean;
+  locale: string;
+}
+
+export interface OrderConfirmRequest extends OrderPreviewRequest {
   totalAmount: number;
   affiliateId: string;
   creatorSource: string;
-  threeDSToken: string;
-  voucherCode: string | null;
-  eulaId: string | null;
-  lineOffers: ConfirmLineOffer[];
-  useDefaultBillingAccount: boolean;
-  syncToken: string;
   captchaToken?: string;
-  canQuickPurchase?: boolean;
 }
 
-export interface ConfirmPurcaseError {
+export interface ConfirmPurchaseError {
+  confirmation: string;
   captchaResult: string;
   syncToken: string;
   errorCode: string;
@@ -97,19 +82,13 @@ export interface OfferInfo {
   productSlug: string;
 }
 
-export interface ConfirmLineOffer {
-  offerId: string;
-  title: string;
-  namespace: string;
-  upgradePathId: string | null;
-}
-
 export interface ArkoseData {
   blob: string;
 }
 
 export interface ReputationData {
   verdict: string;
+  // eslint-disable-next-line camelcase
   arkose_data: ArkoseData;
 }
 
@@ -118,103 +97,23 @@ export interface PurchaseError {
   message?: string;
 }
 
-export interface PreviewOrderResponse extends PurchaseError {
-  orderType: string;
-  symbol: string;
+export type PreviewOrderResponseInner = Record<string, any> & PurchaseError;
+
+export interface OrderPreviewResponse {
+  affiliation: null;
+  catalogResponse: any;
   country: string;
-  agentUserName: string;
-  toUSDExchangeRate: number;
-  totalPrice: number;
-  accountIpCountry: string;
-  resendReceiptForPublic: boolean;
-  formattedTotalPrice: FormattedAmount;
-  formattedConvenienceFee: FormattedAmount;
-  paymentCurrencySymbol: string;
-  vatRate: number;
-  orderStatus: string;
-  epicAccountId: string;
-  salesChannel: string;
-  formattedPresentmentAmount: FormattedAmount;
-  canQuickPurchase: boolean;
-  formattedBillingPaymentAmount: FormattedAmount;
-  taxStatus: string;
-  totalTax: number;
-  isFree: boolean;
-  coupons: any[];
-  walletPaymentAmount: number;
-  totalDiscounted: number;
-  resendReceiptForAdmin: boolean;
-  useSplitPayment: boolean;
-  currency: string;
-  formattedTotalTax: FormattedAmount;
-  rewardVoucher: null;
-  fraudScore: number;
-  lastModifiedDate: string;
-  paymentCurrencyCode: string;
-  paymentCurrencyAmount: number;
-  accountIpAddress: string;
-  vat: number;
-  batchJobFailedRetryCount: number;
-  lineOffers: PreviewLineOffer[];
-  merchantGroup: string;
-  creationDate: string;
-  formattedWalletPaymentAmount: FormattedAmount;
-  convenienceFee: number;
-  identityId: string;
-  fraud: boolean;
-  billingPaymentAmount: number;
-  vatIncluded: boolean;
-  paymentCurrencyExchangeRate: number;
-  formattedTotalDiscounted: FormattedAmount;
-  canSplitPayment: boolean;
-}
-
-export interface FormattedAmount {
-  amount: string;
-  symbol: string;
-  placement: string;
-  decimals: number;
-  digits: number;
-}
-
-export interface PreviewLineOffer {
-  totalPrice: number;
-  formattedTotalPrice: FormattedAmount;
-  entitlementSource: string;
-  vatRate: number;
-  sellerName: string;
-  refundedRevenueWithoutTax: number;
-  revenueWithoutTax: number;
-  title: string;
-  formattedBasePrice: FormattedAmount;
-  offerType: string;
-  basePayoutCurrencyCode: string;
-  sellerId: string;
-  formattedDiscountedPrice: FormattedAmount;
-  refundedBasePayoutPrice: number;
-  remainingDiscountPrice: number;
-  refundedConvenienceFee: number;
-  refundedTax: number;
-  initiatedBy: string;
-  basePrice: number;
-  formattedBasePayoutPrice: FormattedAmount;
-  unitPrice: number;
-  refundedDiscountPrice: number;
-  quantity: number;
-  vat: number;
-  formattedVoucherPrice: FormattedAmount;
-  refundedQuantity: number;
-  shareRate: number;
-  shareRateByDeveloper: number;
-  voucherDiscount: number;
-  namespaceDisplayName: string;
-  convenienceFee: number;
-  discountedPrice: number;
-  formattedTaxPrice: FormattedAmount;
+  countryName: string;
+  lineOffers: null;
+  message: null;
   namespace: string;
-  formattedUnitPrice: FormattedAmount;
-  offerId: string;
-  taxPrice: number;
-  basePayoutPrice: number;
-  roleNames: any[];
+  offers: string[];
+  orderComplete: boolean | null;
+  orderError: boolean | null;
+  orderId: null | null;
+  orderPending: boolean | null;
+  orderResponse: PreviewOrderResponseInner;
+  showCurrencyChangeMessage: boolean;
+  syncToken: string;
+  voucherList: null;
 }
