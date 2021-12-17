@@ -1,4 +1,5 @@
 /* eslint-disable class-methods-use-this */
+import { outputFileSync } from 'fs-extra';
 import path from 'path';
 import { Logger } from 'pino';
 import { Protocol, ElementHandle, Page } from 'puppeteer';
@@ -209,13 +210,17 @@ export default class PuppetPurchase {
       await browser.close();
     } catch (err) {
       if (page) {
-        const errorFile = `error-${new Date().toISOString()}.png`;
+        const errorPrefix = `error-${new Date().toISOString()}`;
+        const errorImage = `${errorPrefix}.png`;
         await page.screenshot({
-          path: path.join(CONFIG_DIR, errorFile),
+          path: path.join(CONFIG_DIR, errorImage),
         });
+        const errorHtml = `${errorPrefix}.html`;
+        const htmlContent = await page.content();
+        outputFileSync(errorHtml, htmlContent, 'utf8');
         this.L.error(
-          { errorFile },
-          'Encountered an error during browser automation. Saved a screenshot for debugging purposes.'
+          { errorImage, errorHtml },
+          'Encountered an error during browser automation. Saved a screenshot and page HTML for debugging purposes.'
         );
       }
       if (browser) await browser.close();
