@@ -1,4 +1,10 @@
-import { DiscordNotifier, EmailNotifier, LocalNotifier, TelegramNotifier } from './notifiers';
+import {
+  AppriseNotifier,
+  DiscordNotifier,
+  EmailNotifier,
+  LocalNotifier,
+  TelegramNotifier,
+} from './notifiers';
 import {
   config,
   DiscordConfig,
@@ -6,6 +12,7 @@ import {
   LocalConfig,
   NotificationType,
   TelegramConfig,
+  AppriseConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
@@ -40,6 +47,8 @@ export async function sendNotification(
         return new LocalNotifier(notifierConfig as LocalConfig);
       case NotificationType.TELEGRAM:
         return new TelegramNotifier(notifierConfig as TelegramConfig);
+      case NotificationType.APPRISE:
+        return new AppriseNotifier(notifierConfig as AppriseConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }

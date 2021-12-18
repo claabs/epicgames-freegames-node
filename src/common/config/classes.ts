@@ -28,6 +28,7 @@ export enum NotificationType {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   DISCORD = 'discord',
+  APPRISE = 'apprise',
   LOCAL = 'local',
 }
 
@@ -52,6 +53,40 @@ export class LocalConfig extends NotifierConfig {
    */
   constructor() {
     super(NotificationType.LOCAL);
+  }
+}
+
+/**
+ * Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api)
+ * Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)
+ */
+export class AppriseConfig extends NotifierConfig {
+  /**
+   * The base URL of your Apprise instance
+   * @example http://localhost:8000
+   * @env APPRISE_API
+   */
+  @IsUrl({
+    require_tld: false,
+  })
+  apiUrl: string;
+
+  /**
+   * One or more URLs identifying where the notification should be sent to.
+   * If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance.
+   * More details: https://github.com/caronc/apprise-api#stateless-solution
+   * @example mailto://user:pass@gmail.com
+   * @env APPRISE_URLS
+   */
+  @IsString()
+  @IsOptional()
+  urls?: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.APPRISE);
   }
 }
 
@@ -310,10 +345,11 @@ export class AccountConfig {
         { value: DiscordConfig, name: NotificationType.DISCORD },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
+        { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
+  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
 
   /**
    * @ignore
@@ -389,7 +425,12 @@ export enum LogLevel {
  *        "type": "telegram",
  *        "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
  *        "chatId": "-987654321",
- *      }
+ *      },
+ *      {
+ *        "type": "apprise",
+ *        "apiUrl": "http://192.168.1.2:8000",
+ *        "urls": "mailto://user:pass@gmail.com",
+ *      },
  *    ],
  * }
  * ```
@@ -520,10 +561,11 @@ export class AppConfig {
         { value: DiscordConfig, name: NotificationType.DISCORD },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
+        { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig)[];
+  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
 
   /**
    * Number of hours to wait for a response for a notification.
