@@ -3,9 +3,10 @@ import { config } from './common/config';
 import L from './common/logger';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
-const { COMMIT_SHA, BRANCH } = process.env;
+const { COMMIT_SHA, BRANCH, DISTRO } = process.env;
 
 export async function checkForUpdate(): Promise<void> {
+  L.info({ COMMIT_SHA, BRANCH, DISTRO }, `Started ${PROJECT_NAME}`);
   if (!(COMMIT_SHA && BRANCH) || config.skipVersionCheck) {
     L.debug(
       { COMMIT_SHA, BRANCH, skipVersionCheck: config.skipVersionCheck },
@@ -36,7 +37,7 @@ export async function checkForUpdate(): Promise<void> {
 }
 
 export function logVersionOnError(): void {
-  if (COMMIT_SHA || BRANCH) {
-    L.warn({ COMMIT_SHA, BRANCH }, 'Current version');
+  if (COMMIT_SHA || BRANCH || DISTRO) {
+    L.warn({ COMMIT_SHA, BRANCH, DISTRO }, 'Current version');
   }
 }
