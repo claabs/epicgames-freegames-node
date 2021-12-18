@@ -170,14 +170,14 @@ export default class PuppetPurchase {
       const placeOrderButton = (await page.waitForSelector(
         `button.payment-btn:not([disabled])`
       )) as ElementHandle<HTMLButtonElement>;
-      this.L.trace('Clicking placeOrderButton');
+      this.L.debug('Clicking placeOrderButton');
       await placeOrderButton.click({ delay: 100 });
       try {
         const euRefundAgreeButton = (await page.waitForSelector(
           `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
           { timeout: 3000 }
         )) as ElementHandle<HTMLButtonElement>;
-        this.L.trace('Clicking euRefundAgreeButton');
+        this.L.debug('Clicking euRefundAgreeButton');
         await euRefundAgreeButton.click({ delay: 100 });
       } catch (err) {
         if (!err.message.includes('timeout')) {
