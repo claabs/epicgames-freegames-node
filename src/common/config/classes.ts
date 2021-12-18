@@ -57,8 +57,8 @@ export class LocalConfig extends NotifierConfig {
 }
 
 /**
- * Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api)
- * Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)
+ * Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api).
+ * Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services).
  */
 export class AppriseConfig extends NotifierConfig {
   /**
@@ -719,6 +719,20 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof TelegramConfig)) {
         this.notifiers.push(telegram);
+      }
+    }
+
+    // Use environment variables to fill apprise notification config if present
+    const { APPRISE_API, APPRISE_URLS } = process.env;
+    if (APPRISE_API) {
+      const apprise = new AppriseConfig();
+      apprise.apiUrl = APPRISE_API;
+      apprise.urls = APPRISE_URLS;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof AppriseConfig)) {
+        this.notifiers.push(apprise);
       }
     }
 
