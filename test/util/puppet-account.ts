@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import RandExp from 'randexp';
-import { config } from 'dotenv';
+import { config as dotenv } from 'dotenv';
 import { Logger } from 'pino';
 import { Page, Protocol, ElementHandle } from 'puppeteer';
 // import { writeFileSync } from 'fs-extra';
@@ -14,8 +14,11 @@ import puppeteer, {
 } from '../../src/common/puppeteer';
 import logger from '../../src/common/logger';
 import Smtp4Dev from './smtp4dev';
+import { LocalNotifier } from '../../src/notifiers';
 
-config();
+dotenv();
+
+const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000;
 
 export interface AccountManagerProps {
   username?: string;
@@ -98,6 +101,7 @@ export default class AccountManager {
     );
     await this.fillDOB(page);
     await this.fillSignUpForm(page);
+    await this.handleCaptcha(page);
     await this.fillEmailVerificationForm(page);
 
     this.L.trace('Saving new cookies');
@@ -220,6 +224,44 @@ export default class AccountManager {
     )) as ElementHandle<HTMLButtonElement>;
     this.L.trace('Clicking submitButton');
     await submitButton.click({ delay: 100 });
+  }
+
+  private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
+    try {
+      const talonHandle = await page.$('iframe#talon_frame_registration_prod');
+      if (!talonHandle) throw new Error('Could not find talon_frame_registration_prod');
+      const talonFrame = await talonHandle.contentFrame();
+      if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
+      this.L.trace('Waiting for hcaptcha iframe');
+      await talonFrame.waitForSelector(`#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`, {
+        visible: true,
+      });
+      return 'captcha';
+    } catch (err) {
+      if (err.message.includes('timeout')) {
+        throw err;
+      }
+      if (err.message.includes('detached')) {
+        this.L.trace(err);
+      } else {
+        this.L.warn(err);
+      }
+      return 'nav';
+    }
+  }
+
+  private async handleCaptcha(page: Page): Promise<void> {
+    const action = await this.waitForHCaptcha(page);
+    if (action === 'nav') return;
+    this.L.debug('Captcha detected');
+    const url = await page.openPortal();
+    this.L.info({ url }, 'Go to this URL and do something');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    new LocalNotifier(null as any).sendNotification(url);
+    await page.waitForSelector(`input[name='code-input-0']`, {
+      timeout: NOTIFICATION_TIMEOUT,
+    });
+    await page.closePortal();
   }
 
   private async fillEmailVerificationForm(page: Page): Promise<void> {
