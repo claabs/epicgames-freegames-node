@@ -7,6 +7,7 @@ const logger = pino({
   },
   useLevelLabels: true,
   level: config.logLevel,
+  base: {},
 });
 
 export default logger;

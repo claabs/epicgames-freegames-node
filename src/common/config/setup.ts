@@ -17,6 +17,7 @@ const L = pino({
   },
   useLevelLabels: true,
   level: process.env.LOG_LEVEL || 'info',
+  base: {},
 });
 
 // TODO: Add YAML parser
