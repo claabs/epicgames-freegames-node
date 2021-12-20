@@ -35,7 +35,7 @@ FROM base as deps
 # to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
 # ensure that version is published at https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium
 RUN apk add --no-cache \
-    'chromium=~96' \
+    'chromium=~93' \
     nss \
     freetype \
     harfbuzz \
