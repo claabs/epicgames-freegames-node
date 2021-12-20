@@ -4,7 +4,7 @@ import json5 from 'json5';
 import path from 'path';
 import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
-import { plainToClass, classToPlain } from 'class-transformer';
+import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
 import { AppConfig, EmailConfig, WebPortalConfig } from './classes';
 
@@ -46,7 +46,7 @@ if (!configPath) {
   config = new AppConfig();
   try {
     L.debug({ newConfigPath }, 'Creating new config file');
-    fs.writeJSONSync(newConfigPath, classToPlain(config), { spaces: 2 });
+    fs.writeJSONSync(newConfigPath, instanceToPlain(config), { spaces: 2 });
     L.info({ newConfigPath }, 'Wrote new default config file');
   } catch (err) {
     L.debug(err);
@@ -55,7 +55,7 @@ if (!configPath) {
 } else {
   L.debug({ configPath });
   const parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
-  config = plainToClass(AppConfig, parsedConfig);
+  config = plainToInstance(AppConfig, parsedConfig);
 }
 
 /**
@@ -105,6 +105,6 @@ if (errors.length > 0) {
   throw new Error('Invalid config');
 }
 
-L.debug({ config: classToPlain(config) });
+L.debug({ config: instanceToPlain(config) });
 
 export { config };

@@ -13,6 +13,7 @@ import { checkForUpdate, logVersionOnError } from './version';
 
 export async function redeemAccount(account: AccountConfig, index: number): Promise<void> {
   const waitTime = index * config.intervalTime * 1000;
+  // eslint-disable-next-line no-promise-executor-return
   await new Promise((resolve) => setTimeout(resolve, waitTime));
   L.info(`Checking free games for ${account.email} `);
   try {
