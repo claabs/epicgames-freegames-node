@@ -175,12 +175,14 @@ export default class FreeGames {
             ];
           }
           const productOffers = await this.getProduct(game.productSlug);
-          return productOffers.map((o) => ({
-            offerNamespace: o.namespace,
-            offerId: o.id,
-            productName: game.title,
-            productSlug: game.productSlug,
-          }));
+          return productOffers
+            .filter((o) => o.hasOffer)
+            .map((o) => ({
+              offerNamespace: o.namespace,
+              offerId: o.id,
+              productName: game.title,
+              productSlug: game.productSlug,
+            }));
         })
       )
     ).flat();
