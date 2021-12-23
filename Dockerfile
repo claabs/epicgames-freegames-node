@@ -17,7 +17,7 @@ FROM base as deps
 
 RUN dnf -y module install nodejs:14/minimal \
     && dnf -y install \
-    chromium \
+    chromium-headless \
     # App dependencies
     jq \
     tzdata \
@@ -73,7 +73,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_EXECUTABLE_PATH=/usr/lib64/chromium-browser/headless_shell \
     COMMIT_SHA=${COMMIT_SHA} \
     BRANCH=${BRANCH}
 
