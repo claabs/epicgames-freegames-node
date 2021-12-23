@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM fedora:36 as base
+FROM fedora:35 as base
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
@@ -16,7 +16,7 @@ WORKDIR /usr/app
 FROM base as deps
 
 RUN dnf -y module install nodejs:14/minimal \
-    && dnf -y install \
+    && dnf -y --enablerepo=updates-testing install \
     chromium-headless \
     # App dependencies
     jq \
@@ -69,7 +69,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="fedora:36" \
+    org.opencontainers.image.base.name="fedora:35" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
