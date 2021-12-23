@@ -528,13 +528,13 @@ export class AppConfig {
 
   /**
    * Default to purchasing games using browser automation
-   * @example true
-   * @default false
+   * @example false
+   * @default true
    * @env PUPPETEER_PURCHASE
    */
   @IsOptional()
   @IsBoolean()
-  puppeteerPurchase = process.env.PUPPETEER_PURCHASE?.toLowerCase() === 'true' || false;
+  puppeteerPurchase = process.env.PUPPETEER_PURCHASE?.toLowerCase() !== 'false';
 
   /**
    * A list of accounts to work with
