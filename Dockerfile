@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:14-bullseye-slim as base
+FROM fedora:36 as base
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
@@ -9,10 +9,28 @@ ARG TARGETARCH
 
 WORKDIR /usr/app
 
+
+########
+# DEPS
+########
+FROM base as deps
+
+RUN dnf -y module install nodejs:14/minimal \
+    && dnf -y install \
+    chromium \
+    # App dependencies
+    jq \
+    tzdata \
+    cronie \
+    tini \
+    && dnf clean all \
+    && rm -rf /var/cache/yum
+
+
 ########
 # BUILD
 ########
-FROM base as build
+FROM deps as build
 
 # Copy all source files
 COPY package*.json tsconfig.json ./
@@ -24,33 +42,6 @@ RUN npm ci
 COPY src src
 
 RUN npm run build
-
-########
-# DEPS
-########
-FROM base as deps
-
-# Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-puppeteer-in-docker
-# The Google Chrome apt list only seems to provide the latest version, so version compatibility with puppeteer is questionable
-RUN apt-get update \
-    && apt-get install -y wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=${TARGETARCH}] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    google-chrome-stable \
-    fonts-ipafont-gothic \
-    fonts-wqy-zenhei \
-    fonts-thai-tlwg \
-    fonts-kacst \
-    fonts-freefont-ttf \
-    libxss1 \
-    # App dependencies
-    jq \
-    tzdata \
-    cron \
-    tini \
-    && rm -rf /var/lib/apt/lists/*
 
 ########
 # DEPLOY
@@ -78,11 +69,11 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-bullseye-slim" \
+    org.opencontainers.image.base.name="fedora:36" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     COMMIT_SHA=${COMMIT_SHA} \
     BRANCH=${BRANCH}
 
