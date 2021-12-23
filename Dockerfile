@@ -1,10 +1,11 @@
 ########
 # BASE
 ########
-FROM node:14-alpine3.14 as base
+FROM node:14-bullseye-slim as base
 
-ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+
+ARG TARGETARCH
 
 WORKDIR /usr/app
 
@@ -29,22 +30,27 @@ RUN npm run build
 ########
 FROM base as deps
 
-# Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-on-alpine
-# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v10.4.0/src/revisions.ts,
-# select the correct tag for the puppeteer version, and note the chromium revision number. Then go
-# to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
-# ensure that version is published at https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium
-RUN apk add --no-cache \
-    'chromium=~93' \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
+# Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-puppeteer-in-docker
+# The Google Chrome apt list only seems to provide the latest version, so version compatibility with puppeteer is questionable
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=${TARGETARCH}] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    google-chrome-stable \
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-thai-tlwg \
+    fonts-kacst \
+    fonts-freefont-ttf \
+    libxss1 \
     # App dependencies
     jq \
     tzdata \
-    tini
+    cron \
+    tini \
+    && rm -rf /var/lib/apt/lists/*
 
 ########
 # DEPLOY
@@ -72,11 +78,11 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-alpine3.14" \
+    org.opencontainers.image.base.name="node:14-bullseye-slim" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
     COMMIT_SHA=${COMMIT_SHA} \
     BRANCH=${BRANCH}
 

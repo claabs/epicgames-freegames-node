@@ -39,7 +39,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push master (Alpine)
+      - name: Build and push master
         if: ${{ github.ref == 'refs/heads/master' }}
         uses: docker/build-push-action@v2
         with:
@@ -50,29 +50,14 @@ jobs:
             charlocharlie/epicgames-freegames:${{ github.sha }}
             ghcr.io/claabs/epicgames-freegames-node:latest
             ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
+            charlocharlie/epicgames-freegames:bullseye-slim
+            ghcr.io/claabs/epicgames-freegames-node:bullseye-slim
           platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
-
-      - name: Build and push master (Debian)
-        if: ${{ github.ref == 'refs/heads/master' }}
-        uses: docker/build-push-action@v2
-        with:
-          target: deploy
-          push: true
-          file: Dockerfile.debian
-          tags: |
-            charlocharlie/epicgames-freegames:bullseye-slim
-            ghcr.io/claabs/epicgames-freegames-node:bullseye-slim
-          platforms: linux/amd64
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
-            BRANCH=${{ env.GIT_BRANCH }}
-          cache-from: type=gha,scope=${{ github.workflow }}-Debian
-          cache-to: type=gha,mode=max,scope=${{ github.workflow }}-Debian
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
