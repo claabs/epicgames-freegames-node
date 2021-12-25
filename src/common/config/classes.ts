@@ -118,14 +118,16 @@ export class DiscordConfig extends NotifierConfig {
  */
 export class PushoverConfig extends NotifierConfig {
   /**
-   * Discord channel webhook URL.
-   * Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
-   * @example https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456
-   * @env DISCORD_WEBHOOK
+   * @example a172fyyl9gw99p2xi16tq8hnib48p2
+   * @env PUSHOVER_TOKEN
    */
   @IsString()
   token: string;
 
+  /**
+   * @example uvgidym7l5ggpwu2r8i1oy6diaapll
+   * @env PUSHOVER_USER_ID
+   */
   @IsString()
   userKey: string;
 
@@ -368,13 +370,21 @@ export class AccountConfig {
       subTypes: [
         { value: EmailConfig, name: NotificationType.EMAIL },
         { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: PushoverConfig, name: NotificationType.PUSHOVER },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
+  notifiers?: (
+    | EmailConfig
+    | DiscordConfig
+    | LocalConfig
+    | TelegramConfig
+    | AppriseConfig
+    | PushoverConfig
+  )[];
 
   /**
    * @ignore
@@ -584,13 +594,21 @@ export class AppConfig {
       subTypes: [
         { value: EmailConfig, name: NotificationType.EMAIL },
         { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: PushoverConfig, name: NotificationType.PUSHOVER },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
+  notifiers?: (
+    | EmailConfig
+    | DiscordConfig
+    | LocalConfig
+    | TelegramConfig
+    | AppriseConfig
+    | PushoverConfig
+  )[];
 
   /**
    * Number of hours to wait for a response for a notification.
@@ -730,6 +748,20 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof DiscordConfig)) {
         this.notifiers.push(discord);
+      }
+    }
+
+    // Use environment variables to fill pushover notification config if present
+    const { PUSHOVER_TOKEN, PUSHOVER_USER_ID } = process.env;
+    if (PUSHOVER_TOKEN) {
+      const pushover = new PushoverConfig();
+      pushover.token = PUSHOVER_TOKEN;
+      pushover.userKey = PUSHOVER_USER_ID!;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof PushoverConfig)) {
+        this.notifiers.push(pushover);
       }
     }
 
