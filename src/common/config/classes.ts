@@ -28,6 +28,7 @@ export enum NotificationType {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   DISCORD = 'discord',
+  PUSHOVER = 'pushover',
   APPRISE = 'apprise',
   LOCAL = 'local',
 }
@@ -109,6 +110,30 @@ export class DiscordConfig extends NotifierConfig {
    */
   constructor() {
     super(NotificationType.DISCORD);
+  }
+}
+
+/**
+ * Sends a message pushover
+ */
+export class PushoverConfig extends NotifierConfig {
+  /**
+   * Discord channel webhook URL.
+   * Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
+   * @example https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456
+   * @env DISCORD_WEBHOOK
+   */
+  @IsString()
+  token: string;
+
+  @IsString()
+  userKey: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.PUSHOVER);
   }
 }
 
