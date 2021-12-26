@@ -4,10 +4,10 @@ import { Logger } from 'pino';
 import { Protocol, ElementHandle, Page } from 'puppeteer';
 import path from 'path';
 import logger from '../common/logger';
-import puppeteer, {
+import {
   getDevtoolsUrl,
-  launchArgs,
-  newPageSafe,
+  safeLaunchBrowser,
+  safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -71,8 +71,8 @@ export default class PuppetLogin {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
-    const browser = await puppeteer.launch(launchArgs);
-    const page = await newPageSafe(browser, this.L);
+    const browser = await safeLaunchBrowser(this.L);
+    const page = await safeNewPage(browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(page));
       const cdpClient = await page.target().createCDPSession();

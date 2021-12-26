@@ -109,10 +109,14 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
   ],
 };
 
-export const newPageSafe = async (browser: Browser, L: Logger, attempts = 0): Promise<Page> => {
+export const retryFunction = async <T>(
+  f: () => Promise<T>,
+  L: Logger,
+  attempts = 0
+): Promise<T> => {
   const TIMEOUT = 30 * 1000;
   const MAX_ATTEMPTS = 30;
-  const newPageCancelable = cancelable(browser.newPage());
+  const newPageCancelable = cancelable(f());
   const res = await Promise.race([
     newPageCancelable,
     // eslint-disable-next-line no-promise-executor-return
@@ -125,5 +129,13 @@ export const newPageSafe = async (browser: Browser, L: Logger, attempts = 0): Pr
   if (attempts > MAX_ATTEMPTS)
     throw new Error(`Could not create new page after ${MAX_ATTEMPTS} attempts.`);
   L.debug({ attempts }, `Page did not create after ${TIMEOUT}ms. Trying again.`);
-  return newPageSafe(browser, L, attempts + 1);
+  return retryFunction(f, L, attempts + 1);
+};
+
+export const safeNewPage = (browser: Browser, L: Logger, attempts = 0): Promise<Page> => {
+  return retryFunction(() => browser.newPage(), L, attempts);
+};
+
+export const safeLaunchBrowser = (L: Logger, attempts = 0): Promise<Browser> => {
+  return retryFunction(() => puppeteer.launch(launchArgs), L, attempts);
 };
