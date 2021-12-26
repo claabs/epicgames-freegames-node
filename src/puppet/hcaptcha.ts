@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { ElementHandle, Protocol } from 'puppeteer';
 import path from 'path';
-import puppeteer, { getDevtoolsUrl, launchArgs } from '../common/puppeteer';
+import puppeteer, { getDevtoolsUrl, launchArgs, newPageSafe } from '../common/puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
 import L from '../common/logger';
 
@@ -45,7 +45,7 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
     try {
       L.debug('Setting hCaptcha accessibility cookies');
       browser = await puppeteer.launch(launchArgs);
-      const page = await browser.newPage();
+      const page = await newPageSafe(browser, L);
 
       L.trace(getDevtoolsUrl(page));
       L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);

@@ -10,6 +10,7 @@ import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
   launchArgs,
+  newPageSafe,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -141,7 +142,7 @@ export default class PuppetPurchase {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer (short)');
     const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
+    const page = await newPageSafe(browser, this.L);
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
     try {

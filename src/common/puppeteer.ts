@@ -1,8 +1,10 @@
 import puppeteer from 'puppeteer-extra';
-import { Page, Protocol } from 'puppeteer';
+import { Page, Protocol, Browser } from 'puppeteer';
 import PortalPlugin, { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { Logger } from 'pino';
+import { cancelable } from 'cancelable-promise';
 import { ToughCookieFileStore } from './request';
 import { config } from './config';
 
@@ -105,4 +107,23 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     // '--remote-debugging-port=3001',
     // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
   ],
+};
+
+export const newPageSafe = async (browser: Browser, L: Logger, attempts = 0): Promise<Page> => {
+  const TIMEOUT = 30 * 1000;
+  const MAX_ATTEMPTS = 30;
+  const newPageCancelable = cancelable(browser.newPage());
+  const res = await Promise.race([
+    newPageCancelable,
+    // eslint-disable-next-line no-promise-executor-return
+    new Promise((resolve) => setTimeout(resolve, TIMEOUT)).then(() => 'timeout'),
+  ]);
+  if (typeof res !== 'string') {
+    return res;
+  }
+  newPageCancelable.cancel();
+  if (attempts > MAX_ATTEMPTS)
+    throw new Error(`Could not create new page after ${MAX_ATTEMPTS} attempts.`);
+  L.debug({ attempts }, `Page did not create after ${TIMEOUT}ms. Trying again.`);
+  return newPageSafe(browser, L, attempts + 1);
 };

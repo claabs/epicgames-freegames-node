@@ -16,7 +16,7 @@ import {
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
-import puppeteer, { getDevtoolsUrl, launchArgs } from './common/puppeteer';
+import puppeteer, { getDevtoolsUrl, launchArgs, newPageSafe } from './common/puppeteer';
 import { getLocaltunnelUrl } from './common/localtunnel';
 
 export async function sendNotification(
@@ -62,7 +62,7 @@ export async function sendNotification(
 export async function testNotifiers(): Promise<void> {
   L.info('Testing all configured notifiers');
   const browser = await puppeteer.launch(launchArgs);
-  const page = await browser.newPage();
+  const page = await newPageSafe(browser, L);
   L.trace(getDevtoolsUrl(page));
   await page.goto('https://claabs.github.io/epicgames-freegames-node/test.html');
   let url = await page.openPortal();

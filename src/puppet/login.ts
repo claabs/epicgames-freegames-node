@@ -7,6 +7,7 @@ import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
   launchArgs,
+  newPageSafe,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -71,7 +72,7 @@ export default class PuppetLogin {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
     const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
+    const page = await newPageSafe(browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(page));
       const cdpClient = await page.target().createCDPSession();
