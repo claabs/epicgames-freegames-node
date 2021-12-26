@@ -37,7 +37,7 @@
     "pino-pretty": "^3.6.1",
     "puppeteer": "^13.0.0",
     "puppeteer-extra": "^3.2.3",
-    "puppeteer-extra-plugin-portal": "^3.0.0",
+    "puppeteer-extra-plugin-portal": "^3.0.1",
     "puppeteer-extra-plugin-stealth": "^2.9.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
