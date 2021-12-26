@@ -15,6 +15,8 @@ WORKDIR /usr/app
 ########
 FROM base as deps
 
+# We have to get it from the testing repo cause it's the latest one that has Chromium 96
+# https://src.fedoraproject.org/rpms/chromium
 RUN dnf -y module install nodejs:14/minimal \
     && dnf -y --enablerepo=updates-testing install \
     chromium-headless \
