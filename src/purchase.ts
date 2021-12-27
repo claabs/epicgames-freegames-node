@@ -79,7 +79,7 @@ export default class Purchase {
         return;
       }
       if (e.response?.body) {
-        this.L.warn(
+        this.L.debug(
           { errorBody: e.response.body, code: e.response?.statusCode },
           'Error encountered during purchase'
         );
