@@ -10,6 +10,8 @@ import logger from '../common/logger';
 import puppeteer, {
   getDevtoolsUrl,
   launchArgs,
+  safeLaunchBrowser,
+  safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
@@ -83,6 +85,7 @@ export default class PuppetPurchase {
         if (startTime.getTime() + timeout <= new Date().getTime()) {
           throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
         }
+        // eslint-disable-next-line no-promise-executor-return
         await new Promise((resolve) => setTimeout(resolve, poll));
         return waitForPurchaseButton(startTime);
       }
@@ -140,8 +143,8 @@ export default class PuppetPurchase {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Purchasing with puppeteer (short)');
-    const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
+    const browser = await safeLaunchBrowser(this.L);
+    const page = await safeNewPage(browser, this.L);
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
     try {
