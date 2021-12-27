@@ -102,16 +102,21 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
     '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
     '--single-process',
-    '--disable-gpu', // Maybe prevents some hangs on launch
     // For debugging in Docker
     // '--remote-debugging-port=3001',
     // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
   ],
 };
 
-export const retryFunction = async <T>(
+/**
+ * This is a hacky solution to retry a function if it doesn't return within a timeout.
+ * It leaves behind a danging chromium process, but it should get cleaned up when this parent node
+ * process exits if the container is using tini.
+ */
+const retryFunction = async <T>(
   f: () => Promise<T>,
   L: Logger,
+  outputName: string,
   attempts = 0
 ): Promise<T> => {
   const TIMEOUT = 30 * 1000;
@@ -127,15 +132,24 @@ export const retryFunction = async <T>(
   }
   newPageCancelable.cancel();
   if (attempts > MAX_ATTEMPTS)
-    throw new Error(`Could not create new page after ${MAX_ATTEMPTS} attempts.`);
-  L.debug({ attempts }, `Page did not create after ${TIMEOUT}ms. Trying again.`);
-  return retryFunction(f, L, attempts + 1);
+    throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS} attempts.`);
+  L.debug(
+    { attempts, MAX_ATTEMPTS },
+    `${outputName} did not work after ${TIMEOUT}ms. Trying again.`
+  );
+  return retryFunction(f, L, outputName, attempts + 1);
 };
 
-export const safeNewPage = (browser: Browser, L: Logger, attempts = 0): Promise<Page> => {
-  return retryFunction(() => browser.newPage(), L, attempts);
+/**
+ * Create a new page within a wrapper that will retry if it hangs for 30 seconds
+ */
+export const safeNewPage = (browser: Browser, L: Logger): Promise<Page> => {
+  return retryFunction(() => browser.newPage(), L, 'new page');
 };
 
-export const safeLaunchBrowser = (L: Logger, attempts = 0): Promise<Browser> => {
-  return retryFunction(() => puppeteer.launch(launchArgs), L, attempts);
+/**
+ * Launcha new browser within a wrapper that will retry if it hangs for 30 seconds
+ */
+export const safeLaunchBrowser = (L: Logger): Promise<Browser> => {
+  return retryFunction(() => puppeteer.launch(launchArgs), L, 'browser launch');
 };
