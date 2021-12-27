@@ -70,5 +70,5 @@ jobs:
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
-          cache-from: type=gha,scope=${{ github.workflow }}
-          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
+          # cache-from: type=gha,scope=${{ github.workflow }}
+          # cache-to: type=gha,mode=max,scope=${{ github.workflow }}
