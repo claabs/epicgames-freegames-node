@@ -114,10 +114,11 @@ export class DiscordConfig extends NotifierConfig {
 }
 
 /**
- * Sends a message pushover
+ * Sends a pushover message
  */
 export class PushoverConfig extends NotifierConfig {
   /**
+   * Guide: https://pushover.net/apps/build
    * @example a172fyyl9gw99p2xi16tq8hnib48p2
    * @env PUSHOVER_TOKEN
    */
