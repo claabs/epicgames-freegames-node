@@ -233,7 +233,7 @@ export default class FreeGames {
     if (entitlementResp.body.errors && entitlementResp.body.errors[0]) {
       const error = entitlementResp.body.errors[0];
       const errorJSON: AuthErrorJSON = JSON.parse(error.serviceResponse);
-      if (errorJSON.errorCode.includes('authentication_failed')) {
+      if (errorJSON.errorCode?.includes('authentication_failed')) {
         this.L.warn('Failed to authenticate with GraphQL API, trying again');
         const login = new Login(this.request, this.email);
         await login.refreshAndSid(true);

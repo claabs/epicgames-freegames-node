@@ -419,7 +419,7 @@ export interface ItemEntitlementResp {
 }
 
 export interface AuthErrorJSON {
-  errorCode: string;
+  errorCode?: string;
   errorMessage: string;
   messageVars: string[];
   numericErrorCode: number;
