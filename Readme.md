@@ -62,6 +62,11 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
       "apiUrl": "http://192.168.1.2:8000",
       "urls": "mailto://user:pass@gmail.com",
     },
+    {
+      "type": "pushover",
+      "token": "a172fyyl9gw99p2xi16tq8hnib48p2",
+      "userKey": "uvgidym7l5ggpwu2r8i1oy6diaapll",
+    },
   ],
 }
 ```
@@ -88,7 +93,7 @@ hCaptcha offers an accessibility tool for vision impaired users that can be used
 
 For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify and have you manually solve a captcha. To use this requires:
 
-* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers) (Discord, Telegram, email, Apprise, etc.)
+* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers) (Discord, Telegram, email, Apprise, Pushover, etc.)
 * Configuring the captcha solving page webserver
   * Either via local IP or reverse proxy/port forwarding (if you don't know what this means, use the next option)
   * Or by using [localtunnel](https://localtunnel.me) to very easily remotely tunnel the webserver

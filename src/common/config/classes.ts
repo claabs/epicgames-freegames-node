@@ -28,6 +28,7 @@ export enum NotificationType {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   DISCORD = 'discord',
+  PUSHOVER = 'pushover',
   APPRISE = 'apprise',
   LOCAL = 'local',
 }
@@ -109,6 +110,33 @@ export class DiscordConfig extends NotifierConfig {
    */
   constructor() {
     super(NotificationType.DISCORD);
+  }
+}
+
+/**
+ * Sends a pushover message
+ */
+export class PushoverConfig extends NotifierConfig {
+  /**
+   * Guide: https://pushover.net/apps/build
+   * @example a172fyyl9gw99p2xi16tq8hnib48p2
+   * @env PUSHOVER_TOKEN
+   */
+  @IsString()
+  token: string;
+
+  /**
+   * @example uvgidym7l5ggpwu2r8i1oy6diaapll
+   * @env PUSHOVER_USER_ID
+   */
+  @IsString()
+  userKey: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.PUSHOVER);
   }
 }
 
@@ -343,13 +371,21 @@ export class AccountConfig {
       subTypes: [
         { value: EmailConfig, name: NotificationType.EMAIL },
         { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: PushoverConfig, name: NotificationType.PUSHOVER },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
+  notifiers?: (
+    | EmailConfig
+    | DiscordConfig
+    | LocalConfig
+    | TelegramConfig
+    | AppriseConfig
+    | PushoverConfig
+  )[];
 
   /**
    * @ignore
@@ -559,13 +595,21 @@ export class AppConfig {
       subTypes: [
         { value: EmailConfig, name: NotificationType.EMAIL },
         { value: DiscordConfig, name: NotificationType.DISCORD },
+        { value: PushoverConfig, name: NotificationType.PUSHOVER },
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
       ],
     },
   })
-  notifiers?: (EmailConfig | DiscordConfig | LocalConfig | TelegramConfig | AppriseConfig)[];
+  notifiers?: (
+    | EmailConfig
+    | DiscordConfig
+    | LocalConfig
+    | TelegramConfig
+    | AppriseConfig
+    | PushoverConfig
+  )[];
 
   /**
    * Number of hours to wait for a response for a notification.
@@ -705,6 +749,20 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof DiscordConfig)) {
         this.notifiers.push(discord);
+      }
+    }
+
+    // Use environment variables to fill pushover notification config if present
+    const { PUSHOVER_TOKEN, PUSHOVER_USER_ID } = process.env;
+    if (PUSHOVER_TOKEN) {
+      const pushover = new PushoverConfig();
+      pushover.token = PUSHOVER_TOKEN;
+      pushover.userKey = PUSHOVER_USER_ID!;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof PushoverConfig)) {
+        this.notifiers.push(pushover);
       }
     }
 

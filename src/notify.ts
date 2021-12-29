@@ -13,11 +13,13 @@ import {
   NotificationType,
   TelegramConfig,
   AppriseConfig,
+  PushoverConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
 import { getDevtoolsUrl, safeLaunchBrowser, safeNewPage } from './common/puppeteer';
 import { getLocaltunnelUrl } from './common/localtunnel';
+import { PushoverNotifier } from './notifiers/pushover';
 
 export async function sendNotification(
   url: string,
@@ -41,6 +43,8 @@ export async function sendNotification(
     switch (notifierConfig.type) {
       case NotificationType.DISCORD:
         return new DiscordNotifier(notifierConfig as DiscordConfig);
+      case NotificationType.PUSHOVER:
+        return new PushoverNotifier(notifierConfig as PushoverConfig);
       case NotificationType.EMAIL:
         return new EmailNotifier(notifierConfig as EmailConfig);
       case NotificationType.LOCAL:
