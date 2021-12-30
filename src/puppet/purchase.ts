@@ -227,6 +227,7 @@ export default class PuppetPurchase {
         const errorHtml = path.join(CONFIG_DIR, `${errorPrefix}.html`);
         const htmlContent = await page.content();
         outputFileSync(errorHtml, htmlContent, 'utf8');
+        this.L.warn(err);
         this.L.error(
           { errorImage, errorHtml },
           'Encountered an error during browser automation. Saved a screenshot and page HTML for debugging purposes.'
