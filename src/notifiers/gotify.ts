@@ -37,7 +37,6 @@ export class GotifyNotifier extends NotifierService{
                 }
             }
         }
-        L.info({ apiUrl:this.config.apiUrl, jsonPayload });
 
         try{
             await got.post(`${this.config.apiUrl}/message?token=${this.config.token}`,{
