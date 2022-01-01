@@ -56,7 +56,7 @@ export async function sendNotification(
       case NotificationType.APPRISE:
         return new AppriseNotifier(notifierConfig as AppriseConfig);
       case NotificationType.GOTIFY:
-        return new GotifyNotifier(notifierConfig as GotifyConfig)
+        return new GotifyNotifier(notifierConfig as GotifyConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }
