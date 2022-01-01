@@ -4,6 +4,7 @@ import {
   EmailNotifier,
   LocalNotifier,
   TelegramNotifier,
+  GotifyNotifier,
 } from './notifiers';
 import {
   config,
@@ -14,6 +15,7 @@ import {
   TelegramConfig,
   AppriseConfig,
   PushoverConfig,
+  GotifyConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
@@ -53,6 +55,8 @@ export async function sendNotification(
         return new TelegramNotifier(notifierConfig as TelegramConfig);
       case NotificationType.APPRISE:
         return new AppriseNotifier(notifierConfig as AppriseConfig);
+      case NotificationType.GOTIFY:
+        return new GotifyNotifier(notifierConfig as GotifyConfig)
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }

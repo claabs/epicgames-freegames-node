@@ -31,6 +31,7 @@ export enum NotificationType {
   PUSHOVER = 'pushover',
   APPRISE = 'apprise',
   LOCAL = 'local',
+  GOTIFY = 'gotify',
 }
 
 /**
@@ -169,6 +170,40 @@ export class TelegramConfig extends NotifierConfig {
   constructor() {
     super(NotificationType.TELEGRAM);
   }
+}
+/**
+ * Sends a message to a self-hosted [Gotifier](https://gotify.net/) server
+ */
+export class GotifyConfig extends NotifierConfig {
+  /**
+   * The Gotify server host url
+   * @example http://gotify.net
+   * @env GOTIFY_API_URL
+   */
+  @IsUrl()
+  apiUrl: string;
+
+  /**
+   * The application token
+   * You need to go to Gotify WebUI and click the apps-tab in the upper right corner when logged in and add an application
+   * and then copy the Token to this field.
+   */
+  @IsNotEmpty()
+  token: string;
+
+  /**
+   * The priority of the message which defiend the sequence of message that pushes to your clinet.
+   */
+  @Max(10)
+  @Min(1)
+  priority: number;
+
+    /**
+     * @ignore
+     */
+    constructor() {
+      super(NotificationType.GOTIFY);
+    }
 }
 
 export class EmailAuthConfig {
@@ -599,6 +634,7 @@ export class AppConfig {
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
+        { value: GotifyConfig, name: NotificationType.GOTIFY }
       ],
     },
   })
@@ -609,6 +645,7 @@ export class AppConfig {
     | TelegramConfig
     | AppriseConfig
     | PushoverConfig
+    | GotifyConfig
   )[];
 
   /**

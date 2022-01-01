@@ -5,3 +5,4 @@ export * from './email';
 export * from './local';
 export * from './telegram';
 export * from './apprise';
+export * from './gotify'
