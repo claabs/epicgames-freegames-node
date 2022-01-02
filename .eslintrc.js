@@ -31,5 +31,6 @@ module.exports = {
         extensions: ['.js', '.ts',]
       }
     }
-  }
+  },
+  ignorePatterns: ['dist/**', 'node_modules/**', '**/*.config.js', '.eslintrc.js', 'docs/**'],
 }

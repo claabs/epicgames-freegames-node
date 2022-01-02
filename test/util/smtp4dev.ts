@@ -107,15 +107,16 @@ export default class Smtp4Dev {
       // eslint-disable-next-line no-await-in-loop
       const messages = await this.getMessages();
       const foundMessage = messages.find(
-        m => new Date(m.receivedDate) > startTime && m.to.toLowerCase().includes(lowerSearchString)
+        (m) =>
+          new Date(m.receivedDate) > startTime && m.to.toLowerCase().includes(lowerSearchString)
       );
       if (foundMessage) {
         L.info('Found message', { lowerSearchString });
         return foundMessage;
       }
       L.trace('No message found, waiting...');
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(resolve => setTimeout(resolve, this.pollInterval));
+      // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+      await new Promise((resolve) => setTimeout(resolve, this.pollInterval));
     } while (startTime.getTime() + this.timeout > Date.now());
     throw new Error(`Timed out after ${this.timeout} ms looking for email`);
   }

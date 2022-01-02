@@ -1,15 +1,22 @@
-export interface OffersQueryResponse {
-  data: OfferResponseData;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  extensions: any;
+export interface Category {
+  path: string;
 }
 
-export interface OfferResponseData {
-  Catalog: Catalog;
+export interface Item {
+  id: string;
+  namespace: string;
 }
 
-export interface Catalog {
-  catalogOffer: CatalogOffer;
+export interface TotalPrice {
+  discountPrice: number;
+  originalPrice: number;
+  voucherDiscount: number;
+  discount: number;
+  currencyCode: string;
+}
+
+export interface Price {
+  totalPrice: TotalPrice;
 }
 
 export interface CatalogOffer {
@@ -28,23 +35,16 @@ export interface CatalogOffer {
   price: Price;
 }
 
-export interface Category {
-  path: string;
+export interface Catalog {
+  catalogOffer: CatalogOffer;
 }
 
-export interface Item {
-  id: string;
-  namespace: string;
+export interface OfferResponseData {
+  Catalog: Catalog;
 }
 
-export interface Price {
-  totalPrice: TotalPrice;
-}
-
-export interface TotalPrice {
-  discountPrice: number;
-  originalPrice: number;
-  voucherDiscount: number;
-  discount: number;
-  currencyCode: string;
+export interface OffersQueryResponse {
+  data: OfferResponseData;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  extensions: any;
 }

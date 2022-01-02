@@ -8,7 +8,7 @@
     "start:ts": "DEBUG=puppeteer-extra-plugin:portal* ts-node src/index.ts",
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
-    "lint": "tsc --noEmit && eslint **/*.ts",
+    "lint": "tsc --noEmit && eslint .",
     "test": "jest",
     "redeem": "ts-node commands.ts redeem",
     "create": "ts-node commands.ts create",
@@ -87,11 +87,5 @@
     "url": "https://github.com/claabs/epicgames-freegames-node.git"
   },
   "author": "Charlie Laabs",
-  "eslintIgnore": [
-    "**/*.config.js",
-    "**/node_modules/**",
-    "dist/**",
-    "**/*.d.ts"
-  ],
   "license": "MIT"
 }
