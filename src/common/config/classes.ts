@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function, no-useless-constructor, max-classes-per-file */
 import 'reflect-metadata';
-import { Type } from 'class-transformer';
+import { ClassConstructor, Type } from 'class-transformer';
 import {
   IsEmail,
   IsUrl,
@@ -171,8 +171,9 @@ export class TelegramConfig extends NotifierConfig {
     super(NotificationType.TELEGRAM);
   }
 }
+
 /**
- * Sends a message to a self-hosted [Gotifier](https://gotify.net/) server
+ * Sends a message to a self-hosted [Gotify](https://gotify.net/) server
  */
 export class GotifyConfig extends NotifierConfig {
   /**
@@ -312,20 +313,27 @@ export class EmailConfig extends NotifierConfig {
   }
 }
 
-export class NotificationConfig {
-  /**
-   * Settings for basic SMTP server email notifications
-   */
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => EmailConfig)
-  email?: EmailConfig;
+export type AnyNotifierConfig =
+  | EmailConfig
+  | DiscordConfig
+  | LocalConfig
+  | TelegramConfig
+  | AppriseConfig
+  | PushoverConfig
+  | GotifyConfig;
 
-  /**
-   * @ignore
-   */
-  constructor() {}
-}
+const notifierSubtypes: {
+  value: ClassConstructor<NotifierConfig>;
+  name: string;
+}[] = [
+  { value: EmailConfig, name: NotificationType.EMAIL },
+  { value: DiscordConfig, name: NotificationType.DISCORD },
+  { value: PushoverConfig, name: NotificationType.PUSHOVER },
+  { value: LocalConfig, name: NotificationType.LOCAL },
+  { value: TelegramConfig, name: NotificationType.TELEGRAM },
+  { value: AppriseConfig, name: NotificationType.APPRISE },
+  { value: GotifyConfig, name: NotificationType.GOTIFY },
+];
 
 export class WebPortalConfig {
   /**
@@ -411,26 +419,10 @@ export class AccountConfig {
   @Type(() => NotifierConfig, {
     discriminator: {
       property: 'type',
-      subTypes: [
-        { value: EmailConfig, name: NotificationType.EMAIL },
-        { value: DiscordConfig, name: NotificationType.DISCORD },
-        { value: PushoverConfig, name: NotificationType.PUSHOVER },
-        { value: LocalConfig, name: NotificationType.LOCAL },
-        { value: TelegramConfig, name: NotificationType.TELEGRAM },
-        { value: AppriseConfig, name: NotificationType.APPRISE },
-        { value: GotifyConfig, name: NotificationType.GOTIFY },
-      ],
+      subTypes: notifierSubtypes,
     },
   })
-  notifiers?: (
-    | EmailConfig
-    | DiscordConfig
-    | LocalConfig
-    | TelegramConfig
-    | AppriseConfig
-    | PushoverConfig
-    | GotifyConfig
-  )[];
+  notifiers?: AnyNotifierConfig[];
 
   /**
    * @ignore
@@ -637,26 +629,10 @@ export class AppConfig {
   @Type(() => NotifierConfig, {
     discriminator: {
       property: 'type',
-      subTypes: [
-        { value: EmailConfig, name: NotificationType.EMAIL },
-        { value: DiscordConfig, name: NotificationType.DISCORD },
-        { value: PushoverConfig, name: NotificationType.PUSHOVER },
-        { value: LocalConfig, name: NotificationType.LOCAL },
-        { value: TelegramConfig, name: NotificationType.TELEGRAM },
-        { value: AppriseConfig, name: NotificationType.APPRISE },
-        { value: GotifyConfig, name: NotificationType.GOTIFY },
-      ],
+      subTypes: notifierSubtypes,
     },
   })
-  notifiers?: (
-    | EmailConfig
-    | DiscordConfig
-    | LocalConfig
-    | TelegramConfig
-    | AppriseConfig
-    | PushoverConfig
-    | GotifyConfig
-  )[];
+  notifiers?: AnyNotifierConfig[];
 
   /**
    * Number of hours to wait for a response for a notification.
@@ -801,10 +777,10 @@ export class AppConfig {
 
     // Use environment variables to fill pushover notification config if present
     const { PUSHOVER_TOKEN, PUSHOVER_USER_ID } = process.env;
-    if (PUSHOVER_TOKEN) {
+    if (PUSHOVER_TOKEN && PUSHOVER_USER_ID) {
       const pushover = new PushoverConfig();
       pushover.token = PUSHOVER_TOKEN;
-      pushover.userKey = PUSHOVER_USER_ID!;
+      pushover.userKey = PUSHOVER_USER_ID;
       if (!this.notifiers) {
         this.notifiers = [];
       }
