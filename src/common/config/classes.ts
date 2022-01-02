@@ -107,6 +107,28 @@ export class DiscordConfig extends NotifierConfig {
   webhookUrl: string;
 
   /**
+   * A list of Discord user IDs to ping when posting the message. The IDs must be strings wrapped in quotes.
+   * How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-
+   * @example ["914360712086843432", "914360712086843433"]
+   * @env DISCORD_MENTIONED_USERS (comma separated)
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mentionedUsers: string[];
+
+  /**
+   * A list of Discord role IDs to ping when posting the message. The IDs must be strings wrapped in quotes.
+   * To get a role ID: enable developer mode > right click a role > "Copy ID"
+   * @example ["734548250895319070", "734548250895319071"]
+   * @env DISCORD_MENTIONED_ROLES (comma separated)
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  mentionedRoles: string[];
+
+  /**
    * @ignore
    */
   constructor() {
@@ -763,10 +785,12 @@ export class AppConfig {
     }
 
     // Use environment variables to fill discord notification config if present
-    const { DISCORD_WEBHOOK } = process.env;
+    const { DISCORD_WEBHOOK, DISCORD_MENTIONED_USERS, DISCORD_MENTIONED_ROLES } = process.env;
     if (DISCORD_WEBHOOK) {
       const discord = new DiscordConfig();
       discord.webhookUrl = DISCORD_WEBHOOK;
+      if (DISCORD_MENTIONED_USERS) discord.mentionedUsers = DISCORD_MENTIONED_USERS.split(',');
+      if (DISCORD_MENTIONED_ROLES) discord.mentionedRoles = DISCORD_MENTIONED_ROLES.split(',');
       if (!this.notifiers) {
         this.notifiers = [];
       }

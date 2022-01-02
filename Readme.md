@@ -51,6 +51,9 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
     {
       "type": "discord",
       "webhookUrl": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+      // Optional list of users or roles to mention
+      "mentionedUsers": ["914360712086843432"],
+      "mentionedRoles": ["734548250895319070"],
     },
     {
       "type": "telegram",

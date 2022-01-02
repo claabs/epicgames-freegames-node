@@ -17,10 +17,17 @@ export class DiscordNotifier extends NotifierService {
     const L = logger.child({ user: account, reason });
     L.trace('Sending discord notification');
 
+    let mentions = '';
+    if (this.config.mentionedUsers) {
+      mentions = `${mentions}${this.config.mentionedUsers.map((u) => `<@${u}>`).join('')}\n`;
+    }
+    if (this.config.mentionedRoles) {
+      mentions = `${mentions}${this.config.mentionedRoles.map((r) => `<@&${r}>`).join('')}\n`;
+    }
     try {
       await got.post(this.config.webhookUrl, {
         json: {
-          content: `epicgames-freegames-node needs a captcha solved.`,
+          content: `${mentions}epicgames-freegames-node needs a captcha solved.`,
           embeds: [
             {
               fields: [
