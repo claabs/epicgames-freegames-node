@@ -67,6 +67,11 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
       "token": "a172fyyl9gw99p2xi16tq8hnib48p2",
       "userKey": "uvgidym7l5ggpwu2r8i1oy6diaapll",
     },
+    {
+      "type": "gotify",
+      "apiUrl": "https://gotify.net",
+      "token": "SnL-wAvmfo_QT",
+    },
   ],
 }
 ```

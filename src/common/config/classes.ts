@@ -31,6 +31,7 @@ export enum NotificationType {
   PUSHOVER = 'pushover',
   APPRISE = 'apprise',
   LOCAL = 'local',
+  GOTIFY = 'gotify',
 }
 
 /**
@@ -168,6 +169,48 @@ export class TelegramConfig extends NotifierConfig {
    */
   constructor() {
     super(NotificationType.TELEGRAM);
+  }
+}
+/**
+ * Sends a message to a self-hosted [Gotifier](https://gotify.net/) server
+ */
+export class GotifyConfig extends NotifierConfig {
+  /**
+   * The Gotify server host URL
+   * @example http://gotify.net
+   * @env GOTIFY_API_URL
+   */
+  @IsUrl({
+    require_tld: false,
+  })
+  apiUrl: string;
+
+  /**
+   * On the Gotify web UI, Apps > Create Application > reveal the token
+   * @example SnL-wAvmfo_QT
+   * @env GOTIFY_TOKEN
+   */
+  @IsNotEmpty()
+  @IsString()
+  token: string;
+
+  /**
+   * The priority level sent with the message.
+   * @example 7
+   * @default 5
+   * @env GOTIFY_PRIORITY
+   */
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  @IsOptional()
+  priority = 5;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.GOTIFY);
   }
 }
 
@@ -375,6 +418,7 @@ export class AccountConfig {
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
+        { value: GotifyConfig, name: NotificationType.GOTIFY },
       ],
     },
   })
@@ -385,6 +429,7 @@ export class AccountConfig {
     | TelegramConfig
     | AppriseConfig
     | PushoverConfig
+    | GotifyConfig
   )[];
 
   /**
@@ -599,6 +644,7 @@ export class AppConfig {
         { value: LocalConfig, name: NotificationType.LOCAL },
         { value: TelegramConfig, name: NotificationType.TELEGRAM },
         { value: AppriseConfig, name: NotificationType.APPRISE },
+        { value: GotifyConfig, name: NotificationType.GOTIFY },
       ],
     },
   })
@@ -609,6 +655,7 @@ export class AppConfig {
     | TelegramConfig
     | AppriseConfig
     | PushoverConfig
+    | GotifyConfig
   )[];
 
   /**
@@ -791,6 +838,21 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof AppriseConfig)) {
         this.notifiers.push(apprise);
+      }
+    }
+
+    // Use environment variables to fill gotify notification config if present
+    const { GOTIFY_API_URL, GOTIFY_TOKEN, GOTIFY_PRIORITY } = process.env;
+    if (GOTIFY_API_URL && GOTIFY_TOKEN) {
+      const gotify = new GotifyConfig();
+      gotify.apiUrl = GOTIFY_API_URL;
+      gotify.token = GOTIFY_TOKEN;
+      if (GOTIFY_PRIORITY) gotify.priority = parseInt(GOTIFY_PRIORITY, 10);
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof GotifyConfig)) {
+        this.notifiers.push(gotify);
       }
     }
 
