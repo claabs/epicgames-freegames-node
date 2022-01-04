@@ -5,6 +5,8 @@ import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
+import pidtree from 'pidtree';
+import findProcess from 'find-process';
 import { ToughCookieFileStore } from './request';
 import { config } from './config';
 
@@ -110,8 +112,6 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
 
 /**
  * This is a hacky solution to retry a function if it doesn't return within a timeout.
- * It leaves behind a danging chromium process, but it should get cleaned up when this parent node
- * process exits if the container is using tini.
  */
 const retryFunction = async <T>(
   f: () => Promise<T>,
@@ -119,8 +119,9 @@ const retryFunction = async <T>(
   outputName: string,
   attempts = 0
 ): Promise<T> => {
-  const TIMEOUT = 30 * 1000;
-  const MAX_ATTEMPTS = 30;
+  const TIMEOUT = 15 * 1000;
+  const MAX_ATTEMPTS = 5;
+  const beforeProcesses = await pidtree(process.pid);
   const newPageCancelable = cancelable(f());
   const res = await Promise.race([
     newPageCancelable,
@@ -131,9 +132,17 @@ const retryFunction = async <T>(
     return res;
   }
   newPageCancelable.cancel();
+  const afterProcesses = await pidtree(process.pid);
+  const newProcesses = await Promise.all(
+    afterProcesses
+      .filter((p) => !beforeProcesses.includes(p))
+      .map(async (p) => (await findProcess('pid', p))[0])
+  );
+  L.debug({ newProcesses }, 'Killing new processes spawned');
+  newProcesses.forEach((p) => process.kill(p.pid));
   if (attempts > MAX_ATTEMPTS)
     throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS} attempts.`);
-  L.debug(
+  L.warn(
     { attempts, MAX_ATTEMPTS },
     `${outputName} did not work after ${TIMEOUT}ms. Trying again.`
   );
