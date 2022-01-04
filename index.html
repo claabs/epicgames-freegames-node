@@ -162,6 +162,11 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 </tr>
 </tbody></table>
 
+<a href="#memory-limit" id="memory-limit" style="color: inherit; text-decoration: none;">
+  <h4>Memory Limit</h4>
+</a>
+<p>It&#39;s recommended to add <code>-m 2g</code> as a <code>docker run</code> parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system will eventually lock up.</p>
+
 <a href="#docker-run" id="docker-run" style="color: inherit; text-decoration: none;">
   <h3>Docker Run</h3>
 </a>
@@ -169,13 +174,13 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 <a href="#with-json-config" id="with-json-config" style="color: inherit; text-decoration: none;">
   <h4>With JSON Config</h4>
 </a>
-<p><code>$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest</code></p>
+<p><code>$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest</code></p>
 
 <a href="#without-json-config" id="without-json-config" style="color: inherit; text-decoration: none;">
   <h4>Without JSON Config</h4>
 </a>
 <p>Without JSON config, you can only configure one account.</p>
-<p><code>$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME=&quot;Epic Games Captchas&quot; -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 charlocharlie/epicgames-freegames:latest</code></p>
+<p><code>$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME=&quot;Epic Games Captchas&quot; -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest</code></p>
 
 <a href="#cookie-import" id="cookie-import" style="color: inherit; text-decoration: none;">
   <h3>Cookie Import</h3>
