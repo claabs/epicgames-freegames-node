@@ -138,8 +138,12 @@ const retryFunction = async <T>(
       .filter((p) => !beforeProcesses.includes(p))
       .map(async (p) => (await findProcess('pid', p))[0])
   );
-  L.debug({ newProcesses }, 'Killing new processes spawned');
-  newProcesses.forEach((p) => process.kill(p.pid));
+  const chromiumProcesses = newProcesses.filter(
+    (p) =>
+      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n))
+  );
+  L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
+  chromiumProcesses.forEach((p) => process.kill(p.pid));
   if (attempts > MAX_ATTEMPTS)
     throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS} attempts.`);
   L.warn(
