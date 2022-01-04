@@ -44,7 +44,8 @@
             "args": [
                 "${workspaceFolder}/src/index.ts"
             ],
-            "outputCapture": "std"
+            "outputCapture": "std",
+            "console": "integratedTerminal"
         }
     ]
 }
