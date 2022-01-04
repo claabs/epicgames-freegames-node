@@ -33,11 +33,11 @@ export class DiscordNotifier extends NotifierService {
               fields: [
                 {
                   name: 'Account',
-                  value: account,
+                  value: account || 'unknown', // Fallback required to avoid 400 on empty value
                 },
                 {
                   name: 'Reason',
-                  value: reason.toLowerCase(),
+                  value: reason.toLowerCase() || 'unknown', // Fallback required to avoid 400 on empty value
                 },
               ],
               title: 'Click to view captcha',
