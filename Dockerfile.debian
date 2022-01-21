@@ -1,28 +1,12 @@
 ########
 # BASE
 ########
-FROM node:14-bullseye-slim as base
+FROM node:16-bullseye-slim as base
 
 ENV DISTRO=debian
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
 WORKDIR /usr/app
-
-########
-# BUILD
-########
-FROM base as build
-
-# Copy all source files
-COPY package*.json tsconfig.json ./
-
-# Add dev deps
-RUN npm ci
-
-# Copy source code
-COPY src src
-
-RUN npm run build
 
 ########
 # DEPS
@@ -52,6 +36,22 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ########
+# BUILD
+########
+FROM base as build
+
+# Copy all source files
+COPY package*.json tsconfig.json ./
+
+# Add dev deps
+RUN npm ci
+
+# Copy source code
+COPY src src
+
+RUN npm run build
+
+########
 # DEPLOY
 ########
 FROM deps as deploy
@@ -77,8 +77,8 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-bullseye-slim" \
-    org.opencontainers.image.version="latest"
+    org.opencontainers.image.base.name="node:16-bullseye-slim" \
+    org.opencontainers.image.version="bullseye-slim"
 
 ENV NODE_ENV=production \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { config as dotenv } from 'dotenv';
+import 'dotenv/config';
 import json5 from 'json5';
 import path from 'path';
 import fs from 'fs-extra';
@@ -8,16 +8,21 @@ import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
 import { AppConfig, EmailConfig, WebPortalConfig } from './classes';
 
-dotenv();
-
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({
-  prettyPrint: {
-    translateTime: `SYS:standard`,
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      translateTime: `SYS:standard`,
+    },
   },
-  useLevelLabels: true,
+  formatters: {
+    level: (label) => {
+      return { level: label };
+    },
+  },
   level: process.env.LOG_LEVEL || 'info',
-  base: {},
+  base: undefined,
 });
 
 // TODO: Add YAML parser

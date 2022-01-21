@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
+import 'dotenv/config';
 import RandExp from 'randexp';
-import { config as dotenv } from 'dotenv';
 import { Logger } from 'pino';
 import { Page, Protocol, ElementHandle } from 'puppeteer';
 // import { writeFileSync } from 'fs-extra';
@@ -15,8 +15,6 @@ import puppeteer, {
 import logger from '../../src/common/logger';
 import Smtp4Dev from './smtp4dev';
 import { LocalNotifier } from '../../src/notifiers';
-
-dotenv();
 
 const NOTIFICATION_TIMEOUT = 24 * 60 * 60 * 1000;
 

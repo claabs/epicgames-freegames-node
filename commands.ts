@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { usage } from 'yargs';
+import { Argv, usage } from 'yargs';
 import AccountManager from './test/util/puppet-account';
 import { newCookieJar } from './src/common/request';
 import FreeGames from './src/free-games';
@@ -49,7 +49,7 @@ const redeemGames = async (args: RedeemArgs): Promise<void> => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { argv } = usage('$0 <command> [option]')
-  .command(
+  .command<RedeemArgs>(
     ['create-account', 'create'],
     'Create a fresh account',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,12 +58,11 @@ const { argv } = usage('$0 <command> [option]')
     },
     createAccount
   )
-  .command(
+  .command<RedeemArgs>(
     ['redeem', 'free-games'],
     'Redeem all free games for a user',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (yargs: any) => {
-      return yargs
+    (yargs) =>
+      yargs
         .usage('$0 release --username <username> --pasword <password>')
         .option('u', {
           alias: ['user', 'username'],
@@ -80,8 +79,7 @@ const { argv } = usage('$0 <command> [option]')
           type: 'string',
           demandOption: false,
         })
-        .help();
-    },
+        .help(),
     redeemGames
   )
   .help()

@@ -1,28 +1,12 @@
 ########
 # BASE
 ########
-FROM node:14-alpine3.14 as base
+FROM node:16-alpine3.15 as base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
 WORKDIR /usr/app
-
-########
-# BUILD
-########
-FROM base as build
-
-# Copy all source files
-COPY package*.json tsconfig.json ./
-
-# Add dev deps
-RUN npm ci
-
-# Copy source code
-COPY src src
-
-RUN npm run build
 
 ########
 # DEPS
@@ -45,6 +29,22 @@ RUN apk add --no-cache \
     jq \
     tzdata \
     tini
+
+########
+# BUILD
+########
+FROM base as build
+
+# Copy all source files
+COPY package*.json tsconfig.json ./
+
+# Add dev deps
+RUN npm ci
+
+# Copy source code
+COPY src src
+
+RUN npm run build
 
 ########
 # DEPLOY
@@ -72,7 +72,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:14-alpine3.14" \
+    org.opencontainers.image.base.name="node:16-alpine3.15" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
