@@ -153,70 +153,89 @@ export default class PuppetPurchase {
       });
       await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
       const purchaseUrl = `${EPIC_PURCHASE_ENDPOINT}?highlightColor=0078f2&offers=1-${namespace}-${offer}&orderId&purchaseToken&showNavigation=true`;
-      this.L.info({ purchaseUrl }, 'Loading purchase page');
-      await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
-      await page.waitForNetworkIdle({ idleTime: 2000 });
-      try {
-        this.L.trace('Waiting for cookieDialog');
-        const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
-          timeout: 3000,
-        })) as ElementHandle<HTMLButtonElement>;
-        this.L.trace('Clicking cookieDialog');
-        await cookieDialog.click({ delay: 100 });
-      } catch (err) {
-        if (!err.message.includes('timeout')) {
-          throw err;
+
+      /**
+       * This inner function is declared to allow the page to be refreshed after a 3 hour timeout
+       */
+      // eslint-disable-next-line consistent-return
+      const initPurchase = async (): Promise<void> => {
+        this.L.info({ purchaseUrl }, 'Loading purchase page');
+        await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
+        await page.waitForNetworkIdle({ idleTime: 2000 });
+        try {
+          this.L.trace('Waiting for cookieDialog');
+          const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
+            timeout: 3000,
+          })) as ElementHandle<HTMLButtonElement>;
+          this.L.trace('Clicking cookieDialog');
+          await cookieDialog.click({ delay: 100 });
+        } catch (err) {
+          if (!err.message.includes('timeout')) {
+            throw err;
+          }
+          this.L.trace('No cookie dialog presented');
         }
-        this.L.trace('No cookie dialog presented');
-      }
-      this.L.trace('Waiting for placeOrderButton');
-      const placeOrderButton = (await page.waitForSelector(
-        `button.payment-btn:not([disabled])`
-      )) as ElementHandle<HTMLButtonElement>;
-      this.L.debug('Clicking placeOrderButton');
-      await placeOrderButton.click({ delay: 100 });
-      try {
-        const euRefundAgreeButton = (await page.waitForSelector(
-          `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
-          { timeout: 3000 }
+        this.L.trace('Waiting for placeOrderButton');
+        const placeOrderButton = (await page.waitForSelector(
+          `button.payment-btn:not([disabled])`
         )) as ElementHandle<HTMLButtonElement>;
-        this.L.debug('Clicking euRefundAgreeButton');
-        await euRefundAgreeButton.click({ delay: 100 });
-      } catch (err) {
-        if (!err.message.includes('timeout')) {
-          throw err;
+        this.L.debug('Clicking placeOrderButton');
+        await placeOrderButton.click({ delay: 100 });
+        try {
+          const euRefundAgreeButton = (await page.waitForSelector(
+            `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
+            { timeout: 3000 }
+          )) as ElementHandle<HTMLButtonElement>;
+          this.L.debug('Clicking euRefundAgreeButton');
+          await euRefundAgreeButton.click({ delay: 100 });
+        } catch (err) {
+          if (!err.message.includes('timeout')) {
+            throw err;
+          }
+          this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
         }
-        this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
-      }
-      this.L.debug('Waiting for receipt');
-      const purchaseEvent = await Promise.race([
-        page
-          .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
-          .then(() => 'nav'),
-        page
-          .waitForSelector('span.payment-alert__content')
-          .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
-            errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
-          ),
-        this.waitForHCaptcha(page),
-      ]);
-      if (purchaseEvent === 'captcha') {
-        this.L.debug('Captcha detected');
-        let url = await page.openPortal();
-        if (config.webPortalConfig?.localtunnel) {
-          url = await getLocaltunnelUrl(url);
+        this.L.debug('Waiting for receipt');
+        const purchaseEvent = await Promise.race([
+          page
+            .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
+            .then(() => 'nav'),
+          page
+            .waitForSelector('span.payment-alert__content')
+            .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
+              errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
+            ),
+          this.waitForHCaptcha(page),
+        ]);
+        if (purchaseEvent === 'captcha') {
+          this.L.debug('Captcha detected');
+          // Keep the existing portal open
+          if (!page.hasOpenPortal()) {
+            let url = await page.openPortal();
+            if (config.webPortalConfig?.localtunnel) {
+              url = await getLocaltunnelUrl(url);
+            }
+            this.L.info({ url }, 'Go to this URL and do something');
+            await sendNotification(url, this.email, NotificationReason.PURCHASE);
+          }
+          const interactionResult = await Promise.race([
+            page
+              .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
+                timeout: NOTIFICATION_TIMEOUT,
+              })
+              .then(() => 'nav'),
+            page.waitForTimeout(3 * 60 * 60 * 1000).then(() => 'timeout'),
+          ]);
+          if (interactionResult === 'timeout') {
+            this.L.info('Reloading purchase page...'); // Reload page after 3 hour timeout
+            return initPurchase();
+          }
+          await page.closePortal();
+        } else if (purchaseEvent !== 'nav') {
+          throw new Error(purchaseEvent);
         }
-        this.L.info({ url }, 'Go to this URL and do something');
-        await sendNotification(url, this.email, NotificationReason.PURCHASE);
-        await page
-          .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
-            timeout: NOTIFICATION_TIMEOUT,
-          })
-          .then(() => 'nav');
-        await page.closePortal();
-      } else if (purchaseEvent !== 'nav') {
-        throw new Error(purchaseEvent);
-      }
+      };
+
+      await initPurchase();
       await this.finishPurchase(browser, cdpClient);
     } catch (err) {
       let success = false;
