@@ -113,12 +113,8 @@ export default class PuppetPurchase {
 
   private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
     try {
-      const talonHandle = await page.$('iframe#talon_frame_checkout_free_prod');
-      if (!talonHandle) throw new Error('Could not find talon_frame_checkout_free_prod');
-      const talonFrame = await talonHandle.contentFrame();
-      if (!talonFrame) throw new Error('Could not find talonFrame contentFrame');
       this.L.trace('Waiting for hcaptcha iframe');
-      await talonFrame.waitForSelector(`#challenge_container_hcaptcha > iframe[src*="hcaptcha"]`, {
+      await page.waitForSelector(`.h_captcha_challenge > iframe[src*="hcaptcha"]`, {
         visible: true,
       });
       return 'captcha';
