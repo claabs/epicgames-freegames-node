@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:16-alpine3.15 as base
+FROM alpine:edge as base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -19,13 +19,15 @@ FROM base as deps
 # to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
 # ensure that version is published at https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium
 RUN apk add --no-cache \
-    'chromium=~93' \
+    chromium \
     nss \
     freetype \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
     # App dependencies
+    nodejs=~16 \
+    npm \
     jq \
     tzdata \
     tini
@@ -33,7 +35,7 @@ RUN apk add --no-cache \
 ########
 # BUILD
 ########
-FROM base as build
+FROM deps as build
 
 # Copy all source files
 COPY package*.json tsconfig.json ./
