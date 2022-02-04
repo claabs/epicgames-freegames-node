@@ -585,11 +585,12 @@ export class AppConfig {
    * The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)
    * @example 30
    * @default 60
+   * @env INTERVAL_TIME
    */
   @IsOptional()
   @IsInt()
   @Min(0)
-  intervalTime = 60;
+  intervalTime = process.env.INTERVAL_TIME ? parseInt(process.env.INTERVAL_TIME, 10) : 60;
 
   /**
    * Log level in lower case. Can be [silent, error, warn, info, debug, trace]
@@ -662,11 +663,14 @@ export class AppConfig {
    * If the timeout is reached, the process will exit, and the URL in the notification will be inaccessible.
    * @example 168
    * @default 24
+   * @env NOTIFICATION_TIMEOUT_HOURS
    */
   @IsOptional()
   @IsNumber()
   @Min(0)
-  notificationTimeoutHours = 24;
+  notificationTimeoutHours = process.env.NOTIFICATION_TIMEOUT_HOURS
+    ? parseInt(process.env.NOTIFICATION_TIMEOUT_HOURS, 10)
+    : 24;
 
   /**
    * When true, the process will send test notifications with a test page to all configured accounts.
@@ -699,6 +703,32 @@ export class AppConfig {
   @IsOptional()
   @IsBoolean()
   noHumanErrorHelp = process.env.NO_HUMAN_ERROR_HELP?.toLowerCase() === 'true' || false;
+
+  /**
+   * In seconds, how long before a [stuck Chromium process](https://github.com/claabs/epicgames-freegames-node/issues/164) times out and gets restarted
+   * @example 30
+   * @default 15
+   * @env BROWSER_LAUNCH_TIMEOUT
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  browserLaunchTimeout = process.env.BROWSER_LAUNCH_TIMEOUT
+    ? parseInt(process.env.BROWSER_LAUNCH_TIMEOUT, 10)
+    : 15;
+
+  /**
+   * How many times to attempt retry attempts to launch a browser after it [times out](https://github.com/claabs/epicgames-freegames-node/issues/164)
+   * @example 2
+   * @default 5
+   * @env BROWSER_LAUNCH_RETRY_ATTEMPTS
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  browserLaunchRetryAttempts = process.env.BROWSER_LAUNCH_RETRY_ATTEMPTS
+    ? parseInt(process.env.BROWSER_LAUNCH_RETRY_ATTEMPTS, 10)
+    : 5;
 
   /**
    * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}

@@ -119,8 +119,8 @@ const retryFunction = async <T>(
   outputName: string,
   attempts = 0
 ): Promise<T> => {
-  const TIMEOUT = 15 * 1000;
-  const MAX_ATTEMPTS = 5;
+  const TIMEOUT = config.browserLaunchTimeout * 1000;
+  const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
   const beforeProcesses = await pidtree(process.pid);
   const newPageCancelable = cancelable(f());
   const res = await Promise.race([
@@ -144,8 +144,12 @@ const retryFunction = async <T>(
   );
   L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
   chromiumProcesses.forEach((p) => process.kill(p.pid));
-  if (attempts > MAX_ATTEMPTS)
-    throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS} attempts.`);
+  if (attempts >= MAX_ATTEMPTS) {
+    L.error(
+      `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`
+    );
+    throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
+  }
   L.warn(
     { attempts, MAX_ATTEMPTS },
     `${outputName} did not work after ${TIMEOUT}ms. Trying again.`
