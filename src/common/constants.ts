@@ -16,7 +16,7 @@ export const EMAIL_VERIFY = 'https://www.epicgames.com/id/api/email/verify';
 export const SETUP_MFA =
   'https://www.epicgames.com/account/v2/security/ajaxUpdateTwoFactorAuthSettings';
 export const FREE_GAMES_PROMOTIONS_ENDPOINT =
-  'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
+  'https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions';
 export const STORE_HOMEPAGE = 'https://www.epicgames.com/store/';
 export const STORE_HOMEPAGE_EN = 'https://www.epicgames.com/store/en-US/';
 export const ORDER_CONFIRM_ENDPOINT =

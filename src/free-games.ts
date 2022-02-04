@@ -130,7 +130,7 @@ export default class FreeGames {
   async getWeeklyFreeGames(): Promise<OfferInfo[]> {
     this.L.debug('Getting current weekly free games list');
     const searchParams = {
-      locale: 'en',
+      locale: 'en-US',
       country: 'US',
       allowCountries: 'US',
     };
@@ -174,7 +174,7 @@ export default class FreeGames {
               },
             ];
           }
-          const productOffers = await this.getProduct(game.productSlug);
+          const productOffers = await this.getProduct(game.urlSlug);
           return productOffers
             .filter((o) => o.hasOffer)
             .map((o) => ({
