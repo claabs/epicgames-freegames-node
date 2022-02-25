@@ -457,6 +457,8 @@ export enum SearchStrategy {
    * Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games
    *
    * This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks.
+   *
+   * Generally is less stable than `promotion` due to a more complex lookup method.
    */
   WEEKLY = 'weekly',
   /**
@@ -464,7 +466,7 @@ export enum SearchStrategy {
    */
   PROMOTION = 'promotion',
   /**
-   * Combines the results from `weekly` and `promotion`. The downside being if either API fails, the program crashes.
+   * Combines the results from `weekly` and `promotion`. Should continue if at least one of the APIs works.
    */
   ALL = 'all',
 }

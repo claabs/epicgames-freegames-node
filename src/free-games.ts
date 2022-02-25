@@ -174,7 +174,7 @@ export default class FreeGames {
               },
             ];
           }
-          const productOffers = await this.getProduct(game.urlSlug);
+          const productOffers = await this.getProduct(game.productSlug);
           return productOffers
             .filter((o) => o.hasOffer)
             .map((o) => ({
@@ -308,10 +308,22 @@ export default class FreeGames {
       validFreeGames = await this.getCatalogFreeGames();
     } else {
       this.L.info('searchStrategy is `all`: searching for weekly and promotional games');
-      validFreeGames = [
-        ...(await this.getWeeklyFreeGames()),
-        ...(await this.getCatalogFreeGames()),
-      ];
+      let weeklyFreeGames: OfferInfo[] | null = null;
+      let catalogFreeGames: OfferInfo[] | null = null;
+      try {
+        weeklyFreeGames = await this.getWeeklyFreeGames();
+      } catch (err) {
+        this.L.warn(err, 'Failed to lookup weekly free games');
+      }
+      try {
+        catalogFreeGames = await this.getCatalogFreeGames();
+      } catch (err) {
+        this.L.warn(err, 'Failed to lookup catalog free games');
+      }
+      if (weeklyFreeGames === null && catalogFreeGames === null) {
+        throw new Error('Both free game API lookups failed');
+      }
+      validFreeGames = [...(weeklyFreeGames || []), ...(catalogFreeGames || [])];
       this.L.trace({ dupedFreeGames: validFreeGames });
       // dedupe
       validFreeGames = validFreeGames.filter(
