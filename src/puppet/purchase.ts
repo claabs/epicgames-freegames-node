@@ -85,8 +85,9 @@ export default class PuppetPurchase {
         if (startTime.getTime() + timeout <= new Date().getTime()) {
           throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
         }
-        // eslint-disable-next-line no-promise-executor-return
-        await new Promise((resolve) => setTimeout(resolve, poll));
+        await new Promise((resolve) => {
+          setTimeout(resolve, poll);
+        });
         return waitForPurchaseButton(startTime);
       }
     };

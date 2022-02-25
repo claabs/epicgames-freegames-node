@@ -123,12 +123,15 @@ const retryFunction = async <T>(
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
   const beforeProcesses = await pidtree(process.pid);
   const newPageCancelable = cancelable(f());
+  let timeoutInstance: NodeJS.Timeout | undefined;
   const res = await Promise.race([
     newPageCancelable,
-    // eslint-disable-next-line no-promise-executor-return
-    new Promise((resolve) => setTimeout(resolve, TIMEOUT)).then(() => 'timeout'),
+    new Promise((resolve) => {
+      timeoutInstance = setTimeout(resolve, TIMEOUT);
+    }).then(() => 'timeout'),
   ]);
   if (typeof res !== 'string') {
+    if (timeoutInstance) clearTimeout(timeoutInstance);
     return res;
   }
   newPageCancelable.cancel();
