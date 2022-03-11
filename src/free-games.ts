@@ -57,7 +57,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '6e7c4dd0177150eb9a47d624be221929582df8648e7ec271c821838ff4ee148e',
+        sha256Hash: 'f1547a88b7e317689cb0b06021da8a48adbd2f6c95e56b705af9f1ff27424396',
       },
     };
     this.L.trace(
@@ -275,7 +275,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '3fe02aae98bea508d894173f8bcd8a379f0959ff4b3e1bd2c31183260578922a',
+        sha256Hash: 'bfe23d669f27cc1585044aa6d2ce5319867ad0c5726b22bc8567ee3633c0c402',
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for catalog offer');
