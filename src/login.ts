@@ -7,10 +7,12 @@ import {
   REDIRECT_ENDPOINT,
   REPUTATION_ENDPOINT,
   STORE_HOMEPAGE,
-  SET_SID_ENDPOINT,
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
   LOCATION_ENDPOINT,
+  TWINMOTION_SET_SID_ENDPOINT,
+  UNREAL_SET_SID_ENDPOINT,
+  STORE_HOMEPAGE_EN,
 } from './common/constants';
 import { config } from './common/config';
 import PuppetLogin from './puppet/login';
@@ -42,9 +44,9 @@ export default class Login {
    * Sets the 'store-token' cookie which is necessary to authenticate on the GraphQL proxy endpoint
    */
   async getStoreToken(): Promise<void> {
-    this.L.trace({ url: STORE_HOMEPAGE }, 'Request store homepage');
-    const resp = await this.request.get(STORE_HOMEPAGE, { responseType: 'text' });
-    // this.L.trace({ headers: resp.headers }, 'Store homepage response headers');
+    this.L.trace({ url: STORE_HOMEPAGE_EN }, 'Request store homepage');
+    const resp = await this.request.get(STORE_HOMEPAGE_EN, { responseType: 'text' });
+    this.L.trace({ setCookie: resp.headers?.['set-cookie'] }, 'Store homepage response cookies');
   }
 
   async refreshAndSid(error: boolean): Promise<boolean> {
@@ -69,7 +71,11 @@ export default class Login {
     const authenticateResp = await this.request.get(AUTHENTICATE_ENDPOINT);
     this.L.trace({ resp: authenticateResp.body }, 'Authenticate response');
 
-    const redirectSearchParams = { clientId: EPIC_CLIENT_ID, redirectUrl: STORE_HOMEPAGE };
+    const redirectSearchParams = {
+      clientId: EPIC_CLIENT_ID,
+      redirectUrl: STORE_HOMEPAGE_EN,
+      prompt: 'pass_through',
+    };
     this.L.trace({ params: redirectSearchParams, url: REDIRECT_ENDPOINT }, 'Redirect request');
     const redirectResp = await this.request.get<RedirectResponse>(REDIRECT_ENDPOINT, {
       searchParams: redirectSearchParams,
@@ -81,9 +87,15 @@ export default class Login {
       return false;
     }
     const sidSearchParams = { sid };
-    this.L.trace({ params: sidSearchParams, url: SET_SID_ENDPOINT }, 'Set SID request');
-    const sidResp = await this.request.get(SET_SID_ENDPOINT, { searchParams: sidSearchParams });
-    this.L.trace({ headers: sidResp.headers }, 'Set SID response headers');
+    this.L.trace(
+      { params: sidSearchParams, urls: [UNREAL_SET_SID_ENDPOINT, TWINMOTION_SET_SID_ENDPOINT] },
+      'Set SID requests'
+    );
+    const sidResps = await Promise.all([
+      this.request.get(UNREAL_SET_SID_ENDPOINT, { searchParams: sidSearchParams }),
+      this.request.get(TWINMOTION_SET_SID_ENDPOINT, { searchParams: sidSearchParams }),
+    ]);
+    this.L.trace({ headers: sidResps.map((r) => r.headers) }, 'Set SID responses headers');
     // const csrfToken = await this.getCsrf();
     await this.getStoreToken();
     return true;
