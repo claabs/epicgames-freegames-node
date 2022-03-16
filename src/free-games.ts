@@ -208,7 +208,7 @@ export default class FreeGames {
   }
 
   // TODO: Parameterize region (en-US). Env var probably
-  async ownsGame(offerId: string, namespace: string): Promise<boolean> {
+  async ownsGame(offerId: string, namespace: string, attempts = 1): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting product ownership info');
     // variables and extensions can be found at https://www.epicgames.com/store/en-US
     // Search for "getEntitledOfferItems" in source HTML
@@ -234,10 +234,11 @@ export default class FreeGames {
       const error = entitlementResp.body.errors[0];
       const errorJSON: AuthErrorJSON = JSON.parse(error.serviceResponse);
       if (errorJSON.errorCode?.includes('authentication_failed')) {
+        if (attempts > 3) throw new Error('Failed to authenticate with GraphQL API. Giving up.');
         this.L.warn('Failed to authenticate with GraphQL API, trying again');
         const login = new Login(this.request, this.email);
         await login.refreshAndSid(true);
-        return this.ownsGame(offerId, namespace);
+        return this.ownsGame(offerId, namespace, attempts + 1);
       }
       this.L.error(error);
       throw new Error(error.message);
