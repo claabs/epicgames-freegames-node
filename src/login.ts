@@ -10,8 +10,6 @@ import {
   AUTHENTICATE_ENDPOINT,
   CLIENT_REDIRECT_ENDPOINT,
   LOCATION_ENDPOINT,
-  TWINMOTION_SET_SID_ENDPOINT,
-  UNREAL_SET_SID_ENDPOINT,
   STORE_HOMEPAGE_EN,
 } from './common/constants';
 import { config } from './common/config';
@@ -86,16 +84,6 @@ export default class Login {
       if (error) throw new Error('Sid returned null');
       return false;
     }
-    const sidSearchParams = { sid };
-    this.L.trace(
-      { params: sidSearchParams, urls: [UNREAL_SET_SID_ENDPOINT, TWINMOTION_SET_SID_ENDPOINT] },
-      'Set SID requests'
-    );
-    const sidResps = await Promise.all([
-      this.request.get(UNREAL_SET_SID_ENDPOINT, { searchParams: sidSearchParams }),
-      this.request.get(TWINMOTION_SET_SID_ENDPOINT, { searchParams: sidSearchParams }),
-    ]);
-    this.L.trace({ headers: sidResps.map((r) => r.headers) }, 'Set SID responses headers');
     // const csrfToken = await this.getCsrf();
     await this.getStoreToken();
     return true;
