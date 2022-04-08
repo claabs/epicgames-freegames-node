@@ -14,12 +14,12 @@ WORKDIR /usr/app
 FROM base as deps
 
 # Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-on-alpine
-# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v10.4.0/src/revisions.ts,
+# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v13.4.0/src/revisions.ts,
 # select the correct tag for the puppeteer version, and note the chromium revision number. Then go
 # to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
-# ensure that version is published at https://pkgs.alpinelinux.org/package/edge/community/x86_64/chromium
+# ensure that version is published at https://pkgs.alpinelinux.org/package/v3.15/community/x86_64/chromium
 RUN apk add --no-cache \
-    'chromium=~93' \
+    'chromium=~99' \
     nss \
     freetype \
     harfbuzz \
