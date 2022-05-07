@@ -23,7 +23,9 @@ puppeteer.use(
   })
 );
 
-puppeteer.use(StealthPlugin());
+const stealth = StealthPlugin();
+stealth.enabledEvasions.delete('iframe.contentWindow'); // fixes "word word word..." and "mmMwWLliI0fiflO&1"
+puppeteer.use(stealth);
 
 export default puppeteer;
 
@@ -105,8 +107,8 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
     '--single-process',
     // For debugging in Docker
-    // '--remote-debugging-port=3001',
-    // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
+    '--remote-debugging-port=3001',
+    '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
   ],
 };
 
