@@ -163,8 +163,10 @@ const retryFunction = async <T>(
 /**
  * Create a new page within a wrapper that will retry if it hangs for 30 seconds
  */
-export const safeNewPage = (browser: Browser, L: Logger): Promise<Page> => {
-  return retryFunction(() => browser.newPage(), L, 'new page');
+export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> => {
+  const page = await retryFunction(() => browser.newPage(), L, 'new page');
+  page.setDefaultTimeout(config.browserNavigationTimeout);
+  return page;
 };
 
 /**

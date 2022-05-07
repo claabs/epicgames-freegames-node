@@ -733,6 +733,21 @@ export class AppConfig {
     : 5;
 
   /**
+   * How long in milliseconds the browser navigation will wait before timing out.
+   * 0 disables timeout (not recommended).
+   * See: https://github.com/puppeteer/puppeteer/blob/main/docs/api.md#pagesetdefaulttimeouttimeout
+   * @example 120000
+   * @default 30000
+   * @env BROWSER_NAVIGATION_TIMEOUT
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  browserNavigationTimeout = process.env.BROWSER_NAVIGATION_TIMEOUT
+    ? parseInt(process.env.BROWSER_NAVIGATION_TIMEOUT, 10)
+    : 30000;
+
+  /**
    * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */
