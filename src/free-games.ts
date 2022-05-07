@@ -57,7 +57,7 @@ export default class FreeGames {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '4bebe12f9eab12438766fb5971b0bc54422ba81954539f294ec23b0a29ff92ad',
+        sha256Hash: '13a2b6787f1a20d05c75c54c78b1b8ac7c8bf4efc394edf7a5998fdf35d1adb0',
       },
     };
     this.L.trace(
