@@ -197,7 +197,7 @@ export default class PuppetPurchase {
             .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
             .then(() => 'nav'),
           page
-            .waitForSelector('span.payment-alert__content')
+            .waitForSelector('.payment-alert--ERROR > span.payment-alert__content')
             .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
               errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
             ),
