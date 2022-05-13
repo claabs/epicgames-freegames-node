@@ -91,6 +91,14 @@ export interface Promotions {
   upcomingPromotionalOffers: UpcomingPromotionalOffer[];
 }
 
+export interface Mapping {
+  pageSlug: string;
+  pageType: string;
+}
+export interface CatalogNS {
+  mappings: Mapping[] | null;
+}
+
 export interface Element {
   title: string;
   id: string;
@@ -106,6 +114,7 @@ export interface Element {
   customAttributes: CustomAttribute[];
   categories: Category[];
   tags: Tag[];
+  catalogNs: CatalogNS;
   price: Price;
   promotions: Promotions;
 }

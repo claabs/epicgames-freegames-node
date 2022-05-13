@@ -164,24 +164,27 @@ export default class FreeGames {
     const allProductOffers: OfferInfo[] = (
       await Promise.all(
         freeOfferedGames.map(async (game) => {
-          if (!game.productSlug) {
+          const productHome = game?.catalogNs?.mappings?.find(
+            (mapping) => mapping.pageType === 'productHome'
+          )?.pageSlug;
+          if (!productHome) {
             return [
               {
                 offerNamespace: game.namespace,
                 offerId: game.id,
                 productName: game.title,
-                productSlug: game.productSlug,
+                productSlug: productHome,
               },
             ];
           }
-          const productOffers = await this.getProduct(game.productSlug);
+          const productOffers = await this.getProduct(productHome);
           return productOffers
             .filter((o) => o.hasOffer)
             .map((o) => ({
               offerNamespace: o.namespace,
               offerId: o.id,
               productName: game.title,
-              productSlug: game.productSlug,
+              productSlug: productHome,
             }));
         })
       )

@@ -79,7 +79,7 @@ export interface OfferInfo {
   offerNamespace: string;
   offerId: string;
   productName: string;
-  productSlug: string;
+  productSlug?: string;
 }
 
 export interface ArkoseData {
