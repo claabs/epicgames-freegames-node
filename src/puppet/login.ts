@@ -116,7 +116,7 @@ export default class PuppetLogin {
       if (err.message.includes('timeout')) {
         throw err;
       }
-      if (err.message.includes('detached')) {
+      if (err.message.includes('detached') || err.message.includes('Target closed')) {
         this.L.trace(err);
       } else {
         this.L.warn(err);
