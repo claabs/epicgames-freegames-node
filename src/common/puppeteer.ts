@@ -107,8 +107,8 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
     '--single-process',
     // For debugging in Docker
-    '--remote-debugging-port=3001',
-    '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
+    // '--remote-debugging-port=3001',
+    // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
   ],
 };
 
@@ -166,6 +166,7 @@ const retryFunction = async <T>(
  * Create a new page within a wrapper that will retry if it hangs for 30 seconds
  */
 export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> => {
+  L.debug('Launching a new page');
   const page = await retryFunction(() => browser.newPage(), L, 'new page');
   page.setDefaultTimeout(config.browserNavigationTimeout);
   return page;
@@ -175,5 +176,6 @@ export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> =>
  * Launcha new browser within a wrapper that will retry if it hangs for 30 seconds
  */
 export const safeLaunchBrowser = (L: Logger): Promise<Browser> => {
+  L.debug('Launching a new browser');
   return retryFunction(() => puppeteer.launch(launchArgs), L, 'browser launch');
 };

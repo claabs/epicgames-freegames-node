@@ -19,6 +19,7 @@ export const FREE_GAMES_PROMOTIONS_ENDPOINT =
   'https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions';
 export const STORE_HOMEPAGE = 'https://store.epicgames.com/';
 export const STORE_HOMEPAGE_EN = `${STORE_HOMEPAGE}en-US/`;
+export const STORE_CART_EN = `${STORE_HOMEPAGE}en-US/cart`;
 export const ORDER_CONFIRM_ENDPOINT =
   'https://payment-website-pci.ol.epicgames.com/purchase/confirm-order';
 export const ORDER_PREVIEW_ENDPOINT =

@@ -1,117 +1,15 @@
 /* eslint-disable class-methods-use-this */
 import { outputFileSync } from 'fs-extra';
 import path from 'path';
-import { Logger } from 'pino';
-import { Browser, CDPSession, Protocol, ElementHandle, Page } from 'puppeteer';
+import { ElementHandle, Page } from 'puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
-import { EPIC_PURCHASE_ENDPOINT, STORE_HOMEPAGE_EN } from '../common/constants';
-import { getLocaltunnelUrl } from '../common/localtunnel';
-import logger from '../common/logger';
-import puppeteer, {
-  getDevtoolsUrl,
-  launchArgs,
-  safeLaunchBrowser,
-  safeNewPage,
-  toughCookieFileStoreToPuppeteerCookie,
-} from '../common/puppeteer';
-import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
+import { EPIC_PURCHASE_ENDPOINT } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
-import { sendNotification } from '../notify';
-import { getHcaptchaCookies } from './hcaptcha';
+import PuppetBase from './base';
 
 const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 
-export default class PuppetPurchase {
-  private L: Logger;
-
-  private email: string;
-
-  constructor(email: string) {
-    this.L = logger.child({
-      user: email,
-    });
-    this.email = email;
-  }
-
-  /**
-   * Completes a purchase starting from the product page using its productSlug
-   * **Currently unused**
-   */
-  public async purchaseFull(productSlug: string): Promise<void> {
-    const hCaptchaCookies = await getHcaptchaCookies();
-    const userCookies = await getCookiesRaw(this.email);
-    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    this.L.debug('Purchasing with puppeteer');
-    const browser = await puppeteer.launch(launchArgs);
-    const page = await browser.newPage();
-    this.L.trace(getDevtoolsUrl(page));
-    const cdpClient = await page.target().createCDPSession();
-    await cdpClient.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
-    });
-    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-    await page.setCookie({
-      name: 'HAS_ACCEPTED_AGE_GATE_ONCE',
-      domain: 'www.epicgames.com',
-      value: 'true',
-    });
-    await page.goto(`${STORE_HOMEPAGE_EN}p/${productSlug}`);
-    this.L.trace('Waiting for getButton');
-    const getButton = (await page.waitForSelector(
-      `button[data-testid='purchase-cta-button']:not([aria-disabled='true'])`
-    )) as ElementHandle<HTMLButtonElement>;
-    // const buttonMessage: ElementHandle<HTMLSpanElement> | null = await getButton.$(
-    //   `span[data-component='Message']`
-    // );
-    await getButton.click({ delay: 100 });
-    this.L.trace('Waiting for placeOrderButton');
-
-    const waitForPurchaseButton = async (
-      startTime = new Date()
-    ): Promise<ElementHandle<HTMLButtonElement>> => {
-      const timeout = 30000;
-      const poll = 100;
-      try {
-        const purchaseHandle = await page.waitForSelector('#webPurchaseContainer > iframe', {
-          timeout: 100,
-        });
-        if (!purchaseHandle) throw new Error('Could not find webPurchaseContainer iframe');
-        const purchaseFrame = await purchaseHandle.contentFrame();
-        if (!purchaseFrame) throw new Error('Could not find purchaseFrame contentFrame');
-        const button = await purchaseFrame.$(`button.payment-btn`);
-        if (!button) throw new Error('Could not find purchase button in iframe');
-        return button;
-      } catch (err) {
-        if (startTime.getTime() + timeout <= new Date().getTime()) {
-          throw new Error(`Timeout after ${timeout}ms: ${err.message}`);
-        }
-        await new Promise((resolve) => {
-          setTimeout(resolve, poll);
-        });
-        return waitForPurchaseButton(startTime);
-      }
-    };
-
-    const [placeOrderButton] = await Promise.all([
-      waitForPurchaseButton(),
-      page.waitForNetworkIdle(),
-    ]);
-    this.L.trace('Clicking placeOrderButton');
-    await placeOrderButton.click({ delay: 100 });
-    this.L.trace('Waiting for purchased button');
-    await page.waitForSelector(
-      `button[data-testid='purchase-cta-button'] > span[data-component='Icon']`
-    );
-    this.L.info(`Puppeteer purchase of ${productSlug} complete`);
-    this.L.trace('Saving new cookies');
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Protocol.Network.Cookie[];
-    };
-    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
-    this.L.trace('Saved cookies, closing browser');
-    await browser.close();
-  }
-
+export default class PuppetPurchase extends PuppetBase {
   private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
     try {
       this.L.trace('Waiting for hcaptcha iframe');
@@ -136,19 +34,8 @@ export default class PuppetPurchase {
    * Completes a purchase starting from the purchase iframe using its namespace and offerId
    */
   public async purchaseShort(namespace: string, offer: string): Promise<void> {
-    const hCaptchaCookies = await getHcaptchaCookies();
-    const userCookies = await getCookiesRaw(this.email);
-    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    this.L.debug('Purchasing with puppeteer (short)');
-    const browser = await safeLaunchBrowser(this.L);
-    const page = await safeNewPage(browser, this.L);
-    this.L.trace(getDevtoolsUrl(page));
-    const cdpClient = await page.target().createCDPSession();
+    const page = await this.setupPage();
     try {
-      await cdpClient.send('Network.setCookies', {
-        cookies: [...puppeteerCookies, ...hCaptchaCookies],
-      });
-      await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
       const purchaseUrl = `${EPIC_PURCHASE_ENDPOINT}?highlightColor=0078f2&offers=1-${namespace}-${offer}&orderId&purchaseToken&showNavigation=true`;
 
       /**
@@ -207,12 +94,7 @@ export default class PuppetPurchase {
           this.L.debug('Captcha detected');
           // Keep the existing portal open
           if (!page.hasOpenPortal()) {
-            let url = await page.openPortal();
-            if (config.webPortalConfig?.localtunnel) {
-              url = await getLocaltunnelUrl(url);
-            }
-            this.L.info({ url }, 'Go to this URL and do something');
-            await sendNotification(url, this.email, NotificationReason.PURCHASE);
+            await this.openPortalAndNotify(page, NotificationReason.PURCHASE);
           }
           const interactionResult = await Promise.race([
             page
@@ -233,7 +115,8 @@ export default class PuppetPurchase {
       };
 
       await initPurchase();
-      await this.finishPurchase(browser, cdpClient);
+      this.L.trace(`Puppeteer purchase successful`);
+      await this.teardownPage(page);
     } catch (err) {
       let success = false;
       if (page) {
@@ -248,43 +131,22 @@ export default class PuppetPurchase {
           { errorImage, errorHtml },
           'Encountered an error during browser automation. Saved a screenshot and page HTML for debugging purposes.'
         );
-        if (!config.noHumanErrorHelp)
-          success = await this.sendErrorManualHelpNotification(page, browser, cdpClient);
+        if (!config.noHumanErrorHelp) success = await this.sendErrorManualHelpNotification(page);
+        await page.close();
       }
-      if (browser) await browser.close();
       if (!success) throw err;
     }
   }
 
-  private async finishPurchase(browser: Browser, cdpClient: CDPSession): Promise<void> {
-    this.L.trace(`Puppeteer purchase successful`);
-    this.L.trace('Saving new cookies');
-    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-      cookies: Protocol.Network.Cookie[];
-    };
-    setPuppeteerCookies(this.email, currentUrlCookies.cookies);
-    this.L.trace('Saved cookies, closing browser');
-    await browser.close();
-  }
-
-  private async sendErrorManualHelpNotification(
-    page: Page,
-    browser: Browser,
-    cdpClient: CDPSession
-  ): Promise<boolean> {
+  private async sendErrorManualHelpNotification(page: Page): Promise<boolean> {
     this.L.info('Asking a human for help...');
     try {
-      let url = await page.openPortal();
-      if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(url);
-      }
-      this.L.info({ url }, 'Go to this URL and purchase the game');
-      await sendNotification(url, this.email, NotificationReason.PURCHASE_ERROR);
+      await this.openPortalAndNotify(page, NotificationReason.PURCHASE_ERROR);
       await page.waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
         timeout: NOTIFICATION_TIMEOUT,
       });
       await page.closePortal();
-      await this.finishPurchase(browser, cdpClient);
+      await this.teardownPage(page);
       return true;
     } catch (err) {
       this.L.error('Encountered an error when asking a human for help');

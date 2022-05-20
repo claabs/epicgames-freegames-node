@@ -2,8 +2,6 @@
 import { Argv, usage } from 'yargs';
 import AccountManager from './test/util/puppet-account';
 import { newCookieJar } from './src/common/request';
-import FreeGames from './src/free-games';
-import Purchase from './src/purchase';
 
 interface ReleaseArgs {
   [x: string]: unknown;

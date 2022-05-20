@@ -625,16 +625,6 @@ export class AppConfig {
   webPortalConfig?: WebPortalConfig;
 
   /**
-   * Default to purchasing games using browser automation
-   * @example false
-   * @default true
-   * @env PUPPETEER_PURCHASE
-   */
-  @IsOptional()
-  @IsBoolean()
-  puppeteerPurchase = process.env.PUPPETEER_PURCHASE?.toLowerCase() !== 'false';
-
-  /**
    * A list of accounts to work with
    */
   @IsArray()

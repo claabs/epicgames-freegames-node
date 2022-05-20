@@ -1,44 +1,60 @@
 /* eslint-disable class-methods-use-this */
 import { TOTP } from 'otpauth';
-import { Logger } from 'pino';
-import { Protocol, ElementHandle, Page } from 'puppeteer';
-import path from 'path';
-import logger from '../common/logger';
-import {
-  getDevtoolsUrl,
-  safeLaunchBrowser,
-  safeNewPage,
-  toughCookieFileStoreToPuppeteerCookie,
-} from '../common/puppeteer';
-import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
-import { getHcaptchaCookies } from './hcaptcha';
-import { EPIC_CLIENT_ID, STORE_HOMEPAGE_EN } from '../common/constants';
+import { ElementHandle, Page, Protocol } from 'puppeteer';
+import { EPIC_CLIENT_ID, STORE_CART_EN, STORE_HOMEPAGE_EN } from '../common/constants';
 import { NotificationReason } from '../interfaces/notification-reason';
-import { sendNotification } from '../notify';
-import { config, CONFIG_DIR } from '../common/config';
-import { getLocaltunnelUrl } from '../common/localtunnel';
+import { config } from '../common/config';
+import PuppetBase, { PuppetBaseProps } from './base';
 
 const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 
-export default class PuppetLogin {
-  private L: Logger;
+export interface PuppetLoginProps extends PuppetBaseProps {
+  password: string;
+  totp?: string;
+}
 
-  private email: string;
-
+export default class PuppetLogin extends PuppetBase {
   private password: string;
 
   private totp?: string;
 
-  constructor(email: string, password: string, totp?: string) {
-    this.L = logger.child({
-      user: email,
-    });
-    this.email = email;
-    this.password = password;
-    this.totp = totp;
+  constructor(props: PuppetLoginProps) {
+    super(props);
+    this.password = props.password;
+    this.totp = props.totp;
   }
 
-  private async startLogin(page: Page): Promise<void> {
+  async fullLogin(): Promise<void> {
+    const page = await this.setupPage();
+    try {
+      if (await this.refreshLogin(page)) {
+        this.L.info('Successfully refreshed login');
+      } else {
+        this.L.debug('Could not refresh credentials. Logging in fresh.');
+        await this.login(page);
+        this.L.info('Successfully logged in fresh');
+      }
+    } catch (err) {
+      await this.handlePageError(err, page);
+    }
+    await this.teardownPage(page);
+  }
+
+  async refreshLogin(page: Page): Promise<boolean> {
+    await page.goto(STORE_CART_EN, {
+      waitUntil: 'networkidle0',
+    });
+    const cdpClient = await page.target().createCDPSession();
+    const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
+      cookies: Protocol.Network.Cookie[];
+    };
+    if (currentUrlCookies.cookies.find((c) => c.name === 'storeTokenExpires')) {
+      return true;
+    }
+    return false;
+  }
+
+  private async login(page: Page): Promise<void> {
     this.L.trace('Navigating to Epic Games login page');
     await Promise.all([
       page.goto(
@@ -57,52 +73,13 @@ export default class PuppetLogin {
     this.L.trace('Waiting for sign-in button');
     const [signInElem] = await Promise.all([
       page.waitForSelector('#sign-in:not([disabled])') as Promise<ElementHandle<HTMLInputElement>>,
-      page.waitForNetworkIdle(),
+      // page.waitForNetworkIdle(),
     ]);
     // Remember me should be checked by default
     this.L.trace('Clicking sign-in button');
     await signInElem.hover();
     await signInElem.focus();
     await Promise.all([await signInElem.click({ delay: 100 }), await this.handleLoginClick(page)]);
-  }
-
-  async login(): Promise<void> {
-    const hCaptchaCookies = await getHcaptchaCookies();
-    const userCookies = await getCookiesRaw(this.email);
-    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    this.L.debug('Logging in with puppeteer');
-    const browser = await safeLaunchBrowser(this.L);
-    const page = await safeNewPage(browser, this.L);
-    try {
-      this.L.trace(getDevtoolsUrl(page));
-      const cdpClient = await page.target().createCDPSession();
-      await cdpClient.send('Network.setCookies', {
-        cookies: [...puppeteerCookies, ...hCaptchaCookies],
-      });
-      await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
-      await this.startLogin(page);
-
-      this.L.trace('Saving new cookies');
-      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-        cookies: Protocol.Network.Cookie[];
-      };
-      setPuppeteerCookies(this.email, currentUrlCookies.cookies);
-      this.L.trace('Saved cookies, closing browser');
-      await browser.close();
-    } catch (err) {
-      if (page) {
-        const errorFile = `error-${new Date().toISOString()}.png`;
-        await page.screenshot({
-          path: path.join(CONFIG_DIR, `error-${errorFile}.png`),
-        });
-        this.L.error(
-          { errorFile },
-          'Encountered an error during browser automation. Saved a screenshot for debugging purposes.'
-        );
-      }
-      if (browser) await browser.close();
-      throw err;
-    }
   }
 
   private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
@@ -176,19 +153,14 @@ export default class PuppetLogin {
     ]);
     if (result === 'captcha') {
       this.L.trace('Captcha detected');
-      let url = await page.openPortal();
-      if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(url);
-      }
-      this.L.info({ url }, 'Go to this URL and do something');
-      await sendNotification(url, this.email, NotificationReason.LOGIN);
+      await this.openPortalAndNotify(page, NotificationReason.LOGIN);
       await this.handleCaptchaSolved(page);
       await page.closePortal();
     } else if (result === 'nav') {
       this.L.debug('Redirected to store page, login successful');
     } else if (typeof result === 'string') {
       this.L.warn(`Login returned error: ${result}`);
-      await this.startLogin(page);
+      await this.login(page);
     } else {
       await this.handleMfa(page, result as ElementHandle<HTMLInputElement>);
     }
@@ -207,7 +179,7 @@ export default class PuppetLogin {
     } else if (result !== 'nav') {
       // result is an error message
       this.L.warn(`Login returned error: ${result}`);
-      await this.startLogin(page);
+      await this.login(page);
     }
     // result is 'nav', success
   }
