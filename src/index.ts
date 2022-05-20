@@ -42,6 +42,9 @@ export async function redeemAccount(account: AccountConfig, index: number): Prom
       await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
       L.info(`Done purchasing ${offers[i].productName}`);
     }
+    L.debug('Closing browser');
+    await browser.close();
+    L.trace('Browser finished closing');
   } catch (e) {
     if (e.response) {
       if (e.response.body) L.error(e.response.body);
