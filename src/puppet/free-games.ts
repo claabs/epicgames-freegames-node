@@ -169,9 +169,9 @@ export default class PuppetFreeGames extends PuppetBase {
     const allProductOffers: OfferInfo[] = (
       await Promise.all(
         freeOfferedGames.map(async (game) => {
-          const productHome = game?.catalogNs?.mappings?.find(
-            (mapping) => mapping.pageType === 'productHome'
-          )?.pageSlug;
+          const productHome =
+            game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
+              ?.pageSlug || game.productSlug;
           if (!productHome) {
             return [
               {
