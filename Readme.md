@@ -17,11 +17,9 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 
 ```jsonc
 {
-  "searchStrategy": "promotion",
   "runOnStartup": true,
   "cronSchedule": "5 16 * * *",
   "logLevel": "info",
-  "hcaptchaAccessibilityUrl": "https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c",
   "webPortalConfig": {
     "baseUrl": "https://epic.exmaple.com",
   },
