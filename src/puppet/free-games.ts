@@ -9,7 +9,12 @@ import { config, SearchStrategy } from '../common/config';
 import PuppetBase from './base';
 import { OfferInfo } from '../interfaces/types';
 import { GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
-import { Offer, ProductInfo, ItemEntitlementResp } from '../interfaces/product-info';
+import {
+  Offer,
+  ProductInfo,
+  ItemEntitlementResp,
+  Page as ProductInfoPage,
+} from '../interfaces/product-info';
 import { PromotionsQueryResponse } from '../interfaces/promotions-response';
 import {
   SearchStoreQueryResponse,
@@ -55,7 +60,7 @@ export default class PuppetFreeGames extends PuppetBase {
     this.L.debug('Getting global free games');
     const pageLimit = 1000;
     const nowTimestamp = new Date().toISOString();
-    // variables and extensions can be found at https://www.epicgames.com/store/en-US/browse
+    // variables and extensions can be found at https://store.epicgames.com/en-US/browse
     // Search for "searchStoreQuery" in source HTML
     const variables = {
       allowCountries: 'US',
@@ -172,6 +177,7 @@ export default class PuppetFreeGames extends PuppetBase {
           const productHome =
             game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
               ?.pageSlug || game.productSlug;
+          const { offerType } = game;
           if (!productHome) {
             return [
               {
@@ -182,7 +188,7 @@ export default class PuppetFreeGames extends PuppetBase {
               },
             ];
           }
-          const productOffers = await this.getProduct(productHome);
+          const productOffers = await this.getProduct(productHome, offerType);
           return productOffers
             .filter((o) => o.hasOffer)
             .map((o) => ({
@@ -206,10 +212,18 @@ export default class PuppetFreeGames extends PuppetBase {
     return freeOffers;
   }
 
-  async getProduct(productSlug: string): Promise<Offer[]> {
-    this.L.debug({ productSlug }, 'Getting product info using productSlug');
-    const url = `${STORE_CONTENT}/products/${productSlug}`;
+  async getProduct(productSlug: string, offerType?: 'BUNDLE' | string): Promise<Offer[]> {
+    const isBundle = offerType === 'BUNDLE';
+    this.L.debug({ productSlug, offerType }, 'Getting product info using productSlug');
+    const itemPath = isBundle ? 'bundles' : 'products';
+    const url = `${STORE_CONTENT}/${itemPath}/${productSlug}`;
     this.L.trace({ url }, 'Getting product info');
+
+    if (isBundle) {
+      const entitlementRespBody = await this.request<ProductInfoPage>('GET', url);
+      const offers = [entitlementRespBody.offer];
+      return offers;
+    }
     const entitlementRespBody = await this.request<ProductInfo>('GET', url);
     const offers = entitlementRespBody.pages.map((page) => page.offer);
     return offers;
@@ -218,7 +232,7 @@ export default class PuppetFreeGames extends PuppetBase {
   // TODO: Parameterize region (en-US). Env var probably
   async ownsGame(offerId: string, namespace: string): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting product ownership info');
-    // variables and extensions can be found at https://www.epicgames.com/store/en-US
+    // variables and extensions can be found at https://store.epicgames.com/en-US/
     // Search for "getEntitledOfferItems" in source HTML
     const variables = {
       offerId,
@@ -263,7 +277,7 @@ export default class PuppetFreeGames extends PuppetBase {
    */
   async getFreeCatalogOffer(offerId: string, namespace: string): Promise<OfferInfo | undefined> {
     this.L.trace({ offerId, namespace }, 'Getting offer details');
-    // variables and extensions can be found at https://www.epicgames.com/store/en-US
+    // variables and extensions can be found at https://store.epicgames.com/en-US/
     // Search for "getCatalogOffer" in source HTML
     const variables = {
       locale: 'en-US',
