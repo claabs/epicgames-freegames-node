@@ -462,11 +462,14 @@ export enum SearchStrategy {
    */
   WEEKLY = 'weekly',
   /**
-   * Search the entire Epic Games site for any game with a 100% discount. This includes the `weekly` games, plus any uncommon non-weekly temporarily free games.
+   * Search the entire Epic Games site for any game with a 100% discount.
+   * This includes the `weekly` games, plus any uncommon non-weekly temporarily free games.
+   * Occasionally excludes the weekly promotion if it's a bundle.
    */
   PROMOTION = 'promotion',
   /**
-   * Combines the results from `weekly` and `promotion`. Should continue if at least one of the APIs works.
+   * Combines the results from `weekly` and `promotion`.
+   * Continues if at least one of the APIs works.
    */
   ALL = 'all',
 }
@@ -545,13 +548,13 @@ export class AppConfig {
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
-   * @example all
-   * @default promotion
+   * @example weekly
+   * @default all
    * @env SEARCH_STRATEGY
    */
   @IsOptional()
   @IsEnum(SearchStrategy)
-  searchStrategy = process.env.SEARCH_STRATEGY || SearchStrategy.PROMOTION;
+  searchStrategy = process.env.SEARCH_STRATEGY || SearchStrategy.ALL;
 
   /**
    * If true, the process will run on startup in addition to the scheduled time.
