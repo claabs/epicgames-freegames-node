@@ -25,7 +25,7 @@ export class TelegramNotifier extends NotifierService {
       chat_id: this.config.chatId,
       text: `*epicgames-freegames-node*,\nreason: ${reason},\naccount: ${account}, \nurl: [Click me!](${encodedUrl})`,
       disable_web_page_preview: true,
-      parse_mode: 'Markdown',
+      parse_mode: 'MarkdownV2',
     };
 
     L.trace({ jsonPayload }, 'Sending json payload');
