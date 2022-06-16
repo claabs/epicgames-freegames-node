@@ -21,9 +21,15 @@ export class TelegramNotifier extends NotifierService {
     L.trace('Sending telegram notification');
 
     const encodedUrl = encodeURI(url);
+    const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}\nurl: [Click here](${encodedUrl})`;
+    // https://stackoverflow.com/a/60145565/5037239
+    const escapedMessage = message.replace(
+      /(\[[^\][]*]\(http[^()]*\))|[_*[\]()~>#+=|{}.!-]/gi,
+      (x, y) => y || `\\${x}`
+    );
     const jsonPayload = {
       chat_id: this.config.chatId,
-      text: `*epicgames-freegames-node*,\nreason: ${reason},\naccount: ${account}, \nurl: [Click me!](${encodedUrl})`,
+      text: escapedMessage,
       disable_web_page_preview: true,
       parse_mode: 'MarkdownV2',
     };
