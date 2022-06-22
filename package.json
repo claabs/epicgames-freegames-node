@@ -27,7 +27,7 @@
     "filenamify": "^4.1.0",
     "find-process": "^1.4.7",
     "fs-extra": "^10.1.0",
-    "got": "^11.8.2",
+    "got": "^11.8.5",
     "jsdom": "^19.0.0",
     "json5": "^2.2.1",
     "localtunnel": "^2.0.2",
