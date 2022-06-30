@@ -177,8 +177,8 @@ export default class PuppetFreeGames extends PuppetBase {
           const productHome =
             game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
               ?.pageSlug || game.productSlug;
-          const { offerType } = game;
-          if (!productHome) {
+          const { productSlug, offerType } = game;
+          if (!productHome || !productSlug) {
             return [
               {
                 offerNamespace: game.namespace,
