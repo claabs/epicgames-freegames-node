@@ -103,7 +103,6 @@ export class DiscordConfig extends NotifierConfig {
    * @env DISCORD_WEBHOOK
    */
   @IsUrl()
-  @Matches(/^.*(discord|discordapp)\.com\/api\/webhooks\/([\d]+)\/([a-zA-Z0-9_-]+)$/)
   webhookUrl: string;
 
   /**
