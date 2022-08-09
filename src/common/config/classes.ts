@@ -32,6 +32,7 @@ export enum NotificationType {
   APPRISE = 'apprise',
   LOCAL = 'local',
   GOTIFY = 'gotify',
+  SLACK = 'slack',
 }
 
 /**
@@ -236,6 +237,27 @@ export class GotifyConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Sends a [slack](https://slack.com/) message using webhook
+ */
+ export class SlackConfig extends NotifierConfig {
+  /**
+   * slack channel webhook URL.
+   * Guide: https://api.slack.com/messaging/webhooks
+   * @example https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg
+   * @env SLACK_WEBHOOK
+   */
+   @IsUrl()
+   webhookUrl: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.SLACK);
+  }
+}
+
 export class EmailAuthConfig {
   /**
    * The SMTP username (if necessary)
@@ -341,7 +363,8 @@ export type AnyNotifierConfig =
   | TelegramConfig
   | AppriseConfig
   | PushoverConfig
-  | GotifyConfig;
+  | GotifyConfig
+  | SlackConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -354,6 +377,7 @@ const notifierSubtypes: {
   { value: TelegramConfig, name: NotificationType.TELEGRAM },
   { value: AppriseConfig, name: NotificationType.APPRISE },
   { value: GotifyConfig, name: NotificationType.GOTIFY },
+  { value: SlackConfig, name: NotificationType.SLACK },
 ];
 
 export class WebPortalConfig {

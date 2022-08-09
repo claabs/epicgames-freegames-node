@@ -5,6 +5,7 @@ import {
   LocalNotifier,
   TelegramNotifier,
   GotifyNotifier,
+  SlackNotifier,
 } from './notifiers';
 import {
   config,
@@ -16,6 +17,7 @@ import {
   AppriseConfig,
   PushoverConfig,
   GotifyConfig,
+  SlackConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
@@ -57,6 +59,8 @@ export async function sendNotification(
         return new AppriseNotifier(notifierConfig as AppriseConfig);
       case NotificationType.GOTIFY:
         return new GotifyNotifier(notifierConfig as GotifyConfig);
+      case NotificationType.SLACK:
+        return new SlackNotifier(notifierConfig as SlackConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }
