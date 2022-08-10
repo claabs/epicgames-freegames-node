@@ -240,15 +240,15 @@ export class GotifyConfig extends NotifierConfig {
 /**
  * Sends a [slack](https://slack.com/) message using webhook
  */
- export class SlackConfig extends NotifierConfig {
+export class SlackConfig extends NotifierConfig {
   /**
    * slack channel webhook URL.
    * Guide: https://api.slack.com/messaging/webhooks
    * @example https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg
    * @env SLACK_WEBHOOK
    */
-   @IsUrl()
-   webhookUrl: string;
+  @IsUrl()
+  webhookUrl: string;
 
   /**
    * @ignore
@@ -914,6 +914,19 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof GotifyConfig)) {
         this.notifiers.push(gotify);
+      }
+    }
+
+    // Use environment variables to fill slack notification config if present
+    const { SLACK_WEBHOOK } = process.env;
+    if (SLACK_WEBHOOK) {
+      const slack = new SlackConfig();
+      slack.webhookUrl = SLACK_WEBHOOK;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof SlackConfig)) {
+        this.notifiers.push(slack);
       }
     }
 

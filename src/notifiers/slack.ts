@@ -19,7 +19,7 @@ export class SlackNotifier extends NotifierService {
     try {
       await got.post(this.config.webhookUrl, {
         json: {
-          text: `epicgames-freegames-node needs a captcha solved. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`
+          text: `epicgames-freegames-node needs a captcha solved. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`,
         },
         responseType: 'text',
       });
