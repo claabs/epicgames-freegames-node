@@ -39,8 +39,12 @@ export async function redeemAccount(account: AccountConfig, index: number): Prom
     for (let i = 0; i < offers.length; i += 1) {
       // Async for-loop as running purchases in parallel may break
       L.info(`Purchasing ${offers[i].productName}`);
-      await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
-      L.info(`Done purchasing ${offers[i].productName}`);
+      try {
+        await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
+        L.info(`Done purchasing ${offers[i].productName}`);
+      } catch (err) {
+        L.error(err);
+      }
     }
     L.debug('Closing browser');
     await browser.close();
