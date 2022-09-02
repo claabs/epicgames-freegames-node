@@ -25,23 +25,7 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 <a href="#captchas" id="captchas" style="color: inherit; text-decoration: none;">
   <h3>Captchas</h3>
 </a>
-<p>Epic Games currently serves captchas and bot detection to its login and checkout pages. This project works around the issue in two ways:</p>
-<ol>
-<li>hCaptcha accessibility cookies</li>
-<li>Sending you captchas</li>
-</ol>
-
-<a href="#hcaptcha-accessibility-cookies" id="hcaptcha-accessibility-cookies" style="color: inherit; text-decoration: none;">
-  <h4>hCaptcha accessibility cookies</h4>
-</a>
-<p><strong>This is currently unavailable. See <a href="https://github.com/claabs/epicgames-freegames-node/issues/178">#178</a> for details.</strong></p>
-<p>hCaptcha offers an accessibility tool for vision impaired users that can be used to bypass captchas served by Epic Games. It&#39;s very simple to set up:</p>
-<ol>
-<li>Go <a href="https://dashboard.hcaptcha.com/signup?type=accessibility">here</a> and enter an email you have access to</li>
-<li>In your email inbox find an email titled &quot;Instructions for using hCaptcha Accessibility&quot;</li>
-<li>Right-click the &quot;Get Accessibility Cookie&quot; button and copy its link address</li>
-<li>Add the link to your config as the <code>hcaptchaAccessibilityUrl</code> option</li>
-</ol>
+<p>Epic Games currently serves captchas and bot detection to its login and checkout pages.</p>
 
 <a href="#sending-you-captchas" id="sending-you-captchas" style="color: inherit; text-decoration: none;">
   <h4>Sending you captchas</h4>
@@ -181,28 +165,6 @@ Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and sched
 </a>
 <p>Without JSON config, you can only configure one account.</p>
 <p><code>$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME=&quot;Epic Games Captchas&quot; -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest</code></p>
-
-<a href="#cookie-import" id="cookie-import" style="color: inherit; text-decoration: none;">
-  <h3>Cookie Import</h3>
-</a>
-<p>If you&#39;re experiencing issues logging in with username and password, you can import cookies for a temporary session.</p>
-<ol>
-<li>Setup the container per the below instructions</li>
-<li>In your web browser, log in to the Epic Games Store with &quot;Remember me&quot; checked.</li>
-<li>Install the <a href="http://www.editthiscookie.com/">EditThisCookie</a> browser extension.</li>
-<li>While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to <code>https://www.epicgames.com/id</code>, and click the export button:
-<img src="https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true" alt="EditThisCookie export button"></li>
-<li>In your mounted <code>./config</code> folder, create <code>&lt;email_address&gt;-cookies.json</code> (e.g. <code>me@example.com-cookies.json</code>), and paste in your cookies.</li>
-<li>Start the container and the cookies will automatically be converted to a new format.</li>
-</ol>
-
-<a href="#cookie-import-notes" id="cookie-import-notes" style="color: inherit; text-decoration: none;">
-  <h4>Cookie Import Notes</h4>
-</a>
-<ul>
-<li>If you click &quot;Log Out&quot; on the browser session you copied the cookies from, the container may break.</li>
-<li>If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.</li>
-</ul>
 
 <a href="#running-without-docker" id="running-without-docker" style="color: inherit; text-decoration: none;">
   <h2>Running without Docker</h2>
