@@ -204,23 +204,6 @@ Without JSON config, you can only configure one account.
 
 `$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest`
 
-### Cookie Import
-
-If you're experiencing issues logging in with username and password, you can import cookies for a temporary session.
-
-1. Setup the container per the below instructions
-1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
-1. Install the [EditThisCookie](http://www.editthiscookie.com/) browser extension.
-1. While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to `https://www.epicgames.com/id`, and click the export button:
-![EditThisCookie export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true)
-1. In your mounted `./config` folder, create `<email_address>-cookies.json` (e.g. `me@example.com-cookies.json`), and paste in your cookies.
-1. Start the container and the cookies will automatically be converted to a new format.
-
-#### Cookie Import Notes
-
-* If you click "Log Out" on the browser session you copied the cookies from, the container may break.
-* If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.
-
 ## Running without Docker
 
 If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing Node.js.
