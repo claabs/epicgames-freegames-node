@@ -220,12 +220,12 @@ export default class PuppetFreeGames extends PuppetBase {
     this.L.trace({ url }, 'Getting product info');
 
     if (isBundle) {
-      const entitlementRespBody = await this.request<ProductInfoPage>('GET', url);
-      const offers = [entitlementRespBody.offer];
+      const productInfoRespBody = await this.request<ProductInfoPage>('GET', url);
+      const offers = [productInfoRespBody.offer];
       return offers;
     }
-    const entitlementRespBody = await this.request<ProductInfo>('GET', url);
-    const offers = entitlementRespBody.pages.map((page) => page.offer);
+    const productInfoRespBody = await this.request<ProductInfo>('GET', url);
+    const offers = productInfoRespBody.pages.map((page) => page.offer);
     return offers;
   }
 
