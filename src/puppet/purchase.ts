@@ -142,14 +142,25 @@ export default class PuppetPurchase extends PuppetBase {
     this.L.info('Asking a human for help...');
     try {
       await this.openPortalAndNotify(page, NotificationReason.PURCHASE_ERROR);
-      await page.waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
-        timeout: NOTIFICATION_TIMEOUT,
-      });
+      const interactionResult = await Promise.race([
+        page
+          .waitForFunction(() => document.location.hash.includes('/purchase/receipt'), {
+            timeout: NOTIFICATION_TIMEOUT,
+          })
+          .then(() => 'nav'),
+        page
+          .waitForResponse((res) => res.url().endsWith('/purchase/confirm-order') && !res.ok(), {
+            timeout: NOTIFICATION_TIMEOUT,
+          })
+          .then(() => 'error'),
+      ]);
+      if (interactionResult === 'error') {
+        throw new Error('Encountered an error when asking a human for help');
+      }
       await page.closePortal();
       await this.teardownPage(page);
       return true;
     } catch (err) {
-      this.L.error('Encountered an error when asking a human for help');
       this.L.error(err);
       return false;
     }
