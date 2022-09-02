@@ -298,9 +298,12 @@ export default class PuppetFreeGames extends PuppetBase {
       extensions: JSON.stringify(extensions),
     });
     const offer = offerResponseBody.data.Catalog.catalogOffer;
+    const isBlacklisted = offer.countriesBlacklist?.includes(
+      config.countryCode?.toUpperCase() || ''
+    );
     const isFree = offer.price?.totalPrice?.discountPrice === 0;
-    this.L.trace({ offerId, namespace, isFree });
-    if (!isFree) {
+    this.L.trace({ offerId, namespace, isFree, isBlacklisted });
+    if (!isFree || isBlacklisted) {
       return undefined;
     }
     return {

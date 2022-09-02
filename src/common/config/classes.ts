@@ -739,6 +739,18 @@ export class AppConfig {
     : 30000;
 
   /**
+   * The 2 character country code associated with your account.
+   * Used when determining if a game is blacklisted for your account.
+   * Commonly blacklisted countries: "MO","HK","RU","BY","CN"
+   * @example RU
+   * @default blacklisting is not checked
+   * @env COUNTRY_CODE
+   */
+  @IsOptional()
+  @IsString()
+  countryCode = process.env.COUNTRY_CODE;
+
+  /**
    * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
    * @deprecated
    */

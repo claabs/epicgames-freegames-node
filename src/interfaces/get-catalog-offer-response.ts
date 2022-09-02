@@ -106,8 +106,8 @@ export interface CatalogOffer {
   title: string;
   id: string;
   namespace: string;
-  countriesBlacklist: null;
-  countriesWhitelist: null;
+  countriesBlacklist: string[] | null;
+  countriesWhitelist: string[] | null;
   developerDisplayName: null;
   description: string;
   effectiveDate: string;
