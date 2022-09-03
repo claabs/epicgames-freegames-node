@@ -308,7 +308,7 @@ export default class PuppetFreeGames extends PuppetBase {
     }
 
     // HACK: fix for "Knockout City Cross-Play Beta"
-    if (offer.productSlug.endsWith('/beta')) return undefined;
+    if (offer.productSlug?.endsWith('/beta')) return undefined;
 
     return {
       offerId: offer.id,
