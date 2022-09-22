@@ -15,7 +15,7 @@ import {
   NotificationType,
   TelegramConfig,
   AppriseConfig,
-  PushoverConfig,  
+  PushoverConfig,
   GotifyConfig,
   SlackConfig,
   HomeassistantConfig,
@@ -50,7 +50,7 @@ export async function sendNotification(
       case NotificationType.DISCORD:
         return new DiscordNotifier(notifierConfig as DiscordConfig);
       case NotificationType.PUSHOVER:
-        return new PushoverNotifier(notifierConfig as PushoverConfig);	  
+        return new PushoverNotifier(notifierConfig as PushoverConfig);
       case NotificationType.EMAIL:
         return new EmailNotifier(notifierConfig as EmailConfig);
       case NotificationType.LOCAL:

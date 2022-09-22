@@ -28,11 +28,11 @@ export enum NotificationType {
   EMAIL = 'email',
   TELEGRAM = 'telegram',
   DISCORD = 'discord',
-  PUSHOVER = 'pushover',  
+  PUSHOVER = 'pushover',
   APPRISE = 'apprise',
   LOCAL = 'local',
   GOTIFY = 'gotify',
-  SLACK = 'slack',  
+  SLACK = 'slack',
   HOMEASSISTANT = 'homeassistant',
 }
 
