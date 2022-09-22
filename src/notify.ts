@@ -15,15 +15,17 @@ import {
   NotificationType,
   TelegramConfig,
   AppriseConfig,
-  PushoverConfig,
+  PushoverConfig,  
   GotifyConfig,
   SlackConfig,
+  HomeassistantConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
 import { getDevtoolsUrl, safeLaunchBrowser, safeNewPage } from './common/puppeteer';
 import { getLocaltunnelUrl } from './common/localtunnel';
 import { PushoverNotifier } from './notifiers/pushover';
+import { HomeassistantNotifier } from './notifiers/homeassistant';
 
 export async function sendNotification(
   url: string,
@@ -48,7 +50,7 @@ export async function sendNotification(
       case NotificationType.DISCORD:
         return new DiscordNotifier(notifierConfig as DiscordConfig);
       case NotificationType.PUSHOVER:
-        return new PushoverNotifier(notifierConfig as PushoverConfig);
+        return new PushoverNotifier(notifierConfig as PushoverConfig);	  
       case NotificationType.EMAIL:
         return new EmailNotifier(notifierConfig as EmailConfig);
       case NotificationType.LOCAL:
@@ -61,6 +63,8 @@ export async function sendNotification(
         return new GotifyNotifier(notifierConfig as GotifyConfig);
       case NotificationType.SLACK:
         return new SlackNotifier(notifierConfig as SlackConfig);
+      case NotificationType.HOMEASSISTANT:
+        return new HomeassistantNotifier(notifierConfig as HomeassistantConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }
