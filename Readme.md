@@ -73,6 +73,12 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
       "apiUrl": "https://gotify.net",
       "token": "SnL-wAvmfo_QT",
     },
+    {
+      "type": "homeassistant",
+      "instance": "https://homeassistant.example.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      "notifyservice": "mobile_app_smartphone_name",
+    },
   ],
 }
 ```
