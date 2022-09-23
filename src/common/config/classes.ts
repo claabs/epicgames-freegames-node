@@ -358,7 +358,7 @@ export class EmailConfig extends NotifierConfig {
 }
 
 /**
- * Sends a homeassistant message
+ * Sends a homeassistant notification
  */
 export class HomeassistantConfig extends NotifierConfig {
   /**
@@ -367,21 +367,21 @@ export class HomeassistantConfig extends NotifierConfig {
    */
   @IsString()
   instance: string;
-
+  
   /**
    * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
    * @env HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN
    */
   @IsString()
   token: string;
-
+  
   /**
    * @example mobile_app_smartphone_name
    * @env HOMEASSISTANT_NOTIFYSERVICE
    */
   @IsString()
   notifyservice: string;
-
+  
   /**
    * @ignore
    */
@@ -980,10 +980,12 @@ export class AppConfig {
     }
 
     // Use environment variables to fill homeassistant notification config if present
-    const { HOMEASSISTANT_TOKEN } = process.env;
-    if (HOMEASSISTANT_TOKEN) {
+    const { HOMEASSISTANT_INSTANCE, HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN, HOMEASSISTANT_NOTIFYSERVICE} = process.env;
+    if (HOMEASSISTANT_INSTANCE && HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN && HOMEASSISTANT_NOTIFYSERVICE) {
       const homeassistant = new HomeassistantConfig();
-      homeassistant.token = HOMEASSISTANT_TOKEN;
+      homeassistant.instance = HOMEASSISTANT_INSTANCE;
+      homeassistant.token = HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN;
+      homeassistant.notifyservice = HOMEASSISTANT_NOTIFYSERVICE;
       if (!this.notifiers) {
         this.notifiers = [];
       }
