@@ -1,0 +1,119 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: epic-free-games-config
+data:
+  account1: |
+    {
+      "runOnStartup": true,
+      "cronSchedule": "5 16 * * *",
+      "logLevel": "info",
+      "webPortalConfig": {
+        "baseUrl": "https://epic.example.com",
+      },
+      "accounts": [
+        {
+          "email": "example@gmail.com",
+          "password": "abc1234",
+          "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
+        },
+      ],
+      "notifiers": [
+        // You may configure as many of any notifier as needed
+        // Here are some examples of each type
+        {
+          "type": "email",
+          "smtpHost": "smtp.gmail.com",
+          "smtpPort": 587,
+          "emailSenderAddress": "hello@gmail.com",
+          "emailSenderName": "Epic Games Captchas",
+          "emailRecipientAddress": "hello@gmail.com",
+          "secure": false,
+          "auth": {
+              "user": "hello@gmail.com",
+              "pass": "abc123",
+          },
+        },
+        {
+          "type": "discord",
+          "webhookUrl": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+          // Optional list of users or roles to mention
+          "mentionedUsers": ["914360712086843432"],
+          "mentionedRoles": ["734548250895319070"],
+        },
+        {
+          "type": "telegram",
+          "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
+          "chatId": "-987654321",
+        },
+        {
+          "type": "apprise",
+          "apiUrl": "http://192.168.1.2:8000",
+          "urls": "mailto://user:pass@gmail.com",
+        },
+        {
+          "type": "pushover",
+          "token": "a172fyyl9gw99p2xi16tq8hnib48p2",
+          "userKey": "uvgidym7l5ggpwu2r8i1oy6diaapll",
+        },
+        {
+          "type": "gotify",
+          "apiUrl": "https://gotify.net",
+          "token": "SnL-wAvmfo_QT",
+        },
+      ],
+    }
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: epic-free-games
+  labels:
+    app: epic-free-games
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: epic-free-games
+  template:
+    metadata:
+      labels:
+        app: epic-free-games
+    spec:
+      volumes:
+        - name: config-vol
+          configMap:
+            name: epic-free-games-config
+      containers:
+        - name: epic-free-games
+          image: ghcr.io/claabs/epicgames-freegames-node:latest
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - name: config-vol
+              mountPath: /usr/app/config/config.json
+              subPath: account1
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: epic-free-games
+spec:
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: epic-free-games
+  type: ClusterIP
+status:
+  loadBalancer: {}
