@@ -360,28 +360,28 @@ export class EmailConfig extends NotifierConfig {
 /**
  * Sends a homeassistant message
  */
- export class HomeassistantConfig extends NotifierConfig {
+export class HomeassistantConfig extends NotifierConfig {
   /**
    * @example https://homeassistant.example.com
    * @env HOMEASSISTANT_INSTANCE
    */
   @IsString()
   instance: string;
-  
+
   /**
    * @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
    * @env HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN
    */
   @IsString()
   token: string;
-  
+
   /**
    * @example mobile_app_smartphone_name
    * @env HOMEASSISTANT_NOTIFYSERVICE
    */
   @IsString()
   notifyservice: string;
-  
+
   /**
    * @ignore
    */
@@ -396,7 +396,7 @@ export type AnyNotifierConfig =
   | LocalConfig
   | TelegramConfig
   | AppriseConfig
-  | PushoverConfig  
+  | PushoverConfig
   | GotifyConfig
   | SlackConfig
   | HomeassistantConfig;
@@ -407,7 +407,7 @@ const notifierSubtypes: {
 }[] = [
   { value: EmailConfig, name: NotificationType.EMAIL },
   { value: DiscordConfig, name: NotificationType.DISCORD },
-  { value: PushoverConfig, name: NotificationType.PUSHOVER },  
+  { value: PushoverConfig, name: NotificationType.PUSHOVER },
   { value: LocalConfig, name: NotificationType.LOCAL },
   { value: TelegramConfig, name: NotificationType.TELEGRAM },
   { value: AppriseConfig, name: NotificationType.APPRISE },
@@ -979,18 +979,18 @@ export class AppConfig {
       }
     }
 
-    	// Use environment variables to fill homeassistant notification config if present
-      const { HOMEASSISTANT_TOKEN } = process.env;
-      if (HOMEASSISTANT_TOKEN ) {
-        const homeassistant = new HomeassistantConfig();
-        homeassistant.token = HOMEASSISTANT_TOKEN;
-        if (!this.notifiers) {
-          this.notifiers = [];
-        }
-        if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
-          this.notifiers.push(homeassistant);
-        }
+    // Use environment variables to fill homeassistant notification config if present
+    const { HOMEASSISTANT_TOKEN } = process.env;
+    if (HOMEASSISTANT_TOKEN) {
+      const homeassistant = new HomeassistantConfig();
+      homeassistant.token = HOMEASSISTANT_TOKEN;
+      if (!this.notifiers) {
+        this.notifiers = [];
       }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
+        this.notifiers.push(homeassistant);
+      }
+    }
 
     // Use environment variables to fill webPortalConfig if present
     const { BASE_URL, SERVER_PORT } = process.env;

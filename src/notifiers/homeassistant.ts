@@ -17,16 +17,15 @@ export class HomeassistantNotifier extends NotifierService {
     L.trace('Sending homeassistant notification');
 
     try {
-      await got.post(this.config.instance + '/api/services/notify/' + this.config.notifyservice, {
-		headers:
-		{
-		  'Authorization':'Bearer ' + this.config.token,
-		},
+      await got.post(`${this.config.instance}/api/services/notify/${this.config.notifyservice}`, {
+        headers: {
+          Authorization: `Bearer ${this.config.token}`,
+        },
         json: {
           title: `Captcha request from Epic Games`,
-		      message: `epicgames needs a captcha solved. Reason: ${reason} {{ '\n' -}} Open this page and solve the captcha: ${url}`,
+          message: `epicgames needs a captcha solved. Reason: ${reason} {{ '\n' -}} Open this page and solve the captcha: ${url}`,
           data: {
-            url: url,
+            url,
             clickAction: url,
           },
         },
