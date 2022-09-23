@@ -4,8 +4,9 @@
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node dist/src/index.js",
-    "start:ts": "DEBUG=puppeteer-extra-plugin:portal* ts-node src/index.ts",
+    "start": "ts-node src/index.ts",
+    "start:ts": "ts-node src/index.ts",
+    "start:debug": "DEBUG=puppeteer-extra-plugin:portal* ts-node src/index.ts",
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
     "lint": "tsc --noEmit && eslint .",
