@@ -34,6 +34,7 @@ export enum NotificationType {
   GOTIFY = 'gotify',
   SLACK = 'slack',
   HOMEASSISTANT = 'homeassistant',
+  BARK = 'bark',
 }
 
 /**
@@ -390,6 +391,46 @@ export class HomeassistantConfig extends NotifierConfig {
   }
 }
 
+/**
+ * BarkConfig
+ * https://github.com/Finb/Bark
+ */
+export class BarkConfig extends NotifierConfig {
+  /**
+   * bark key
+   */
+  @IsString()
+  key: string;
+
+  /**
+   * bark title
+   * @default 'epicgames-freegames-node'
+   */
+  @IsString()
+  @IsOptional()
+  title: string;
+
+  /**
+   * bark group
+   * @default 'epicgames-freegames-node'
+   */
+  @IsString()
+  @IsOptional()
+  group: string;
+
+  /**
+   * bark private service address
+   * @default 'https://api.day.app'
+   */
+  @IsUrl({ require_tld: false })
+  @IsOptional()
+  apiUrl: string;
+
+  constructor() {
+    super(NotificationType.BARK);
+  }
+}
+
 export type AnyNotifierConfig =
   | EmailConfig
   | DiscordConfig
@@ -399,7 +440,8 @@ export type AnyNotifierConfig =
   | PushoverConfig
   | GotifyConfig
   | SlackConfig
-  | HomeassistantConfig;
+  | HomeassistantConfig
+  | BarkConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -414,6 +456,7 @@ const notifierSubtypes: {
   { value: GotifyConfig, name: NotificationType.GOTIFY },
   { value: SlackConfig, name: NotificationType.SLACK },
   { value: HomeassistantConfig, name: NotificationType.HOMEASSISTANT },
+  { value: BarkConfig, name: NotificationType.BARK },
 ];
 
 export class WebPortalConfig {

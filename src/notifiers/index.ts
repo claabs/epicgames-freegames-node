@@ -7,3 +7,4 @@ export * from './telegram';
 export * from './apprise';
 export * from './gotify';
 export * from './slack';
+export * from './bark';

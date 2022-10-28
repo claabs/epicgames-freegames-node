@@ -6,6 +6,7 @@ import {
   TelegramNotifier,
   GotifyNotifier,
   SlackNotifier,
+  BarkNotifier,
 } from './notifiers';
 import {
   config,
@@ -19,6 +20,7 @@ import {
   GotifyConfig,
   SlackConfig,
   HomeassistantConfig,
+  BarkConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
@@ -65,6 +67,8 @@ export async function sendNotification(
         return new SlackNotifier(notifierConfig as SlackConfig);
       case NotificationType.HOMEASSISTANT:
         return new HomeassistantNotifier(notifierConfig as HomeassistantConfig);
+      case NotificationType.BARK:
+        return new BarkNotifier(notifierConfig as BarkConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }

@@ -79,6 +79,17 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
       "notifyservice": "mobile_app_smartphone_name",
     },
+    {
+      "type": "bark",
+      // your bark key
+      "key": "xxxxxxxxxxxxxxxxxxxxxx",
+      // bark title, optional, default: 'epicgames-freegames'
+      "title": "epicgames-freegames",
+      // bark group, optional, default: 'epicgames-freegames'
+      "group": "epicgames-freegames",
+      // bark private service address, optional, default: 'https://api.day.app'
+      "apiUrl": "https://api.day.app"
+    },
   ],
 }
 ```
