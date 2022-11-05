@@ -9,7 +9,6 @@ import {
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
-import { getHcaptchaCookies } from './hcaptcha';
 import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
 import { config, CONFIG_DIR } from '../common/config';
@@ -36,7 +35,6 @@ export default class PuppetBase {
   }
 
   protected async setupPage(): Promise<Page> {
-    const hCaptchaCookies = await getHcaptchaCookies();
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
@@ -46,10 +44,10 @@ export default class PuppetBase {
       this.L.trace(getDevtoolsUrl(page));
       const cdpClient = await page.target().createCDPSession();
       await cdpClient.send('Network.setCookies', {
-        cookies: [...puppeteerCookies, ...hCaptchaCookies],
+        cookies: puppeteerCookies,
       });
       await cdpClient.detach();
-      await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+      await page.setCookie(...puppeteerCookies);
       return page;
     } catch (err) {
       await this.handlePageError(err, page);

@@ -6,7 +6,6 @@ import { Page, Protocol, ElementHandle } from 'puppeteer';
 // import { writeFileSync } from 'fs-extra';
 import { getCookiesRaw, setPuppeteerCookies } from '../../src/common/request';
 import { EPIC_CLIENT_ID, STORE_HOMEPAGE_EN } from '../../src/common/constants';
-import { getHcaptchaCookies } from '../../src/puppet/hcaptcha';
 import puppeteer, {
   toughCookieFileStoreToPuppeteerCookie,
   getDevtoolsUrl,
@@ -81,7 +80,6 @@ export default class AccountManager {
   public async createAccount(): Promise<void> {
     this.L.info({ username: this.username, password: this.password, email: this.email });
 
-    const hCaptchaCookies = await getHcaptchaCookies();
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
@@ -90,9 +88,9 @@ export default class AccountManager {
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
     await cdpClient.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
+      cookies: puppeteerCookies,
     });
-    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+    await page.setCookie(...puppeteerCookies);
     await page.goto(
       `https://www.epicgames.com/id/register/epic?redirect_uri=${STORE_HOMEPAGE_EN}&client_id=${EPIC_CLIENT_ID}`,
       { waitUntil: 'networkidle0' }
@@ -141,7 +139,6 @@ export default class AccountManager {
   public async deleteAccount(): Promise<void> {
     this.L.info({ email: this.email }, 'Deleting account');
 
-    const hCaptchaCookies = await getHcaptchaCookies();
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     this.L.debug('Logging in with puppeteer');
@@ -150,9 +147,9 @@ export default class AccountManager {
     this.L.trace(getDevtoolsUrl(page));
     const cdpClient = await page.target().createCDPSession();
     await cdpClient.send('Network.setCookies', {
-      cookies: [...puppeteerCookies, ...hCaptchaCookies],
+      cookies: puppeteerCookies,
     });
-    await page.setCookie(...puppeteerCookies, ...hCaptchaCookies);
+    await page.setCookie(...puppeteerCookies);
     await page.goto(`https://www.epicgames.com/account/personal`, { waitUntil: 'networkidle0' });
     this.L.trace('Waiting for deleteButton');
     const deleteButton = (await page.waitForXPath(

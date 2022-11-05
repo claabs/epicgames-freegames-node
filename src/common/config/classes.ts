@@ -666,7 +666,7 @@ export class AppConfig {
 
   /**
    * A unique hCaptcha accessibility URL recieved in your email after signing up here: https://dashboard.hcaptcha.com/signup?type=accessibility
-   * @deprecated No longer works
+   * @deprecated No longer works; does nothing
    * @example https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c
    * @env HCAPTCHA_ACCESSIBILITY_URL
    */
