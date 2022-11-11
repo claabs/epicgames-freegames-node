@@ -34,6 +34,7 @@ export enum NotificationType {
   GOTIFY = 'gotify',
   SLACK = 'slack',
   HOMEASSISTANT = 'homeassistant',
+  BARK = 'bark',
 }
 
 /**
@@ -390,6 +391,53 @@ export class HomeassistantConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Send a notification to the Bark iOS app
+ * https://github.com/Finb/Bark
+ */
+export class BarkConfig extends NotifierConfig {
+  /**
+   * Bark key
+   * @env BARK_KEY
+   */
+  @IsString()
+  key: string;
+
+  /**
+   * Bark title
+   * @default epicgames-freegames-node
+   * @env BARK_TITLE
+   */
+  @IsString()
+  @IsOptional()
+  title = 'epicgames-freegames-node';
+
+  /**
+   * Bark group
+   * @default epicgames-freegames-node
+   * @env BARK_GROUP
+   */
+  @IsString()
+  @IsOptional()
+  group = 'epicgames-freegames-node';
+
+  /**
+   * Custom Bark server URL
+   * @default https://api.day.app
+   * @env BARK_API_URL
+   */
+  @IsUrl({ require_tld: false })
+  @IsOptional()
+  apiUrl = 'https://api.day.app';
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.BARK);
+  }
+}
+
 export type AnyNotifierConfig =
   | EmailConfig
   | DiscordConfig
@@ -399,7 +447,8 @@ export type AnyNotifierConfig =
   | PushoverConfig
   | GotifyConfig
   | SlackConfig
-  | HomeassistantConfig;
+  | HomeassistantConfig
+  | BarkConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -414,6 +463,7 @@ const notifierSubtypes: {
   { value: GotifyConfig, name: NotificationType.GOTIFY },
   { value: SlackConfig, name: NotificationType.SLACK },
   { value: HomeassistantConfig, name: NotificationType.HOMEASSISTANT },
+  { value: BarkConfig, name: NotificationType.BARK },
 ];
 
 export class WebPortalConfig {
@@ -999,6 +1049,22 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
         this.notifiers.push(homeassistant);
+      }
+    }
+
+    // Use environment variables to fill bark notification config if present
+    const { BARK_KEY, BARK_TITLE, BARK_GROUP, BARK_API_URL } = process.env;
+    if (BARK_KEY) {
+      const bark = new BarkConfig();
+      bark.key = BARK_KEY;
+      if (BARK_TITLE) bark.title = BARK_TITLE;
+      if (BARK_GROUP) bark.group = BARK_GROUP;
+      if (BARK_API_URL) bark.apiUrl = BARK_API_URL;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof BarkConfig)) {
+        this.notifiers.push(bark);
       }
     }
 
