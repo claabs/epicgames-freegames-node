@@ -392,40 +392,47 @@ export class HomeassistantConfig extends NotifierConfig {
 }
 
 /**
- * BarkConfig
+ * Send a notification to the Bark iOS app
  * https://github.com/Finb/Bark
  */
 export class BarkConfig extends NotifierConfig {
   /**
-   * bark key
+   * Bark key
+   * @env BARK_KEY
    */
   @IsString()
   key: string;
 
   /**
-   * bark title
-   * @default 'epicgames-freegames-node'
+   * Bark title
+   * @default epicgames-freegames-node
+   * @env BARK_TITLE
    */
   @IsString()
   @IsOptional()
-  title: string;
+  title = 'epicgames-freegames-node';
 
   /**
-   * bark group
-   * @default 'epicgames-freegames-node'
+   * Bark group
+   * @default epicgames-freegames-node
+   * @env BARK_GROUP
    */
   @IsString()
   @IsOptional()
-  group: string;
+  group = 'epicgames-freegames-node';
 
   /**
-   * bark private service address
-   * @default 'https://api.day.app'
+   * Custom Bark server URL
+   * @default https://api.day.app
+   * @env BARK_API_URL
    */
   @IsUrl({ require_tld: false })
   @IsOptional()
-  apiUrl: string;
+  apiUrl = 'https://api.day.app';
 
+  /**
+   * @ignore
+   */
   constructor() {
     super(NotificationType.BARK);
   }
@@ -1042,6 +1049,22 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
         this.notifiers.push(homeassistant);
+      }
+    }
+
+    // Use environment variables to fill bark notification config if present
+    const { BARK_KEY, BARK_TITLE, BARK_GROUP, BARK_API_URL } = process.env;
+    if (BARK_KEY) {
+      const bark = new BarkConfig();
+      bark.key = BARK_KEY;
+      if (BARK_TITLE) bark.title = BARK_TITLE;
+      if (BARK_GROUP) bark.group = BARK_GROUP;
+      if (BARK_API_URL) bark.apiUrl = BARK_API_URL;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof BarkConfig)) {
+        this.notifiers.push(bark);
       }
     }
 
