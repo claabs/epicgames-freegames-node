@@ -214,19 +214,6 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * `git pull`
     * `npm i`
 
-## Development
-
-### Recommended Dev Environment Variables
-
-Place these variables in a `.env` file in the project root. These variables support automatic account creation for rapid testing.
-
-| Variable            | Example                     | Description                                                                                               |
-|---------------------|-----------------------------|-----------------------------------------------------------------------------------------------------------|
-| SMTP4DEV_URL        | `http://192.168.1.100:5000` | Web UI address for [smtp4dev](https://github.com/rnwood/smtp4dev) instance for automatic account creation |
-| SMTP4DEV_USER       | `user`                      | A basic auth username for `smtp4dev` if applicable                                                        |
-| SMTP4DEV_PASSWORD   | `abc123`                    | A basic auth password for `smtp4dev` if applicable                                                        |
-| CREATION_EMAIL_HOST | `test.example.com`          | The email suffix for newly created accounts                                                               |
-
 ## Miscellaneous
 
 ### v3 to v4 Migration
