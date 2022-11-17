@@ -259,6 +259,7 @@ export default class PuppetFreeGames extends PuppetBase {
       }
     );
     const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
+    this.L.debug({ offerId, namespace, validations }, 'Offers validation response');
     if (validations?.missingPrerequisites?.length) return false;
     return true;
   }
