@@ -233,7 +233,7 @@ export default class PuppetFreeGames extends PuppetBase {
   async hasPrerequesites(offerId: string, namespace: string): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting offers validation info');
     // variables and extensions can be found at https://store.epicgames.com/en-US/
-    // Search for "getEntitledOfferItems" in source HTML
+    // Search for "getOffersValidation" in source HTML
     const variables = {
       offers: [
         {
@@ -279,6 +279,7 @@ export default class PuppetFreeGames extends PuppetBase {
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for offer entitlement');
+    // TODO: this will get replaced by getOffersValidation
     const entitlementRespBody = await this.request<ItemEntitlementResp>('GET', GRAPHQL_ENDPOINT, {
       operationName: 'getEntitledOfferItems',
       variables: JSON.stringify(variables),
@@ -330,7 +331,7 @@ export default class PuppetFreeGames extends PuppetBase {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: 'ff096572d1065b7058e64c86ce4630bfb5727955056fe910b3f29cb50568fdd7',
+        sha256Hash: '6797fe39bfac0e6ea1c5fce0ecbff58684157595fee77e446b4254ec45ee2dcb',
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for catalog offer');
