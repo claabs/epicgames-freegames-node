@@ -297,21 +297,19 @@ export default class PuppetFreeGames extends PuppetBase {
   }
 
   async getPurchasableFreeGames(offers: OfferInfo[]): Promise<OfferInfo[]> {
-    this.L.debug('Checking ownership on available games');
-    const ownsGamePromises = offers.map((offer) => {
-      return this.ownsGame(offer.offerId, offer.offerNamespace);
-    });
-    const ownsGames = await Promise.all(ownsGamePromises);
-    let purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
-      return !ownsGames[index];
-    });
-    this.L.debug('Checking prerequesites on available games');
-    const hasPrerequesitesPromises = offers.map((offer) => {
-      return this.hasPrerequesites(offer.offerId, offer.offerNamespace);
-    });
-    const hasPrerequesitesSet = await Promise.all(hasPrerequesitesPromises);
-    purchasableGames = purchasableGames.filter((_offer, index) => {
-      return hasPrerequesitesSet[index];
+    this.L.debug('Checking ownership and prerequesites on available games');
+    const ownsGames = await Promise.all(
+      offers.map((offer) => {
+        return this.ownsGame(offer.offerId, offer.offerNamespace);
+      })
+    );
+    const hasPrerequesitesSet = await Promise.all(
+      offers.map((offer) => {
+        return this.hasPrerequesites(offer.offerId, offer.offerNamespace);
+      })
+    );
+    const purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
+      return !ownsGames[index] && hasPrerequesitesSet[index];
     });
     return purchasableGames;
   }
