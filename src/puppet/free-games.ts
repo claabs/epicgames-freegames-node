@@ -20,6 +20,7 @@ import {
   SearchStoreQueryResponse,
   Element as SearchStoreElement,
 } from '../interfaces/search-store-query-response';
+import { OffersValidationResponse } from '../interfaces/offers-validation';
 
 export default class PuppetFreeGames extends PuppetBase {
   private page?: Page;
@@ -229,6 +230,39 @@ export default class PuppetFreeGames extends PuppetBase {
     return offers;
   }
 
+  async hasPrerequesites(offerId: string, namespace: string): Promise<boolean> {
+    this.L.debug({ offerId, namespace }, 'Getting offers validation info');
+    // variables and extensions can be found at https://store.epicgames.com/en-US/
+    // Search for "getEntitledOfferItems" in source HTML
+    const variables = {
+      offers: [
+        {
+          offerId,
+          namespace,
+        },
+      ],
+    };
+    const extensions = {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: '3c9bb0f213f6d0cb6bf056e6b206ba166c8dd59d014618e4d59bff11689f403a',
+      },
+    };
+    this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for offers validation');
+    const entitlementRespBody = await this.request<OffersValidationResponse>(
+      'GET',
+      GRAPHQL_ENDPOINT,
+      {
+        operationName: 'getOffersValidation',
+        variables: JSON.stringify(variables),
+        extensions: JSON.stringify(extensions),
+      }
+    );
+    const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
+    if (validations?.missingPrerequisites?.length) return false;
+    return true;
+  }
+
   // TODO: Parameterize region (en-US). Env var probably
   async ownsGame(offerId: string, namespace: string): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting product ownership info');
@@ -266,8 +300,16 @@ export default class PuppetFreeGames extends PuppetBase {
       return this.ownsGame(offer.offerId, offer.offerNamespace);
     });
     const ownsGames = await Promise.all(ownsGamePromises);
-    const purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
+    let purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
       return !ownsGames[index];
+    });
+    this.L.debug('Checking prerequesites on available games');
+    const hasPrerequesitesPromises = offers.map((offer) => {
+      return this.hasPrerequesites(offer.offerId, offer.offerNamespace);
+    });
+    const hasPrerequesitesSet = await Promise.all(hasPrerequesitesPromises);
+    purchasableGames = purchasableGames.filter((_offer, index) => {
+      return hasPrerequesitesSet[index];
     });
     return purchasableGames;
   }
