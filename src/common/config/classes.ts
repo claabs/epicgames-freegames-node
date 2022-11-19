@@ -189,6 +189,15 @@ export class TelegramConfig extends NotifierConfig {
   chatId: string;
 
   /**
+   * Custom TELEGRAM server URL
+   * @default https://api.telegram.org
+   * @env TELEGRAM_API_URL
+   */
+  @IsUrl({ require_tld: false })
+  @IsOptional()
+  apiUrl = 'https://api.telegram.org';
+
+  /**
    * @ignore
    */
   constructor() {

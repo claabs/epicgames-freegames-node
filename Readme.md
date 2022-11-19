@@ -55,6 +55,8 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
     },
     {
       "type": "telegram",
+      // Optional Custom TELEGRAM server URL
+      "apiUrl": "https://api.telegram.org",
       "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
       "chatId": "-987654321",
     },

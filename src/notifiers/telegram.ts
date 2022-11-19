@@ -37,7 +37,7 @@ export class TelegramNotifier extends NotifierService {
     L.trace({ jsonPayload }, 'Sending json payload');
 
     try {
-      await got.post(`https://api.telegram.org/bot${this.config.token}/sendMessage`, {
+      await got.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, {
         json: jsonPayload,
         responseType: 'json',
       });
