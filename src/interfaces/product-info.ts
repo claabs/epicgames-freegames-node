@@ -404,20 +404,6 @@ export interface GraphQLError {
   stack: null;
 }
 
-export interface ItemEntitlementResp {
-  errors?: GraphQLError[];
-  data: {
-    Launcher: {
-      entitledOfferItems: {
-        namespace: string;
-        offerId: string;
-        entitledToAllItemsInOffer: boolean;
-        entitledToAnyItemInOffer: boolean;
-      };
-    };
-  };
-}
-
 export interface AuthErrorJSON {
   errorCode?: string;
   errorMessage: string;

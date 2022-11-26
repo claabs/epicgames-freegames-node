@@ -9,12 +9,7 @@ import { config, SearchStrategy } from '../common/config';
 import PuppetBase from './base';
 import { OfferInfo } from '../interfaces/types';
 import { GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
-import {
-  Offer,
-  ProductInfo,
-  ItemEntitlementResp,
-  Page as ProductInfoPage,
-} from '../interfaces/product-info';
+import { Offer, ProductInfo, Page as ProductInfoPage } from '../interfaces/product-info';
 import { PromotionsQueryResponse } from '../interfaces/promotions-response';
 import {
   SearchStoreQueryResponse,
@@ -230,7 +225,7 @@ export default class PuppetFreeGames extends PuppetBase {
     return offers;
   }
 
-  async hasPrerequesites(offerId: string, namespace: string): Promise<boolean> {
+  async canPurchase(offerId: string, namespace: string): Promise<boolean> {
     this.L.debug({ offerId, namespace }, 'Getting offers validation info');
     // variables and extensions can be found at https://store.epicgames.com/en-US/
     // Search for "getOffersValidation" in source HTML
@@ -260,56 +255,25 @@ export default class PuppetFreeGames extends PuppetBase {
     );
     const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
     this.L.debug({ offerId, namespace, validations }, 'Offers validation response');
-    if (validations?.missingPrerequisites?.length) return false;
+    if (
+      validations?.missingPrerequisites?.length ||
+      validations?.conflictingOffers?.length ||
+      validations?.fullyOwnedOffers?.length ||
+      validations?.unablePartiallyUpgradeOffers?.length
+    )
+      return false;
     return true;
-  }
-
-  // TODO: Parameterize region (en-US). Env var probably
-  async ownsGame(offerId: string, namespace: string): Promise<boolean> {
-    this.L.debug({ offerId, namespace }, 'Getting product ownership info');
-    // variables and extensions can be found at https://store.epicgames.com/en-US/
-    // Search for "getEntitledOfferItems" in source HTML
-    const variables = {
-      offerId,
-      sandboxId: namespace,
-    };
-    const extensions = {
-      persistedQuery: {
-        version: 1,
-        sha256Hash: '803d00fd80aef2cbb0b998ba27b761143d228195b86cc8af55e73002f18a1678',
-      },
-    };
-    this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for offer entitlement');
-    // TODO: this will get replaced by getOffersValidation
-    const entitlementRespBody = await this.request<ItemEntitlementResp>('GET', GRAPHQL_ENDPOINT, {
-      operationName: 'getEntitledOfferItems',
-      variables: JSON.stringify(variables),
-      extensions: JSON.stringify(extensions),
-    });
-    if (entitlementRespBody.errors && entitlementRespBody.errors[0]) {
-      const error = entitlementRespBody.errors[0];
-      this.L.error(error);
-      throw new Error(error.message);
-    }
-    this.L.trace({ resp: entitlementRespBody.data }, 'Entitlement response');
-    const items = entitlementRespBody.data.Launcher.entitledOfferItems;
-    return items.entitledToAllItemsInOffer && items.entitledToAnyItemInOffer;
   }
 
   async getPurchasableFreeGames(offers: OfferInfo[]): Promise<OfferInfo[]> {
     this.L.debug('Checking ownership and prerequesites on available games');
-    const ownsGames = await Promise.all(
+    const canPurchaseSet = await Promise.all(
       offers.map((offer) => {
-        return this.ownsGame(offer.offerId, offer.offerNamespace);
-      })
-    );
-    const hasPrerequesitesSet = await Promise.all(
-      offers.map((offer) => {
-        return this.hasPrerequesites(offer.offerId, offer.offerNamespace);
+        return this.canPurchase(offer.offerId, offer.offerNamespace);
       })
     );
     const purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
-      return !ownsGames[index] && hasPrerequesitesSet[index];
+      return canPurchaseSet[index];
     });
     return purchasableGames;
   }
