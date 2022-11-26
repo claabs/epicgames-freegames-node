@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:16-bullseye-slim as base
+FROM node:18-bullseye-slim as base
 
 ENV DISTRO=debian
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -77,7 +77,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:16-bullseye-slim" \
+    org.opencontainers.image.base.name="node:18-bullseye-slim" \
     org.opencontainers.image.version="bullseye-slim"
 
 ENV NODE_ENV=production \

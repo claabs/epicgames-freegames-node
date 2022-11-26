@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:16-alpine3.15 as base
+FROM node:18-alpine3.16 as base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -14,12 +14,12 @@ WORKDIR /usr/app
 FROM base as deps
 
 # Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-on-alpine
-# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v13.4.0/src/revisions.ts,
+# To find latest chromium version for puppeteer, go to https://github.com/puppeteer/puppeteer/blob/v18.2.1/packages/puppeteer-core/src/revisions.ts,
 # select the correct tag for the puppeteer version, and note the chromium revision number. Then go
 # to https://omahaproxy.appspot.com/ and in "Find Releases" search for "r<version number>". Then
-# ensure that version is published at https://pkgs.alpinelinux.org/package/v3.15/community/x86_64/chromium
+# ensure that version is published at https://pkgs.alpinelinux.org/package/v3.16/community/x86_64/chromium
 RUN apk add --no-cache \
-    'chromium=~99' \
+    'chromium=~102' \
     nss \
     freetype \
     harfbuzz \
@@ -72,7 +72,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:16-alpine3.15" \
+    org.opencontainers.image.base.name="node:18-alpine3.16" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \
