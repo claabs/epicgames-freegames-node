@@ -12,7 +12,6 @@ const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
 export default class PuppetPurchase extends PuppetBase {
   private async waitForHCaptcha(page: Page): Promise<'captcha' | 'nav'> {
     try {
-      this.L.trace('Waiting for hcaptcha iframe');
       await page.waitForSelector(`.h_captcha_challenge > iframe[src*="hcaptcha"]`, {
         visible: true,
       });
@@ -28,6 +27,41 @@ export default class PuppetPurchase extends PuppetBase {
       }
       return 'nav';
     }
+  }
+
+  private async waitForPurchaseEvent(page: Page): Promise<'captcha' | 'nav' | 'refund' | string> {
+    this.L.debug('Waiting for receipt, captcha, refund dialog, or error');
+    return Promise.race([
+      page
+        .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
+        .then(() => 'nav'),
+      page
+        .waitForSelector('.payment-alert--ERROR > span.payment-alert__content')
+        .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
+          errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
+        ),
+      this.waitForHCaptcha(page),
+      page
+        .waitForSelector(
+          `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`
+        )
+        .then(() => 'refund'),
+    ]);
+  }
+
+  private async waitForCookieOrOrderButton(page: Page): Promise<{
+    button: ElementHandle<HTMLButtonElement> | null;
+    event: 'order' | 'cookie' | string;
+  }> {
+    this.L.debug('Waiting for order button or cookie dialog');
+    return Promise.race([
+      page
+        .waitForSelector(`button.payment-btn:not([disabled])`)
+        .then((button) => ({ button, event: 'order' })),
+      page
+        .waitForSelector(`button#onetrust-accept-btn-handler`)
+        .then((button) => ({ button, event: 'cookie' })),
+    ]);
   }
 
   /**
@@ -46,50 +80,36 @@ export default class PuppetPurchase extends PuppetBase {
         this.L.info({ purchaseUrl }, 'Loading purchase page');
         await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
         await page.waitForNetworkIdle({ idleTime: 2000 });
-        try {
-          this.L.trace('Waiting for cookieDialog');
+        let orderCookieResult = await this.waitForCookieOrOrderButton(page);
+        if (orderCookieResult.event === 'cookie') {
+          this.L.trace('Clicking cookieDialog');
+          if (orderCookieResult.button) {
+            await orderCookieResult.button.click({ delay: 100 });
+          }
+          orderCookieResult = await this.waitForCookieOrOrderButton(page);
+        }
+        if (orderCookieResult.event !== 'order' || !orderCookieResult.button) {
+          throw new Error('Could not detect place order button');
+        }
+        this.L.debug('Clicking placeOrderButton');
+        await orderCookieResult.button.click({ delay: 100 });
+        let purchaseEvent = await this.waitForPurchaseEvent(page);
+        if (purchaseEvent === 'cookie') {
           const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
             timeout: 3000,
           })) as ElementHandle<HTMLButtonElement>;
           this.L.trace('Clicking cookieDialog');
           await cookieDialog.click({ delay: 100 });
-        } catch (err) {
-          if (!err.message.includes('timeout')) {
-            throw err;
-          }
-          this.L.trace('No cookie dialog presented');
+          purchaseEvent = await this.waitForPurchaseEvent(page);
         }
-        this.L.trace('Waiting for placeOrderButton');
-        const placeOrderButton = (await page.waitForSelector(
-          `button.payment-btn:not([disabled])`
-        )) as ElementHandle<HTMLButtonElement>;
-        this.L.debug('Clicking placeOrderButton');
-        await placeOrderButton.click({ delay: 100 });
-        try {
-          const euRefundAgreeButton = (await page.waitForSelector(
-            `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`,
-            { timeout: 3000 }
-          )) as ElementHandle<HTMLButtonElement>;
+        if (purchaseEvent === 'refund') {
           this.L.debug('Clicking euRefundAgreeButton');
+          const euRefundAgreeButton = (await page.waitForSelector(
+            `div.payment-confirm__actions > button.payment-btn.payment-confirm__btn.payment-btn--primary`
+          )) as ElementHandle<HTMLButtonElement>;
           await euRefundAgreeButton.click({ delay: 100 });
-        } catch (err) {
-          if (!err.message.includes('timeout')) {
-            throw err;
-          }
-          this.L.trace('No EU "Refund and Right of Withdrawal Information" dialog presented');
+          purchaseEvent = await this.waitForPurchaseEvent(page);
         }
-        this.L.debug('Waiting for receipt');
-        const purchaseEvent = await Promise.race([
-          page
-            .waitForFunction(() => document.location.hash.includes('/purchase/receipt'))
-            .then(() => 'nav'),
-          page
-            .waitForSelector('.payment-alert--ERROR > span.payment-alert__content')
-            .then((errorHandle: ElementHandle<HTMLSpanElement> | null) =>
-              errorHandle ? errorHandle.evaluate((el) => el.innerText) : 'Unknown purchase error'
-            ),
-          this.waitForHCaptcha(page),
-        ]);
         if (purchaseEvent === 'captcha') {
           this.L.debug('Captcha detected');
           // Keep the existing portal open
