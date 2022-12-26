@@ -16,6 +16,7 @@ import {
   Element as SearchStoreElement,
 } from '../interfaces/search-store-query-response';
 import { OffersValidationResponse } from '../interfaces/offers-validation';
+import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping';
 
 export default class PuppetFreeGames extends PuppetBase {
   private page?: Page;
@@ -170,29 +171,39 @@ export default class PuppetFreeGames extends PuppetBase {
     const allProductOffers: OfferInfo[] = (
       await Promise.all(
         freeOfferedGames.map(async (game) => {
-          const productHome =
+          let pageSlug =
             game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
               ?.pageSlug || game.productSlug;
           const { productSlug, offerType } = game;
-          if (!productHome || !productSlug) {
-            return [
-              {
-                offerNamespace: game.namespace,
-                offerId: game.id,
-                productName: game.title,
-                productSlug: productHome,
-              },
-            ];
+          let { id: offerId, namespace } = game;
+
+          if (pageSlug && productSlug) {
+            const mappingResp = await this.getPageSlugMapping(pageSlug);
+            if (typeof mappingResp === 'string') {
+              // Older CMS product lookup strategy
+              pageSlug = mappingResp;
+              const productOffers = await this.getCmsProduct(pageSlug, offerType);
+              return productOffers
+                .filter((o) => o.hasOffer)
+                .map((o) => ({
+                  offerNamespace: o.namespace,
+                  offerId: o.id,
+                  productName: game.title,
+                  productSlug: pageSlug,
+                }));
+            }
+            // Newer catalog lookup strategy (Bloons TD6)
+            offerId = mappingResp.offerId;
+            namespace = mappingResp.namespace;
           }
-          const productOffers = await this.getProduct(productHome, offerType);
-          return productOffers
-            .filter((o) => o.hasOffer)
-            .map((o) => ({
-              offerNamespace: o.namespace,
-              offerId: o.id,
+          return [
+            {
+              offerNamespace: namespace,
+              offerId,
               productName: game.title,
-              productSlug: productHome,
-            }));
+              productSlug: pageSlug,
+            },
+          ];
         })
       )
     ).flat();
@@ -208,7 +219,36 @@ export default class PuppetFreeGames extends PuppetBase {
     return freeOffers;
   }
 
-  async getProduct(productSlug: string, offerType?: 'BUNDLE' | string): Promise<Offer[]> {
+  async getPageSlugMapping(pageSlug: string): Promise<PageSlugMappingResult | string> {
+    this.L.debug({ pageSlug }, 'Getting product info using pageSlug');
+    const variables = {
+      pageSlug,
+      locale: 'en-US',
+    };
+    const extensions = {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: '781fd69ec8116125fa8dc245c0838198cdf5283e31647d08dfa27f45ee8b1f30',
+      },
+    };
+    this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for pageSlug mapping');
+    const resp = await this.request<PageSlugMappingResponse>('GET', GRAPHQL_ENDPOINT, {
+      operationName: 'getMappingByPageSlug',
+      variables: JSON.stringify(variables),
+      extensions: JSON.stringify(extensions),
+    });
+    const storePageMapping = resp.data.StorePageMapping.mapping;
+    this.L.debug({ pageSlug, storePageMapping }, 'Page slug response');
+    if (storePageMapping.mappings.offer) {
+      return {
+        namespace: storePageMapping.mappings.offer.namespace,
+        offerId: storePageMapping.mappings.offer.id,
+      };
+    }
+    return storePageMapping.pageSlug;
+  }
+
+  async getCmsProduct(productSlug: string, offerType?: 'BUNDLE' | string): Promise<Offer[]> {
     const isBundle = offerType === 'BUNDLE';
     this.L.debug({ productSlug, offerType }, 'Getting product info using productSlug');
     const itemPath = isBundle ? 'bundles' : 'products';
