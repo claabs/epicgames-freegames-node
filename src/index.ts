@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
 import { exit } from 'process';
+import PQueue from 'p-queue';
 import { config, AccountConfig } from './common/config';
 import logger from './common/logger';
 import PuppetPurchase from './puppet/purchase';
@@ -10,12 +11,8 @@ import PuppetLogin from './puppet/login';
 import { safeLaunchBrowser } from './common/puppeteer';
 import PuppetFreeGames from './puppet/free-games';
 
-export async function redeemAccount(account: AccountConfig, index: number): Promise<void> {
+export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
-  const waitTime = index * config.intervalTime * 1000;
-  await new Promise((resolve) => {
-    setTimeout(resolve, waitTime);
-  });
   L.info(`Checking free games for ${account.email} `);
   try {
     // const requestClient = newCookieJar(account.email);
@@ -65,7 +62,14 @@ export async function main(): Promise<void> {
     if (config.testNotifiers) {
       await testNotifiers();
     }
-    const accountPromises = config.accounts.map(redeemAccount);
+    const queue = new PQueue({
+      concurrency: config.accountConcurrency,
+      interval: config.intervalTime * 1000,
+      intervalCap: 1,
+    });
+    const accountPromises = config.accounts.map(async (account) =>
+      queue.add(() => redeemAccount(account))
+    );
     await Promise.all(accountPromises);
     exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }

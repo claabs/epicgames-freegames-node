@@ -714,6 +714,19 @@ export class AppConfig {
   intervalTime = process.env.INTERVAL_TIME ? parseInt(process.env.INTERVAL_TIME, 10) : 60;
 
   /**
+   * How many accounts can be processed at the same time
+   * @example 1
+   * @default 3
+   * @env ACCOUNT_CONCURRENCY
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  accountConcurrency = process.env.ACCOUNT_CONCURRENCY
+    ? parseInt(process.env.ACCOUNT_CONCURRENCY, 10)
+    : 3;
+
+  /**
    * Log level in lower case. Can be [silent, error, warn, info, debug, trace]
    * @example debug
    * @default info
