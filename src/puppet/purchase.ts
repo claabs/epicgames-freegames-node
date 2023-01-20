@@ -56,9 +56,9 @@ export default class PuppetPurchase extends PuppetBase {
     this.L.debug('Waiting for order button');
     return Promise.resolve(
       page
-        .waitForSelector(`button.payment-btn:not([disabled])`, {timeout: 3000})
+        .waitForSelector(`button.payment-btn:not([disabled])`, { timeout: 3000 })
         .then((button) => ({ button, hasOrderButton: true }))
-        .catch(e => ({button: null, hasOrderButton: false}))
+        .catch(() => ({ button: null, hasOrderButton: false }))
     );
   }
 
@@ -69,9 +69,9 @@ export default class PuppetPurchase extends PuppetBase {
     this.L.debug('Waiting for cookie dialog');
     return Promise.resolve(
       page
-        .waitForSelector(`button#onetrust-accept-btn-handler`, {timeout: 3000})
+        .waitForSelector(`button#onetrust-accept-btn-handler`, { timeout: 3000 })
         .then((button) => ({ button, hasCookieDialog: true }))
-        .catch(e => ({button: null, hasCookieDialog: false}))
+        .catch(() => ({ button: null, hasCookieDialog: false }))
     );
   }
 
@@ -91,7 +91,7 @@ export default class PuppetPurchase extends PuppetBase {
         this.L.info({ purchaseUrl }, 'Loading purchase page');
         await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
         await page.waitForNetworkIdle({ idleTime: 2000 });
-        let cookieResult = await this.waitForCookieButton(page);
+        const cookieResult = await this.waitForCookieButton(page);
         if (cookieResult.hasCookieDialog) {
           this.L.debug('Clicking cookieDialog');
           if (cookieResult.button) {
@@ -99,7 +99,7 @@ export default class PuppetPurchase extends PuppetBase {
           }
         }
         await page.waitForTimeout(2000);
-        let orderResult = await this.waitForOrderButton(page);
+        const orderResult = await this.waitForOrderButton(page);
         if (!orderResult.hasOrderButton || !orderResult.button) {
           throw new Error('Could not detect place order button');
         }
