@@ -49,19 +49,30 @@ export default class PuppetPurchase extends PuppetBase {
     ]);
   }
 
-  private async waitForCookieOrOrderButton(page: Page): Promise<{
+  private async waitForOrderButton(page: Page): Promise<{
     button: ElementHandle<HTMLButtonElement> | null;
-    event: 'order' | 'cookie' | string;
+    hasOrderButton: boolean;
   }> {
-    this.L.debug('Waiting for order button or cookie dialog');
-    return Promise.race([
+    this.L.debug('Waiting for order button');
+    return Promise.resolve(
       page
-        .waitForSelector(`button.payment-btn:not([disabled])`)
-        .then((button) => ({ button, event: 'order' })),
+        .waitForSelector(`button.payment-btn:not([disabled])`, {timeout: 3000})
+        .then((button) => ({ button, hasOrderButton: true }))
+        .catch(e => ({button: null, hasOrderButton: false}))
+    );
+  }
+
+  private async waitForCookieButton(page: Page): Promise<{
+    button: ElementHandle<HTMLButtonElement> | null;
+    hasCookieDialog: boolean;
+  }> {
+    this.L.debug('Waiting for cookie dialog');
+    return Promise.resolve(
       page
-        .waitForSelector(`button#onetrust-accept-btn-handler`)
-        .then((button) => ({ button, event: 'cookie' })),
-    ]);
+        .waitForSelector(`button#onetrust-accept-btn-handler`, {timeout: 3000})
+        .then((button) => ({ button, hasCookieDialog: true }))
+        .catch(e => ({button: null, hasCookieDialog: false}))
+    );
   }
 
   /**
@@ -80,28 +91,21 @@ export default class PuppetPurchase extends PuppetBase {
         this.L.info({ purchaseUrl }, 'Loading purchase page');
         await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
         await page.waitForNetworkIdle({ idleTime: 2000 });
-        let orderCookieResult = await this.waitForCookieOrOrderButton(page);
-        if (orderCookieResult.event === 'cookie') {
-          this.L.trace('Clicking cookieDialog');
-          if (orderCookieResult.button) {
-            await orderCookieResult.button.click({ delay: 100 });
+        let cookieResult = await this.waitForCookieButton(page);
+        if (cookieResult.hasCookieDialog) {
+          this.L.debug('Clicking cookieDialog');
+          if (cookieResult.button) {
+            await cookieResult.button.click({ delay: 100 });
           }
-          orderCookieResult = await this.waitForCookieOrOrderButton(page);
         }
-        if (orderCookieResult.event !== 'order' || !orderCookieResult.button) {
+        await page.waitForTimeout(2000);
+        let orderResult = await this.waitForOrderButton(page);
+        if (!orderResult.hasOrderButton || !orderResult.button) {
           throw new Error('Could not detect place order button');
         }
         this.L.debug('Clicking placeOrderButton');
-        await orderCookieResult.button.click({ delay: 100 });
+        await orderResult.button.click({ delay: 100 });
         let purchaseEvent = await this.waitForPurchaseEvent(page);
-        if (purchaseEvent === 'cookie') {
-          const cookieDialog = (await page.waitForSelector(`button#onetrust-accept-btn-handler`, {
-            timeout: 3000,
-          })) as ElementHandle<HTMLButtonElement>;
-          this.L.trace('Clicking cookieDialog');
-          await cookieDialog.click({ delay: 100 });
-          purchaseEvent = await this.waitForPurchaseEvent(page);
-        }
         if (purchaseEvent === 'refund') {
           this.L.debug('Clicking euRefundAgreeButton');
           const euRefundAgreeButton = (await page.waitForSelector(
