@@ -49,30 +49,17 @@ export default class PuppetPurchase extends PuppetBase {
     ]);
   }
 
-  private async waitForOrderButton(page: Page): Promise<{
-    button: ElementHandle<HTMLButtonElement> | null;
-    hasOrderButton: boolean;
-  }> {
-    this.L.debug('Waiting for order button');
-    return Promise.resolve(
-      page
-        .waitForSelector(`button.payment-btn:not([disabled])`, { timeout: 3000 })
-        .then((button) => ({ button, hasOrderButton: true }))
-        .catch(() => ({ button: null, hasOrderButton: false }))
-    );
-  }
-
-  private async waitForCookieButton(page: Page): Promise<{
-    button: ElementHandle<HTMLButtonElement> | null;
-    hasCookieDialog: boolean;
-  }> {
+  private async handleCookieDialog(page: Page): Promise<void> {
     this.L.debug('Waiting for cookie dialog');
-    return Promise.resolve(
-      page
-        .waitForSelector(`button#onetrust-accept-btn-handler`, { timeout: 3000 })
-        .then((button) => ({ button, hasCookieDialog: true }))
-        .catch(() => ({ button: null, hasCookieDialog: false }))
-    );
+    const cookieButton = await page
+      .waitForSelector(`button#onetrust-accept-btn-handler`, { timeout: 3000 })
+      .catch(() => null);
+    if (!cookieButton) return;
+
+    this.L.debug('Clicking cookieDialog');
+    await cookieButton.click({ delay: 100 });
+    this.L.debug('Waiting for cookieDialog to be hidden');
+    await page.waitForSelector(`#onetrust-banner-sdk`, { hidden: true });
   }
 
   /**
@@ -91,20 +78,14 @@ export default class PuppetPurchase extends PuppetBase {
         this.L.info({ purchaseUrl }, 'Loading purchase page');
         await page.goto(purchaseUrl, { waitUntil: 'networkidle0' });
         await page.waitForNetworkIdle({ idleTime: 2000 });
-        const cookieResult = await this.waitForCookieButton(page);
-        if (cookieResult.hasCookieDialog) {
-          this.L.debug('Clicking cookieDialog');
-          if (cookieResult.button) {
-            await cookieResult.button.click({ delay: 100 });
-          }
-        }
-        await page.waitForTimeout(2000);
-        const orderResult = await this.waitForOrderButton(page);
-        if (!orderResult.hasOrderButton || !orderResult.button) {
-          throw new Error('Could not detect place order button');
+        await this.handleCookieDialog(page);
+        this.L.debug('Waiting for order button');
+        const placeOrderButton = await page.waitForSelector(`button.payment-btn:not([disabled])`);
+        if (!placeOrderButton) {
+          throw new Error('Could not detect placeOrderButton');
         }
         this.L.debug('Clicking placeOrderButton');
-        await orderResult.button.click({ delay: 100 });
+        await placeOrderButton.click({ delay: 100 });
         let purchaseEvent = await this.waitForPurchaseEvent(page);
         if (purchaseEvent === 'refund') {
           this.L.debug('Clicking euRefundAgreeButton');
