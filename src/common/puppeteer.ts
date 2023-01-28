@@ -100,6 +100,7 @@ export function getDevtoolsUrl(page: Page): string {
 export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
   headless: true,
   args: [
+    '--disable-blink-features=AutomationControlled', // Bypass hcaptcha detection
     '--disable-web-security', // For accessing iframes
     '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes
     '--no-sandbox', // For Docker root user
