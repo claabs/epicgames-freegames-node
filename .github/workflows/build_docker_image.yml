@@ -67,7 +67,7 @@ jobs:
           tags: |
             charlocharlie/epicgames-freegames:bullseye-slim
             ghcr.io/claabs/epicgames-freegames-node:bullseye-slim
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
