@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { NotificationReason } from '../interfaces/notification-reason';
@@ -25,8 +25,9 @@ export class DiscordNotifier extends NotifierService {
       mentions = `${mentions}${this.config.mentionedRoles.map((r) => `<@&${r}>`).join('')}\n`;
     }
     try {
-      await got.post(this.config.webhookUrl, {
-        json: {
+      await axios.post(
+        this.config.webhookUrl,
+        {
           content: `${mentions}epicgames-freegames-node needs a captcha solved.`,
           embeds: [
             {
@@ -45,8 +46,10 @@ export class DiscordNotifier extends NotifierService {
             },
           ],
         },
-        responseType: 'json',
-      });
+        {
+          responseType: 'json',
+        }
+      );
     } catch (err) {
       L.error(err);
       L.error({ webhookUrl: this.config.webhookUrl }, `Failed to send message`);

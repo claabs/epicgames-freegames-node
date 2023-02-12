@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { TelegramConfig } from '../common/config';
@@ -37,8 +37,7 @@ export class TelegramNotifier extends NotifierService {
     L.trace({ jsonPayload }, 'Sending json payload');
 
     try {
-      await got.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, {
-        json: jsonPayload,
+      await axios.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, jsonPayload, {
         responseType: 'json',
       });
     } catch (err) {

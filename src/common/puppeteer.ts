@@ -7,7 +7,7 @@ import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
-import { ToughCookieFileStore } from './request';
+import { ToughCookieFileStore } from './cookie';
 import { config } from './config';
 
 const defaultWebPortalConfig: WebPortalConnectionConfig = {

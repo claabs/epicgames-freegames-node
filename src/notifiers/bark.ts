@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { BarkConfig } from '../common/config';
@@ -27,7 +27,7 @@ export class BarkNotifier extends NotifierService {
 
     L.trace({ requestUrl }, 'Sending request');
     try {
-      await got.get(requestUrl);
+      await axios.get(requestUrl);
     } catch (err) {
       L.error(err);
       L.error(this.config, `Failed to send message`);

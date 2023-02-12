@@ -1,4 +1,3 @@
-import got, { Got, ToughCookieJar } from 'got';
 import * as tough from 'tough-cookie';
 import { FileCookieStore } from 'tough-cookie-file-store';
 import fs from 'fs-extra';
@@ -108,37 +107,6 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
   });
   L.debug({ convertedCookies: tcfs });
   return tcfs;
-}
-
-export default got.extend({
-  cookieJar: getCookieJar(DEFAULT_COOKIE_NAME) as ToughCookieJar,
-  responseType: 'json',
-});
-
-export function newCookieJar(username: string): Got {
-  const cookieFilename = getCookiePath(username);
-  const fileExists = fs.existsSync(cookieFilename);
-  if (fileExists) {
-    let cookieData;
-    try {
-      cookieData = fs.readFileSync(cookieFilename, 'utf8');
-      const cookieTest = JSON.parse(cookieData);
-      if (Array.isArray(cookieTest)) {
-        L.info(`Converting ${cookieFilename} cookie format`);
-        const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
-        fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
-      }
-    } catch (err) {
-      L.warn(err);
-      L.warn({ cookieData }, `Could not parse ${cookieFilename}, deleting it`);
-      fs.rmSync(cookieFilename, { force: true });
-    }
-  }
-
-  return got.extend({
-    cookieJar: getCookieJar(username) as ToughCookieJar,
-    responseType: 'json',
-  });
 }
 
 export function getCookies(username: string): Record<string, string> {

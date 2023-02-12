@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { NotificationReason } from '../interfaces/notification-reason';
@@ -17,15 +17,18 @@ export class PushoverNotifier extends NotifierService {
     L.trace('Sending pushover notification');
 
     try {
-      await got.post('https://api.pushover.net/1/messages.json', {
-        json: {
+      await axios.post(
+        'https://api.pushover.net/1/messages.json',
+        {
           token: this.config.token,
           user: this.config.userKey,
           message: `epicgames-freegames-node needs a captcha solved. Reason: ${reason}`,
           url,
         },
-        responseType: 'json',
-      });
+        {
+          responseType: 'json',
+        }
+      );
     } catch (err) {
       L.error(err);
       L.error(

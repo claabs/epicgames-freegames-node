@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { NotificationReason } from '../interfaces/notification-reason';
@@ -17,12 +17,15 @@ export class SlackNotifier extends NotifierService {
     L.trace('Sending Slack notification');
 
     try {
-      await got.post(this.config.webhookUrl, {
-        json: {
+      await axios.post(
+        this.config.webhookUrl,
+        {
           text: `epicgames-freegames-node needs a captcha solved. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`,
         },
-        responseType: 'text',
-      });
+        {
+          responseType: 'text',
+        }
+      );
     } catch (err) {
       L.error(err);
       L.error(

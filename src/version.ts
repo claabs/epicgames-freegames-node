@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import { config } from './common/config';
 import L from './common/logger';
 
@@ -17,13 +17,13 @@ export async function checkForUpdate(): Promise<void> {
   L.debug({ PROJECT_NAME, BRANCH, COMMIT_SHA }, 'Performing version check');
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resp = await got.get<any>(
+    const resp = await axios.get<any>(
       `https://api.github.com/repos/claabs/${PROJECT_NAME}/commits/${BRANCH}`,
       {
         responseType: 'json',
       }
     );
-    const latestSha = resp.body.sha;
+    const latestSha = resp.data.sha;
     L.trace({ latestSha }, 'Response from GitHub API');
     if (COMMIT_SHA !== latestSha) {
       L.warn(

@@ -1,4 +1,4 @@
-import got from 'got/dist/source';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { GotifyConfig } from '../common/config/classes';
@@ -37,8 +37,7 @@ export class GotifyNotifier extends NotifierService {
     };
 
     try {
-      await got.post(`${this.config.apiUrl}/message?token=${this.config.token}`, {
-        json: jsonPayload,
+      await axios.post(`${this.config.apiUrl}/message?token=${this.config.token}`, jsonPayload, {
         responseType: 'json',
       });
     } catch (err) {

@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { NotificationReason } from '../interfaces/notification-reason';
@@ -17,11 +17,9 @@ export class HomeassistantNotifier extends NotifierService {
     L.trace('Sending homeassistant notification');
 
     try {
-      await got.post(`${this.config.instance}/api/services/notify/${this.config.notifyservice}`, {
-        headers: {
-          Authorization: `Bearer ${this.config.token}`,
-        },
-        json: {
+      await axios.post(
+        `${this.config.instance}/api/services/notify/${this.config.notifyservice}`,
+        {
           title: `Captcha request from Epic Games`,
           message: `epicgames needs a captcha solved. Reason: ${reason} {{ '\n' -}} Open this page and solve the captcha: ${url}`,
           data: {
@@ -29,8 +27,13 @@ export class HomeassistantNotifier extends NotifierService {
             clickAction: url,
           },
         },
-        responseType: 'json',
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${this.config.token}`,
+          },
+          responseType: 'json',
+        }
+      );
     } catch (err) {
       L.error(err);
       L.error(

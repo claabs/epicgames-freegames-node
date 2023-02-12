@@ -8,7 +8,7 @@ import {
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
-import { getCookiesRaw, setPuppeteerCookies } from '../common/request';
+import { getCookiesRaw, setPuppeteerCookies } from '../common/cookie';
 import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
 import { config, CONFIG_DIR } from '../common/config';

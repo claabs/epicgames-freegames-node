@@ -1,4 +1,4 @@
-import got from 'got';
+import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { AppriseConfig } from '../common/config';
@@ -35,8 +35,7 @@ url: ${encodedUrl}`,
     L.trace({ apiUrl: this.config.apiUrl, jsonPayload }, 'Sending json payload');
 
     try {
-      await got.post(`${this.config.apiUrl}/notify`, {
-        json: jsonPayload,
+      await axios.post(`${this.config.apiUrl}/notify`, jsonPayload, {
         responseType: 'text',
       });
     } catch (err) {
