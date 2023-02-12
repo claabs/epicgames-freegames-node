@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-extra';
-import { Page, Protocol, Browser } from 'puppeteer';
+import { Page, Protocol, Browser, executablePath } from 'puppeteer';
 import PortalPlugin, { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -98,6 +98,7 @@ export function getDevtoolsUrl(page: Page): string {
 }
 
 export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
+  executablePath: executablePath(),
   headless: true,
   args: [
     '--disable-web-security', // For accessing iframes

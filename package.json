@@ -37,7 +37,7 @@
     "pidtree": "^0.5.0",
     "pino": "^7.11.0",
     "pino-pretty": "^7.6.1",
-    "puppeteer": "^14.4.1",
+    "puppeteer": "~19.5.2",
     "puppeteer-extra": "^3.3.4",
     "puppeteer-extra-plugin-portal": "^3.1.0",
     "puppeteer-extra-plugin-stealth": "^2.11.1",
