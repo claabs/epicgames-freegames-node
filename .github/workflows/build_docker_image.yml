@@ -50,7 +50,7 @@ jobs:
             charlocharlie/epicgames-freegames:${{ github.sha }}
             ghcr.io/claabs/epicgames-freegames-node:latest
             ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
@@ -83,7 +83,7 @@ jobs:
           tags: |
             charlocharlie/epicgames-freegames:dev
             ghcr.io/claabs/epicgames-freegames-node:dev
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
