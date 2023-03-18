@@ -35,6 +35,7 @@ export enum NotificationType {
   SLACK = 'slack',
   HOMEASSISTANT = 'homeassistant',
   BARK = 'bark',
+  NTFY = 'ntfy',
 }
 
 /**
@@ -268,6 +269,45 @@ export class SlackConfig extends NotifierConfig {
     super(NotificationType.SLACK);
   }
 }
+/**
+ * Sends a ntfy message using webhook
+ */
+export class NtfyConfig extends NotifierConfig {
+  /**
+   * ntfy channel webhook URL.
+   * Guide: https://docs.ntfy.sh/publish/
+   * @example https://ntfy.sh/mytopic
+   * @env NTFY_WEBHOOK
+   */
+  @IsUrl()
+  webhookUrl: string;
+  
+  /**
+   * ntfy channel priority.
+   * Guide: https://docs.ntfy.sh/publish/
+   * @example urgent
+   * @env NTFY_PRIORITY
+   */
+  @IsString()
+  priority: string;
+
+
+  /**
+   * ntfy channel token.
+   * Guide: https://docs.ntfy.sh/config/#access-tokens
+   * @example tk_yourtoken
+   * @env NTFY_TOKEN
+   */
+  @IsString()
+  token: string;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.NTFY);
+  }
+}
 
 export class EmailAuthConfig {
   /**
@@ -457,7 +497,8 @@ export type AnyNotifierConfig =
   | GotifyConfig
   | SlackConfig
   | HomeassistantConfig
-  | BarkConfig;
+  | BarkConfig
+  | NtfyConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -473,6 +514,7 @@ const notifierSubtypes: {
   { value: SlackConfig, name: NotificationType.SLACK },
   { value: HomeassistantConfig, name: NotificationType.HOMEASSISTANT },
   { value: BarkConfig, name: NotificationType.BARK },
+  { value: NtfyConfig, name: NotificationType.NTFY },
 ];
 
 export class WebPortalConfig {
@@ -1048,6 +1090,21 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof SlackConfig)) {
         this.notifiers.push(slack);
+      }
+    }
+
+    // Use environment variables to fill Ntfy notification config if present
+    const { NTFY_WEBHOOK, NTFY_PRIORITY, NTFY_TOKEN } = process.env;
+    if (NTFY_WEBHOOK && NTFY_PRIORITY && NTFY_TOKEN) {
+      const ntfy = new NtfyConfig();
+      ntfy.webhookUrl = NTFY_WEBHOOK;
+      ntfy.priority = NTFY_PRIORITY;
+      ntfy.token = NTFY_TOKEN;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof NtfyConfig)) {
+        this.notifiers.push(ntfy);
       }
     }
 

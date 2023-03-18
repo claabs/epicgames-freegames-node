@@ -7,6 +7,7 @@ import {
   GotifyNotifier,
   SlackNotifier,
   BarkNotifier,
+  NtfyNotifier,
 } from './notifiers';
 import {
   config,
@@ -19,6 +20,7 @@ import {
   PushoverConfig,
   GotifyConfig,
   SlackConfig,
+  NtfyConfig,
   HomeassistantConfig,
   BarkConfig,
 } from './common/config';
@@ -69,6 +71,8 @@ export async function sendNotification(
         return new HomeassistantNotifier(notifierConfig as HomeassistantConfig);
       case NotificationType.BARK:
         return new BarkNotifier(notifierConfig as BarkConfig);
+      case NotificationType.NTFY:
+        return new NtfyNotifier(notifierConfig as NtfyConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }
