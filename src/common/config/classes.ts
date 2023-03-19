@@ -281,7 +281,7 @@ export class NtfyConfig extends NotifierConfig {
    */
   @IsUrl()
   webhookUrl: string;
-  
+
   /**
    * ntfy channel priority.
    * Guide: https://docs.ntfy.sh/publish/
@@ -290,7 +290,6 @@ export class NtfyConfig extends NotifierConfig {
    */
   @IsString()
   priority: string;
-
 
   /**
    * ntfy channel token.
