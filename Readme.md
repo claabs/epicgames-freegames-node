@@ -92,6 +92,12 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
       // bark private service address, optional, default: 'https://api.day.app'
       "apiUrl": "https://api.day.app"
     },
+    {
+        "type": "ntfy",
+        "webhookUrl": "https://ntfy.example.com/mytopic",
+        "priority": "urgent",
+        "token": "tk_mytoken"
+    },
   ],
 }
 ```
