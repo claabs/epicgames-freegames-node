@@ -15,7 +15,6 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
   L.info(`Checking free games for ${account.email} `);
   try {
-    // const requestClient = newCookieJar(account.email);
     const browser = await safeLaunchBrowser(L);
     const login = new PuppetLogin({
       email: account.email,
