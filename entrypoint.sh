@@ -12,7 +12,7 @@ RUN_ONCE=$(cat $TEMP_CONFIG | jq -r ".runOnce")
 CRON_SCHEDULE=$(cat $TEMP_CONFIG | jq -r ".cronSchedule")
 
 echo "Setting timezone: $TZ"
-ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime
 echo "$TZ" > /etc/timezone
 
 # If runOnStartup is set, run it once before setting up the schedule

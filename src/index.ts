@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import 'source-map-support/register';
 import { exit } from 'process';
 import PQueue from 'p-queue';
@@ -15,7 +14,6 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
   L.info(`Checking free games for ${account.email} `);
   try {
-    // const requestClient = newCookieJar(account.email);
     const browser = await safeLaunchBrowser(L);
     const login = new PuppetLogin({
       email: account.email,
@@ -33,12 +31,12 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     });
     await login.fullLogin(); // Login
     const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
-    for (let i = 0; i < offers.length; i += 1) {
+    for (const offer of offers) {
       // Async for-loop as running purchases in parallel may break
-      L.info(`Purchasing ${offers[i].productName}`);
+      L.info(`Purchasing ${offer.productName}`);
       try {
-        await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
-        L.info(`Done purchasing ${offers[i].productName}`);
+        await purchasePuppeteer.purchaseShort(offer.offerNamespace, offer.offerId);
+        L.info(`Done purchasing ${offer.productName}`);
       } catch (err) {
         L.error(err);
       }
