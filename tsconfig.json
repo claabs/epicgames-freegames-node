@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    // see https://github.com/tsconfig/bases/blob/main/bases/node16.json
-    "target": "ESNext",
-    "module": "CommonJS",
+    // see https://github.com/tsconfig/bases/blob/main/bases/node18.json
+    "target": "es2022",
+    "module": "commonjs",
     "outDir": "./dist", /* Redirect output structure to the directory. */
     "removeComments": true, /* Do not emit comments to output. */
     "esModuleInterop": true,
