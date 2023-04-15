@@ -59,7 +59,7 @@ FROM deps as deploy
 # Copy package.json for version number
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist

@@ -10,6 +10,7 @@ import { checkForUpdate, logVersionOnError } from './version';
 import PuppetLogin from './puppet/login';
 import { safeLaunchBrowser } from './common/puppeteer';
 import PuppetFreeGames from './puppet/free-games';
+import { createServer } from './common/server';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -58,6 +59,8 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
 export async function main(): Promise<void> {
   if (process.env.NODE_ENV !== 'test') {
     await checkForUpdate();
+    logger.debug('Starting web server for captcha portals');
+    const server = await createServer();
     if (config.testNotifiers) {
       await testNotifiers();
     }
@@ -70,6 +73,8 @@ export async function main(): Promise<void> {
       queue.add(() => redeemAccount(account))
     );
     await Promise.all(accountPromises);
+    server.close();
+    logger.info('Exiting successfully');
     exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
 }

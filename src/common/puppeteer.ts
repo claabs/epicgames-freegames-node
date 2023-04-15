@@ -7,6 +7,7 @@ import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
+import express from 'express';
 import { ToughCookieFileStore } from './cookie';
 import { config } from './config';
 
@@ -17,17 +18,22 @@ const defaultWebPortalConfig: WebPortalConnectionConfig = {
   },
 };
 
-puppeteer.use(
-  PortalPlugin({
-    webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
-  })
-);
+const app = express();
+
+const portalPlugin = PortalPlugin({
+  webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
+});
+app.use(portalPlugin.createExpressMiddleware());
+
+puppeteer.use(portalPlugin);
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('iframe.contentWindow'); // fixes "word word word..." and "mmMwWLliI0fiflO&1"
 puppeteer.use(stealth);
 
 export default puppeteer;
+
+export const portalExpressApp = app;
 
 export function puppeteerCookieToToughCookieFileStore(
   puppetCookie: Protocol.Network.Cookie
@@ -100,6 +106,7 @@ export function getDevtoolsUrl(page: Page): string {
 export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
   executablePath: executablePath(),
   headless: true,
+  protocolTimeout: 0, // https://github.com/puppeteer/puppeteer/issues/9927
   args: [
     '--disable-web-security', // For accessing iframes
     '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes

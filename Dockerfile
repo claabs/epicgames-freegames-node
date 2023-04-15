@@ -18,7 +18,7 @@ FROM base as deps
 # and note the Chromium version available. Then go to https://github.com/puppeteer/puppeteer/releases?q=chromium&expanded=true
 # and find the latest puppeteer version that supports that Chromium version, and update it in the package.json.
 RUN apk add --no-cache \
-    'chromium=~111' \
+    'chromium=~112' \
     nss \
     freetype \
     harfbuzz \
@@ -53,7 +53,7 @@ FROM deps as deploy
 # Copy package.json for version number
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist
