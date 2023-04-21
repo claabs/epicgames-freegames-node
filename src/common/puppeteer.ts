@@ -23,7 +23,11 @@ const app = express();
 const portalPlugin = PortalPlugin({
   webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
 });
-app.use(portalPlugin.createExpressMiddleware());
+const baseUrl = config.webPortalConfig?.baseUrl
+  ? new URL(config.webPortalConfig?.baseUrl)
+  : undefined;
+const basePath = baseUrl?.pathname || '/';
+app.use(basePath, portalPlugin.createExpressMiddleware());
 
 puppeteer.use(portalPlugin);
 
