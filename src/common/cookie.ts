@@ -171,3 +171,24 @@ export function deleteCookies(username?: string): void {
     fs.unlinkSync(cookieFilename);
   }
 }
+
+export function convertImportCookies(username: string): void {
+  const cookieFilename = getCookiePath(username);
+  const fileExists = fs.existsSync(cookieFilename);
+  if (fileExists) {
+    let cookieData;
+    try {
+      cookieData = fs.readFileSync(cookieFilename, 'utf8');
+      const cookieTest = JSON.parse(cookieData);
+      if (Array.isArray(cookieTest)) {
+        L.info(`Converting ${cookieFilename} cookie format`);
+        const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
+        fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+      }
+    } catch (err) {
+      L.warn(err);
+      L.warn({ cookieData }, `Could not parse ${cookieFilename}, deleting it`);
+      fs.rmSync(cookieFilename, { force: true });
+    }
+  }
+}

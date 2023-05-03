@@ -11,11 +11,13 @@ import PuppetLogin from './puppet/login';
 import { safeLaunchBrowser } from './common/puppeteer';
 import PuppetFreeGames from './puppet/free-games';
 import { createServer } from './common/server';
+import { convertImportCookies } from './common/cookie';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
   L.info(`Checking free games for ${account.email} `);
   try {
+    convertImportCookies(account.email);
     const browser = await safeLaunchBrowser(L);
     const login = new PuppetLogin({
       email: account.email,
