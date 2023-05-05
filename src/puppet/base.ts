@@ -1,6 +1,7 @@
 import { Logger } from 'pino';
-import { Protocol, Page, Browser } from 'puppeteer';
+import { Protocol, Page, Browser, HTTPRequest } from 'puppeteer';
 import path from 'path';
+import { getRedemptionToken } from 'privacy-pass-redeemer';
 import logger from '../common/logger';
 import {
   getDevtoolsUrl,
@@ -13,11 +14,21 @@ import { NotificationReason } from '../interfaces/notification-reason';
 import { sendNotification } from '../notify';
 import { config, CONFIG_DIR } from '../common/config';
 import { getLocaltunnelUrl } from '../common/localtunnel';
+import { getHcaptchaPrivacyPassToken } from '../common/privacypass';
+import { getHcaptchaCookies } from './hcaptcha';
 
 export interface PuppetBaseProps {
   browser: Browser;
   email: string;
 }
+
+const SPEND_REGEX = /^https:\/\/(.+\\.)*hcaptcha.com\/getcaptcha\/(.*)$/;
+const NON_SPEND_HCAPTCHA_URLS = [
+  'https://hcaptcha.com/getcaptcha/00000000-0000-0000-0000-000000000000',
+  'https://hcaptcha.com/getcaptcha/10000000-ffff-ffff-ffff-000000000001',
+  'https://hcaptcha.com/getcaptcha/20000000-ffff-ffff-ffff-000000000002',
+  'https://hcaptcha.com/getcaptcha/30000000-ffff-ffff-ffff-000000000003',
+];
 
 export default class PuppetBase {
   protected L: Logger;
@@ -37,6 +48,7 @@ export default class PuppetBase {
   protected async setupPage(): Promise<Page> {
     const userCookies = await getCookiesRaw(this.email);
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
+    const hcaptchaAccessiblityCookies = await getHcaptchaCookies();
     this.L.debug('Logging in with puppeteer');
     const browser = await safeLaunchBrowser(this.L);
     const page = await safeNewPage(browser, this.L);
@@ -47,12 +59,39 @@ export default class PuppetBase {
         cookies: puppeteerCookies,
       });
       await cdpClient.detach();
-      await page.setCookie(...puppeteerCookies);
+      await page.setCookie(...puppeteerCookies, ...hcaptchaAccessiblityCookies);
+      await page.setRequestInterception(true);
+      page.on('request', this.requestInterceptor.bind(this));
       return page;
     } catch (err) {
       await this.handlePageError(err, page);
       throw err;
     }
+  }
+
+  private requestInterceptor(interceptedRequest: HTTPRequest): void {
+    if (interceptedRequest.isInterceptResolutionHandled()) return;
+    const reqUrl = interceptedRequest.url();
+    if (!NON_SPEND_HCAPTCHA_URLS.includes(reqUrl) && SPEND_REGEX.test(reqUrl)) {
+      // TODO: consider using PP token to get hcaptcha accessibility cookie
+      this.L.debug('Intercepting hcaptcha getcaptcha request');
+      const hcToken = getHcaptchaPrivacyPassToken();
+      if (!hcToken) {
+        interceptedRequest.continue();
+        return;
+      }
+      const method = interceptedRequest.method();
+      const { hostname, pathname } = new URL(reqUrl);
+      const headers = interceptedRequest.headers();
+      const token = getRedemptionToken(hcToken, reqUrl, method);
+      headers['challenge-bypass-token'] = token;
+      headers['challenge-bypass-host'] = hostname;
+      headers['challenge-bypass-path'] = `${method} ${pathname}`;
+      this.L.trace({ headers }, 'Modified captcha headers');
+      interceptedRequest.continue({ headers });
+      return;
+    }
+    interceptedRequest.continue();
   }
 
   protected async teardownPage(page: Page): Promise<void> {

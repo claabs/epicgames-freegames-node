@@ -38,6 +38,7 @@
     "pidtree": "^0.6.0",
     "pino": "^8.11.0",
     "pino-pretty": "^10.0.0",
+    "privacy-pass-redeemer": "^1.0.2",
     "puppeteer": "^19.9.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-portal": "^3.2.1",

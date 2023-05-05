@@ -1,9 +1,11 @@
 import fs from 'fs-extra';
-import { ElementHandle, Protocol } from 'puppeteer';
+import { ElementHandle, HTTPRequest, Protocol } from 'puppeteer';
 import path from 'path';
+import { getRedemptionToken } from 'privacy-pass-redeemer';
 import { getDevtoolsUrl, safeLaunchBrowser, safeNewPage } from '../common/puppeteer';
 import { config, CONFIG_DIR } from '../common/config';
 import L from '../common/logger';
+import { getHcaptchaPrivacyPassToken } from '../common/privacypass';
 
 const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = path.join(
   CONFIG_DIR,
@@ -11,6 +13,14 @@ const HCAPTCHA_ACCESSIBILITY_CACHE_FILE = path.join(
 );
 
 const CACHE_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
+
+const SPEND_REGEX = /^https:\/\/(.+\\.)*hcaptcha.com\/getcaptcha\/(.*)$/;
+const NON_SPEND_HCAPTCHA_URLS = [
+  'https://hcaptcha.com/getcaptcha/00000000-0000-0000-0000-000000000000',
+  'https://hcaptcha.com/getcaptcha/10000000-ffff-ffff-ffff-000000000001',
+  'https://hcaptcha.com/getcaptcha/20000000-ffff-ffff-ffff-000000000002',
+  'https://hcaptcha.com/getcaptcha/30000000-ffff-ffff-ffff-000000000003',
+];
 
 const getCookieCache = async (): Promise<Protocol.Network.Cookie[] | null> => {
   try {
@@ -31,6 +41,31 @@ const setCookieCache = async (cookies: Protocol.Network.Cookie[]): Promise<void>
   await fs.writeJSON(HCAPTCHA_ACCESSIBILITY_CACHE_FILE, cookies);
 };
 
+const requestInterceptor = (interceptedRequest: HTTPRequest): void => {
+  if (interceptedRequest.isInterceptResolutionHandled()) return;
+  const reqUrl = interceptedRequest.url();
+  if (!NON_SPEND_HCAPTCHA_URLS.includes(reqUrl) && SPEND_REGEX.test(reqUrl)) {
+    // TODO: consider using PP token to get hcaptcha accessibility cookie
+    L.debug('Intercepting hcaptcha getcaptcha request');
+    const hcToken = getHcaptchaPrivacyPassToken();
+    if (!hcToken) {
+      interceptedRequest.continue();
+      return;
+    }
+    const method = interceptedRequest.method();
+    const { hostname, pathname } = new URL(reqUrl);
+    const headers = interceptedRequest.headers();
+    const token = getRedemptionToken(hcToken, reqUrl, method);
+    headers['challenge-bypass-token'] = token;
+    headers['challenge-bypass-host'] = hostname;
+    headers['challenge-bypass-path'] = `${method} ${pathname}`;
+    L.trace({ headers }, 'Modified captcha headers');
+    interceptedRequest.continue({ headers });
+    return;
+  }
+  interceptedRequest.continue();
+};
+
 export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> => {
   const { hcaptchaAccessibilityUrl } = config;
   if (!hcaptchaAccessibilityUrl) {
@@ -46,6 +81,8 @@ export const getHcaptchaCookies = async (): Promise<Protocol.Network.Cookie[]> =
       L.debug('Setting hCaptcha accessibility cookies');
       browser = await safeLaunchBrowser(L);
       const page = await safeNewPage(browser, L);
+      await page.setRequestInterception(true);
+      page.on('request', requestInterceptor);
 
       L.trace(getDevtoolsUrl(page));
       L.trace(`Navigating to ${hcaptchaAccessibilityUrl}`);
