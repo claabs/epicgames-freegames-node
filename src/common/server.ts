@@ -1,8 +1,20 @@
 import https from 'https';
 import http from 'http';
 import { once } from 'events';
-import { portalExpressApp } from './puppeteer';
+import express from 'express';
+
 import { config } from './config';
+
+const app = express();
+const router = express.Router();
+
+const baseUrl = config.webPortalConfig?.baseUrl
+  ? new URL(config.webPortalConfig?.baseUrl)
+  : undefined;
+const basePath = baseUrl?.pathname || '/';
+
+app.use(basePath, router);
+export const serverRoute = router;
 
 export async function createServer(): Promise<http.Server> {
   let server: http.Server;
@@ -11,14 +23,12 @@ export async function createServer(): Promise<http.Server> {
     Object.entries(config.webPortalConfig?.serverOpts).length > 0
   ) {
     // The serverOpts are mostly HTTPS-related options, so use `https` if there's any options set
-    server = https.createServer(config.webPortalConfig?.serverOpts, portalExpressApp);
+    server = https.createServer(config.webPortalConfig?.serverOpts, app);
   } else {
     // Otherwise, we just use `http`. This is pretty much the first half of `app.listen()`
-    server = http.createServer(portalExpressApp);
+    server = http.createServer(app);
   }
   server = server.listen(config.webPortalConfig?.listenOpts || 3000);
-  server.headersTimeout = 0;
-  server.requestTimeout = 0;
   await once(server, 'listening');
   return server;
 }

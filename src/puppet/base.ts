@@ -8,11 +8,9 @@ import {
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
-import { getCookiesRaw, setPuppeteerCookies } from '../common/cookie';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { sendNotification } from '../notify';
-import { config, CONFIG_DIR } from '../common/config';
-import { getLocaltunnelUrl } from '../common/localtunnel';
+import { getCookiesRaw, setPuppeteerCookies, userHasRememberCookie } from '../common/cookie';
+import { CONFIG_DIR } from '../common/config';
+import { getAccountAuth } from '../common/device-auths';
 
 export interface PuppetBaseProps {
   browser: Browser;
@@ -35,8 +33,31 @@ export default class PuppetBase {
   }
 
   protected async setupPage(): Promise<Page> {
-    const userCookies = await getCookiesRaw(this.email);
-    const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
+    // Get cookies or latest access_token cookies
+    let puppeteerCookies: Protocol.Network.CookieParam[] = [];
+    if (userHasRememberCookie(this.email)) {
+      const userCookies = await getCookiesRaw(this.email);
+      puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
+    } else {
+      const deviceAuth = getAccountAuth(this.email);
+      if (!deviceAuth) throw new Error(`Unable to get auth for user ${this.email}`);
+      const bearerCookies: Protocol.Network.CookieParam[] = [
+        '.epicgames.com',
+        '.twinmotion.com',
+        '.fortnite.com',
+        '.unrealengine.com',
+      ].map((domain) => ({
+        name: 'EPIC_BEARER_TOKEN',
+        value: deviceAuth.access_token,
+        expires: new Date(deviceAuth.expires_at).getTime() / 1000,
+        domain,
+        path: '/',
+        secure: true,
+        httpOnly: true,
+        sameSite: 'Lax',
+      }));
+      puppeteerCookies.push(...bearerCookies);
+    }
     this.L.debug('Logging in with puppeteer');
     const browser = await safeLaunchBrowser(this.L);
     const page = await safeNewPage(browser, this.L);
@@ -83,14 +104,5 @@ export default class PuppetBase {
       await page.close();
     }
     throw err;
-  }
-
-  protected async openPortalAndNotify(page: Page, reason: NotificationReason): Promise<void> {
-    let url = await page.openPortal();
-    if (config.webPortalConfig?.localtunnel) {
-      url = await getLocaltunnelUrl(url);
-    }
-    this.L.info({ url }, 'Go to this URL and do something');
-    await sendNotification(url, this.email, reason);
   }
 }

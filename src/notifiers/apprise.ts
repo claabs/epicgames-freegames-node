@@ -16,18 +16,21 @@ export class AppriseNotifier extends NotifierService {
   /**
    * @ignore
    */
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Apprise notification');
 
-    const encodedUrl = encodeURI(url);
     const jsonPayload = {
       urls: this.config.urls,
       title: 'epicgames-freegames-node',
       body: `epicgames-freegames-node needs a captcha solved.
 reason: ${reason}
-account: ${account}
-url: ${encodedUrl}`,
+account: ${account}${
+        url
+          ? `
+url: ${encodeURI(url)}`
+          : ''
+      }`,
       format: 'text', // The text format is ugly, but all the platforms support it.
       type: 'info',
     };

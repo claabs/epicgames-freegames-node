@@ -6,7 +6,7 @@ import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
-import { AppConfig, EmailConfig, WebPortalConfig } from './classes';
+import { AppConfig } from './classes';
 
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({
@@ -61,43 +61,6 @@ if (!configPath) {
   L.debug({ configPath });
   const parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
   config = plainToInstance(AppConfig, parsedConfig);
-}
-
-/**
- * Handle deprecated options
- */
-if (config.email) {
-  L.warn(
-    '`email` has been deprecated. Please update your config to use `notifiers` with `"type": "email"` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.notifiers) {
-    config.notifiers = [];
-  }
-  if (!config.notifiers.some((notifConfig) => notifConfig instanceof EmailConfig)) {
-    config.notifiers.push(config.email);
-  }
-}
-
-if (config.baseUrl) {
-  L.warn(
-    '`baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.webPortalConfig) {
-    config.webPortalConfig = new WebPortalConfig();
-  }
-  if (!config.webPortalConfig.baseUrl) {
-    config.webPortalConfig.baseUrl = config.baseUrl;
-  }
-}
-
-if (config.onlyWeekly) {
-  L.warn(
-    '`onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.searchStrategy) {
-    const newValue = config.onlyWeekly ? 'weekly' : 'promotion';
-    config.searchStrategy = newValue;
-  }
 }
 
 const errors = validateSync(config, {

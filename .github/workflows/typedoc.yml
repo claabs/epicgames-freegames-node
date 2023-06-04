@@ -6,7 +6,6 @@ on:
     paths:
       - Readme.md
       - src/common/config/classes.ts
-      - test/test.html
       - .github/workflows/typedoc.yml
       - package.json
 jobs:

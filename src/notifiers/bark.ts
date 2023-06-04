@@ -12,18 +12,17 @@ export class BarkNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Bark notification');
 
-    const toUrl = encodeURIComponent(url);
     const message = encodeURIComponent(`reason: ${reason}, account: ${account}`);
 
     const requestUrl = `${this.config.apiUrl}/${encodeURIComponent(
       this.config.key
-    )}/${encodeURIComponent(this.config.title)}/${message}?url=${toUrl}&group=${encodeURIComponent(
-      this.config.group
-    )}`;
+    )}/${encodeURIComponent(this.config.title)}/${message}?${
+      url ? `url=${encodeURIComponent(url)}&` : ''
+    }group=${encodeURIComponent(this.config.group)}`;
 
     L.trace({ requestUrl }, 'Sending request');
     try {

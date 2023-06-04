@@ -8,6 +8,8 @@ import {
   SlackNotifier,
   BarkNotifier,
   NtfyNotifier,
+  PushoverNotifier,
+  HomeassistantNotifier,
 } from './notifiers';
 import {
   config,
@@ -26,15 +28,13 @@ import {
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
-import { getDevtoolsUrl, safeLaunchBrowser, safeNewPage } from './common/puppeteer';
-import { getLocaltunnelUrl } from './common/localtunnel';
-import { PushoverNotifier } from './notifiers/pushover';
-import { HomeassistantNotifier } from './notifiers/homeassistant';
+// eslint-disable-next-line import/no-cycle
+import { DeviceLogin } from './device-login';
 
 export async function sendNotification(
-  url: string,
   accountEmail: string,
-  reason: NotificationReason
+  reason: NotificationReason,
+  url?: string
 ): Promise<void> {
   const account = config.accounts.find((acct) => acct.email === accountEmail);
   const notifierConfigs = account?.notifiers || config.notifiers;
@@ -79,33 +79,22 @@ export async function sendNotification(
   });
 
   await Promise.all(
-    notifiers.map((notifier) => notifier.sendNotification(url, accountEmail, reason))
+    notifiers.map((notifier) => notifier.sendNotification(accountEmail, reason, url))
   );
 }
 
 export async function testNotifiers(): Promise<void> {
   L.info('Testing all configured notifiers');
-  const browser = await safeLaunchBrowser(L);
-  const page = await safeNewPage(browser, L);
-  L.trace(getDevtoolsUrl(page));
-  await page.goto('https://claabs.github.io/epicgames-freegames-node/test.html');
-  let url = await page.openPortal();
-  if (config.webPortalConfig?.localtunnel) {
-    url = await getLocaltunnelUrl(url);
-  }
-  const accountEmails = config.accounts.map((acct) =>
-    sendNotification(url, acct.email, NotificationReason.TEST)
-  );
-  await Promise.all(accountEmails);
-  L.info('Test notifications sent. Waiting for test page interaction...');
+
   try {
-    await page.waitForSelector('#complete', {
-      visible: true,
-      timeout: config.notificationTimeoutHours * 60 * 60 * 1000,
-    });
+    await Promise.any(
+      config.accounts.map((acct) => {
+        const deviceAuth = new DeviceLogin({ user: acct.email });
+        return deviceAuth.testServerNotify();
+      })
+    );
     L.info('Notification test complete');
   } catch (err) {
     L.warn('Test notification timed out. Continuing...');
   }
-  await browser.close();
 }

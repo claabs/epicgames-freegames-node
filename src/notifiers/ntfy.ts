@@ -12,7 +12,7 @@ export class NtfyNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Ntfy notification');
 
@@ -25,7 +25,7 @@ export class NtfyNotifier extends NotifierService {
             Title: 'epicgames-freegames-node needs a captcha solved',
             Priority: this.config.priority,
             Tags: 'closed_lock_with_key',
-            Click: `${url}`,
+            Click: url,
             Authorization: `Bearer ${this.config.token}`,
           },
           responseType: 'text',

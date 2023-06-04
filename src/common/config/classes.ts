@@ -13,8 +13,6 @@ import {
   Min,
   Matches,
   IsObject,
-  Length,
-  MinLength,
   ArrayNotEmpty,
   IsArray,
   Max,
@@ -367,7 +365,7 @@ export class EmailConfig extends NotifierConfig {
 
   /**
    * The name of the email sender
-   * @example Epic Games Captchas
+   * @example Epic Games Free Games
    * @env EMAIL_SENDER_NAME
    */
   @IsString()
@@ -518,7 +516,7 @@ const notifierSubtypes: {
 
 export class WebPortalConfig {
   /**
-   * The URL base that will be returned when a captcha must be remotely solved
+   * The URL base that will be returned when a device token login is required
    * @example https://epic.example.com
    * @default http://localhost:3000
    * @env BASE_URL
@@ -569,25 +567,6 @@ export class AccountConfig {
    */
   @IsEmail()
   email: string;
-
-  /**
-   * Epic Games login password
-   * @example abc1234
-   * @env PASSWORD
-   */
-  @IsString()
-  @MinLength(7)
-  password: string;
-
-  /**
-   * If 2FA is enabled, add your TOTP secret
-   * @example EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE
-   * @env TOTP
-   */
-  @IsOptional()
-  @Length(52)
-  @Matches(/^[A-Z2-7]+=*$/) // IsBase32 also checks for mod 8 length, which these aren't
-  totp?: string;
 
   /**
    * Notification options for just this account. This overrides any global notification configs.
@@ -646,7 +625,7 @@ export enum LogLevel {
  * @example ```jsonc
  * {
  *   "runOnStartup": true,
- *   "cronSchedule": "5 16 * * *",
+ *   "cronSchedule": "0 0/6 * * *",
  *   "logLevel": "info",
  *   "webPortalConfig": {
  *     "baseUrl": "https://epic.exmaple.com",
@@ -654,8 +633,6 @@ export enum LogLevel {
  *   "accounts": [
  *     {
  *       "email": "example@gmail.com",
- *       "password": "abc1234",
- *       "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
  *     },
  *   ],
  *    "notifiers": [
@@ -666,7 +643,7 @@ export enum LogLevel {
  *        "smtpHost": "smtp.gmail.com",
  *        "smtpPort": 587,
  *        "emailSenderAddress": "hello@gmail.com",
- *        "emailSenderName": "Epic Games Captchas",
+ *        "emailSenderName": "Epic Games Free Games",
  *        "emailRecipientAddress": "hello@gmail.com",
  *        "secure": false,
  *        "auth": {
@@ -694,14 +671,16 @@ export enum LogLevel {
  */
 export class AppConfig {
   /**
-   * Cron string of when to run the process. If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
+   * Cron string of when to run the process.
+   * **It should run at least every 8 hours, otherwise the refresh tokens will expire and a new login will be prompted every run.**
+   * If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
    * @example 5 16 * * *
-   * @default 0 12 * * *
+   * @default 0 0/6 * * * (every six hours)
    * @env CRON_SCHEDULE
    */
   @IsOptional()
   @IsString()
-  cronSchedule = process.env.CRON_SCHEDULE || '0 12 * * *';
+  cronSchedule = process.env.CRON_SCHEDULE || '0 */6 * * *';
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
@@ -778,19 +757,6 @@ export class AppConfig {
   logLevel = process.env.LOG_LEVEL || LogLevel.INFO;
 
   /**
-   * A unique hCaptcha accessibility URL recieved in your email after signing up here: https://dashboard.hcaptcha.com/signup?type=accessibility
-   * @deprecated No longer works; does nothing
-   * @example https://accounts.hcaptcha.com/verify_email/96e9d77b-21eb-463d-9a21-75237fb27b6c
-   * @env HCAPTCHA_ACCESSIBILITY_URL
-   */
-  @IsOptional()
-  @IsUrl()
-  @Matches(
-    /https:\/\/accounts\.hcaptcha\.com\/verify_email\/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-4[0-9A-Za-z]{3}-[89ABab][0-9A-Za-z]{3}-[0-9A-Za-z]{12}/
-  )
-  hcaptchaAccessibilityUrl = process.env.HCAPTCHA_ACCESSIBILITY_URL;
-
-  /**
    * Web server configurations for the remote web portal
    */
   @IsOptional()
@@ -825,7 +791,7 @@ export class AppConfig {
 
   /**
    * Number of hours to wait for a response for a notification.
-   * The notification wait is blocking, so while other accounts will still continue, the process won't exit until all captcha requests are solved.
+   * The notification wait is blocking, so while other accounts will still continue, the process won't exit until all login requests are solved.
    * If the timeout is reached, the process will exit, and the URL in the notification will be inaccessible.
    * @example 168
    * @default 24
@@ -859,16 +825,6 @@ export class AppConfig {
   @IsOptional()
   @IsBoolean()
   skipVersionCheck = process.env.SKIP_VERSION_CHECK?.toLowerCase() === 'true' || false;
-
-  /**
-   * Disable the ability to notify you when something goes wrong during browser automation
-   * @example true
-   * @default false
-   * @env NO_HUMAN_ERROR_HELP
-   */
-  @IsOptional()
-  @IsBoolean()
-  noHumanErrorHelp = process.env.NO_HUMAN_ERROR_HELP?.toLowerCase() === 'true' || false;
 
   /**
    * In seconds, how long before a [stuck Chromium process](https://github.com/claabs/epicgames-freegames-node/issues/164) times out and gets restarted
@@ -924,46 +880,49 @@ export class AppConfig {
   countryCode = process.env.COUNTRY_CODE;
 
   /**
-   * Deprecated, use {@link AppConfig.notifiers|`notifiers` with `"type": "email"`}
-   * @deprecated
+   * The Epic Games application client ID used for device code authorization to check your account's ownership of a game
+   * List of available clients [here](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/auth_clients.md).
+   * @example 3446cd72694c4a4485d81b77adbb2141
+   * @default 98f7e42c2e3a4f86a74eb43fbb41ed39 (fortniteIOSGameClient client ID)
+   * @env DEVICE_AUTH_CLIENT_ID
    */
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EmailConfig)
-  email?: EmailConfig;
+  @IsString()
+  deviceAuthClientId = process.env.DEVICE_AUTH_CLIENT_ID || '98f7e42c2e3a4f86a74eb43fbb41ed39';
 
   /**
-   * Deprecated, use {@link WebPortalConfig.baseUrl|`webPortalConfig.baseUrl`}
-   * @deprecated
+   * The Epic Games application secret used for device code authorization to check your account's ownership of a game.
+   * List of available clients [here](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/auth_clients.md).
+   * @example 9209d4a5e25a457fb9b07489d313b41a
+   * @default 0a2449a2-001a-451e-afec-3e812901c4d7 (fortniteIOSGameClient client secret)
+   * @env DEVICE_AUTH_SECRET
    */
   @IsOptional()
-  @IsUrl({
-    require_tld: false,
-  })
-  baseUrl?: string;
+  @IsString()
+  deviceAuthSecret = process.env.DEVICE_AUTH_SECRET || '0a2449a2-001a-451e-afec-3e812901c4d7';
 
   /**
-   * Deprecated, use {@link AppConfig.searchStrategy|`searchStrategy`}
-   * @deprecated
-   * @env ONLY_WEEKLY
+   * After redirecting to a device authorization verification URL, how often the Epic Games API is polled for a successful login.
+   * @example 10
+   * @default 5
+   * @env DEVICE_AUTH_POLL_RATE_SECONDS
    */
+  @Min(1)
+  @IsNumber()
   @IsOptional()
-  @IsBoolean()
-  onlyWeekly = process.env.ONLY_WEEKLY
-    ? process.env.ONLY_WEEKLY?.toLowerCase() === 'true'
-    : undefined;
+  deviceAuthPollRateSeconds = process.env.DEVICE_AUTH_POLL_RATE_SECONDS
+    ? parseInt(process.env.DEVICE_AUTH_POLL_RATE_SECONDS, 10)
+    : 5;
 
   /**
    * @hidden
    */
   constructor() {
     // Use environment variables to fill one account if present
-    const { EMAIL, PASSWORD, TOTP } = process.env;
-    if (EMAIL && PASSWORD) {
+    const { EMAIL } = process.env;
+    if (EMAIL) {
       const account = new AccountConfig();
       account.email = EMAIL;
-      account.password = PASSWORD;
-      account.totp = TOTP;
       this.accounts = [account];
     }
 

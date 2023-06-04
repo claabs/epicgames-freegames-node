@@ -4,14 +4,16 @@ import { exit } from 'process';
 import PQueue from 'p-queue';
 import { config, AccountConfig } from './common/config';
 import logger from './common/logger';
-import PuppetPurchase from './puppet/purchase';
-import { testNotifiers } from './notify';
+import { sendNotification, testNotifiers } from './notify';
 import { checkForUpdate, logVersionOnError } from './version';
 import PuppetLogin from './puppet/login';
 import { safeLaunchBrowser } from './common/puppeteer';
 import PuppetFreeGames from './puppet/free-games';
 import { createServer } from './common/server';
 import { convertImportCookies } from './common/cookie';
+import { DeviceLogin } from './device-login';
+import { generateCheckoutUrl } from './purchase';
+import { NotificationReason } from './interfaces/notification-reason';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -19,35 +21,43 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
   try {
     convertImportCookies(account.email);
     const browser = await safeLaunchBrowser(L);
-    const login = new PuppetLogin({
+    const cookieLogin = new PuppetLogin({
       email: account.email,
       browser,
-      password: account.password,
-      totp: account.totp,
+    });
+    const deviceLogin = new DeviceLogin({
+      user: account.email,
     });
     const freeGames = new PuppetFreeGames({
       email: account.email,
       browser,
     });
-    const purchasePuppeteer = new PuppetPurchase({
-      email: account.email,
-      browser,
-    });
-    await login.fullLogin(); // Login
-    const offers = await freeGames.getAllFreeGames(); // Get purchasable offers
-    for (let i = 0; i < offers.length; i += 1) {
-      // Async for-loop as running purchases in parallel may break
-      L.info(`Purchasing ${offers[i].productName}`);
-      try {
-        await purchasePuppeteer.purchaseShort(offers[i].offerNamespace, offers[i].offerId);
-        L.info(`Done purchasing ${offers[i].productName}`);
-      } catch (err) {
-        L.error(err);
-      }
+
+    // Login
+    let successfulLogin = await cookieLogin.refreshCookieLogin();
+    if (!successfulLogin) {
+      // attempt token refresh
+      successfulLogin = await deviceLogin.refreshDeviceAuth();
     }
+    if (!successfulLogin) {
+      // get new device auth
+      await deviceLogin.newDeviceAuthLogin();
+    }
+
+    // Get purchasable offers
+    const offers = await freeGames.getAllFreeGames();
     L.debug('Closing browser');
     await browser.close();
     L.trace('Browser finished closing');
+
+    if (offers.length) {
+      L.debug(`Sending checkout link for ${offers.length} offer(s)`);
+      const checkoutUrl = generateCheckoutUrl(offers);
+      L.info({ url: checkoutUrl }, 'Dispatching checkout notification');
+      await sendNotification(account.email, NotificationReason.PURCHASE, checkoutUrl);
+    } else {
+      L.info('No free games available');
+    }
   } catch (e) {
     if (e.response) {
       if (e.response.body) L.error(e.response.body);
