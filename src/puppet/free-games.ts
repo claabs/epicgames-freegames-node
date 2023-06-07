@@ -9,7 +9,12 @@ import { config, SearchStrategy } from '../common/config';
 import PuppetBase from './base';
 import { OfferInfo } from '../interfaces/types';
 import { GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
-import { Offer, ProductInfo, Page as ProductInfoPage } from '../interfaces/product-info';
+import {
+  GraphQLErrorResponse,
+  Offer,
+  ProductInfo,
+  Page as ProductInfoPage,
+} from '../interfaces/product-info';
 import { PromotionsQueryResponse } from '../interfaces/promotions-response';
 import {
   SearchStoreQueryResponse,
@@ -284,7 +289,7 @@ export default class PuppetFreeGames extends PuppetBase {
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for offers validation');
-    const entitlementRespBody = await this.request<OffersValidationResponse>(
+    const entitlementRespBody = await this.request<OffersValidationResponse | GraphQLErrorResponse>(
       'GET',
       GRAPHQL_ENDPOINT,
       {
@@ -293,6 +298,10 @@ export default class PuppetFreeGames extends PuppetBase {
         extensions: JSON.stringify(extensions),
       }
     );
+    if ('errors' in entitlementRespBody) {
+      this.L.debug(entitlementRespBody.errors);
+      throw new Error(entitlementRespBody.errors[0].message);
+    }
     const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
     this.L.debug({ offerId, namespace, validations }, 'Offers validation response');
     if (

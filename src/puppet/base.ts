@@ -36,11 +36,13 @@ export default class PuppetBase {
     // Get cookies or latest access_token cookies
     let puppeteerCookies: Protocol.Network.CookieParam[] = [];
     if (userHasRememberCookie(this.email)) {
+      this.L.debug('Setting auth from cookies');
       const userCookies = await getCookiesRaw(this.email);
       puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     } else {
       const deviceAuth = getAccountAuth(this.email);
       if (!deviceAuth) throw new Error(`Unable to get auth for user ${this.email}`);
+      this.L.debug({ deviceAuth }, 'Setting auth from device auth');
       const bearerCookies: Protocol.Network.CookieParam[] = [
         '.epicgames.com',
         '.twinmotion.com',

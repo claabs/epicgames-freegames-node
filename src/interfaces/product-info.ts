@@ -404,6 +404,12 @@ export interface GraphQLError {
   stack: null;
 }
 
+export interface GraphQLErrorResponse {
+  errors: GraphQLError[];
+  data: null;
+  extensions: Record<string, never>;
+}
+
 export interface AuthErrorJSON {
   errorCode?: string;
   errorMessage: string;
