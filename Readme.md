@@ -1,7 +1,7 @@
 # Epic Games Store Weekly Free Games
 
-Automatically login and redeem promotional free games from the Epic Games Store.
-Handles multiple accounts, 2FA, captcha bypass, captcha notifications, and scheduled runs.
+Automatically login and find available free games the Epic Games Store.
+Handles multiple accounts, login sessions, and scheduled runs.
 
 ## Setup
 
@@ -17,8 +17,9 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 
 ```jsonc
 {
+  {
   "runOnStartup": true,
-  "cronSchedule": "5 16 * * *",
+  "cronSchedule": "0 0/6 * * *",
   "logLevel": "info",
   "webPortalConfig": {
     "baseUrl": "https://epic.exmaple.com",
@@ -26,8 +27,6 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
   "accounts": [
     {
       "email": "example@gmail.com",
-      "password": "abc1234",
-      "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
     },
   ],
   "notifiers": [
@@ -102,31 +101,21 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 }
 ```
 
-### Captchas
+### Web server
 
-Epic Games currently serves captchas and bot detection to its login and checkout pages.
+This project can occasionally ask you to login via [device code authentication](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/grant_types/device_code.md). Epic Games's device code session expires after 10 minutes, so this project uses a web server and redirect to prevent from sending you a new link every 10 minutes. There are two options for running the web server:
 
-#### Sending you captchas
+#### Web server config
 
-For whatever reason, if your IP/account loses trust with hCaptcha, this project can notify and have you manually solve a captcha. To use this requires:
-
-* Access to one of the [notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers) (Discord, Telegram, email, Apprise, Pushover, etc.)
-* Configuring the captcha solving page webserver
-  * Either via local IP or reverse proxy/port forwarding (if you don't know what this means, use the next option)
-  * Or by using [localtunnel](https://localtunnel.me) to very easily remotely tunnel the webserver
-
-See below for detailed instructions on each requirement.
-
-##### Webserver setup
+If you're familiar with hosting web servers and/or reverse proxies, follow this:
 
 1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the host machine's port 81 to the container's port 3000)
 1. If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS
 1. Set the `webPortalConfig.baseUrl` in the config
-1. The web portal uses WebSocket to communicate. If you're using a reverse proxy, you may need additional configuration to enable WebSocket. [This guide from Uptime Kuma](https://github.com/louislam/uptime-kuma/wiki/Reverse-Proxy) covers most scenarios.
 
-##### Localtunnel setup
+#### Localtunnel setup
 
-If you don't have the ability to port forward/reverse proxy on your network, you can still access captcha remotely by setting:
+If you don't have the ability to port forward/reverse proxy on your network, you can still access the web server remotely by setting:
 
 ```jsonc
 {
@@ -138,34 +127,20 @@ If you don't have the ability to port forward/reverse proxy on your network, you
 
 in your `config.json`.
 
-##### Notification setup
+### Notifications
 
 Each notification method has unique setup instructions. Read [its documentation]([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) may also help as an example.
 
-##### Testing notification and webserver
+### Testing notification and web server
 
-Since captcas may not always appear, the notification methods and webserver can be manually tested. Essentially, you just need to add:
+Since user actions may not always be required, the notification methods and web server can be manually tested. Essentially, you just need to add:
 
 ```jsonc
   "testNotifiers": true,
 ```
 
 to the root of your `config.json`. For more details check out the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#testNotifiers).
-
-#### Two-factor login
-
-Epic has begun [enforcing two-factor](https://www.epicgames.com/store/en-US/news/two-factor-authentication-required-when-claiming-free-games) when claiming some free games. It rarely may be necessary for some free games when using this tool.
-
-If you have two-factor authentication (2FA) enabled on your account, you need to add your TOTP secret as an environment variable. To get your TOTP secret, you may need to redo your 2FA setup:
-
-1. Go [here](https://www.epicgames.com/account/password) to enable 2FA.
-1. Click "enable authenticator app."
-1. In the section labeled "manual entry key," copy the key.
-1. Use your authenticator app to add scan the QR code.
-1. Activate 2FA by completing the form and clicking activate.
-1. Once 2FA is enabled, use the key you copied as the value for the TOTP parameter.
-
-If you can't get 2FA working with this tool, try enabling `MAKE PRIMARY` for "Authenticator App" in your Epic account settings.
+Note: to optimize for standby memory usage, the web server does not run when the process is not running. The web server will only be available during a scheduled run.
 
 ### Docker Configuration
 
@@ -201,23 +176,23 @@ If for whatever reason you want to change the default config directory or config
 
 #### Memory Limit
 
-It's recommended to add `-m 2g` as a `docker run` parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system will eventually lock up.
+It's recommended to add `-m 2g` as a `docker run` parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system can eventually lock up.
 
 ### Docker Run
 
 #### With JSON Config
 
-`$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g ghcr.io/claabs/epicgames-freegames-node:latest`
 
 #### Without JSON Config
 
 Without JSON config, you can only configure one account.
 
-`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e PASSWORD=abc123 -e TOTP=ABC123 -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g charlocharlie/epicgames-freegames:latest`
+`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e SMTP_HOST=smtp.gmail.com -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g ghcr.io/claabs/epicgames-freegames-node:latest`
 
 ### Cookie Import
 
-If you're experiencing issues logging in with username and password, you can import cookies for a temporary session.
+If you're experiencing issues logging in with device code auth, you can import cookies for a temporary session.
 
 1. Setup the container per the below instructions
 1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
@@ -252,91 +227,26 @@ If for some reason you don't want to use Docker to run this tool you can run it 
 
 ## Miscellaneous
 
-### v3 to v4 Migration
+### v4 to v5 Migration
 
-In v4, three config options have been deprecated and moved: `email`, `baseUrl`, and `onlyWeekly`. The deprecated options will be automatically converted to the new options at runtime, but you will need to change your `config.json` for a stable solution.
+In v5, several options have been added or removed. The added/removed options should not affect existing v4 configs, but may need to change your `config.json` for a stable solution.
 
-#### `email`
+#### Changed
 
-Copy the `email` block into the `notifiers` array and add `"type": "email"` to the email config object.
+* `cronSchedule`: The default was changed to every six hours. You should change your cron schedule to run more often than every 8 hours, as the device code auth refresh token expires after 8 hours.
 
-```jsonc
-{
-  "email": {
-    "smtpHost": "smtp.gmail.com",
-    "smtpPort": 587,
-    "emailSenderAddress": "hello@gmail.com",
-    "emailSenderName": "Epic Games Captchas",
-    "emailRecipientAddress": "hello@gmail.com",
-    "secure": false,
-    "auth": {
-        "user": "hello@gmail.com",
-        "pass": "abc123",
-    },
-  },
+#### Removed
 
-  // ⬇ changes to ⬇
-
-  "notifiers": [
-    {
-      "type": "email", // This indicates the notifier type
-      "smtpHost": "smtp.gmail.com",
-      "smtpPort": 587,
-      "emailSenderAddress": "hello@gmail.com",
-      "emailSenderName": "Epic Games Captchas",
-      "emailRecipientAddress": "hello@gmail.com",
-      "secure": false,
-      "auth": {
-          "user": "hello@gmail.com",
-          "pass": "abc123",
-      },
-    },
-  ],
-}
-```
-
-#### `baseUrl`
-
-Move the `baseUrl` block into the `webPortalConfig` config object.
-
-```jsonc
-{
-  "baseUrl": "https://epic.example.com",
-
-  // ⬇ changes to ⬇
-  
-  "webPortalConfig": {
-    "baseUrl": "https://epic.example.com",
-  },
-}
-```
-
-#### `onlyWeekly`
-
-The `onlyWeekly` boolean has been changed to the `searchStrategy` string.
-
-```jsonc
-{
-  "onlyWeekly": true,
-
-  // ⬇ changes to ⬇
-  
-  "searchStrategy": "weekly"
-}
-```
-
-```jsonc
-{
-  "onlyWeekly": false,
-
-  // ⬇ changes to ⬇
-  
-  "searchStrategy": "promotion"
-}
-```
+* `account.password`: login credentials are no longer used
+* `account.totp`: login credentials are no longer used
+* `noHumanErrorHelp`: purchase is no longer automated
+* `hcaptchaAccessibilityUrl`: was deprecated in v4
+* `email`: was deprecated in v4, use `notifiers` with `"type": "email"`
+* `baseUrl`: was deprecated in v4, use `webPortalConfig.baseUrl`
+* `onlyWeekly`: was deprecated in v4, use `searchStrategy`
 
 ### Thanks
 
 Thanks to [epicgames-weekly-freegames](https://github.com/Ricardo-Osorio/epicgames-weekly-freegames) for the inspiration.
 
-Thanks to [puppeteer-extra](https://github.com/berstend/puppeteer-extra) for making much of this possible technologically.
+Thanks to [EpicResearch](https://github.com/MixV2/EpicResearch) for the documentation that made device code auth possible.

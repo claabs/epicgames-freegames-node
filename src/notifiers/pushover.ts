@@ -22,7 +22,7 @@ export class PushoverNotifier extends NotifierService {
         {
           token: this.config.token,
           user: this.config.userKey,
-          message: `epicgames-freegames-node needs a captcha solved. Reason: ${reason}`,
+          message: `epicgames-freegames-node needs an action performed. Reason: ${reason}`,
           url,
         },
         {

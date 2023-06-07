@@ -28,7 +28,7 @@ export class DiscordNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         {
-          content: `${mentions}epicgames-freegames-node needs a captcha solved.`,
+          content: `${mentions}epicgames-freegames-node needs an action performed.`,
           embeds: [
             {
               fields: [
@@ -41,7 +41,7 @@ export class DiscordNotifier extends NotifierService {
                   value: reason.toLowerCase() || 'unknown', // Fallback required to avoid 400 on empty value
                 },
               ],
-              title: 'Click to view captcha',
+              title: 'Click to proceed',
               url,
             },
           ],

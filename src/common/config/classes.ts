@@ -805,9 +805,9 @@ export class AppConfig {
     : 24;
 
   /**
-   * When true, the process will send test notifications with a test page to all configured accounts.
+   * When true, the process will send test notifications with a test redirect to example.com for all configured accounts.
    * **Be sure to disable this after a successful test.**
-   * This test will block normal operation until the test link is accessed and the `Close page` button is pressed. The test page can only be interacted with once.
+   * This test will block normal operation until the test link is accessed by one account. The test page can only be used once.
    * @example true
    * @default false
    * @env TEST_NOTIFIERS

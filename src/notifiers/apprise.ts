@@ -23,7 +23,7 @@ export class AppriseNotifier extends NotifierService {
     const jsonPayload = {
       urls: this.config.urls,
       title: 'epicgames-freegames-node',
-      body: `epicgames-freegames-node needs a captcha solved.
+      body: `epicgames-freegames-node needs an action performed.
 reason: ${reason}
 account: ${account}${
         url

@@ -26,7 +26,7 @@ data:
           "smtpHost": "smtp.gmail.com",
           "smtpPort": 587,
           "emailSenderAddress": "hello@gmail.com",
-          "emailSenderName": "Epic Games Captchas",
+          "emailSenderName": "Epic Games Free Games",
           "emailRecipientAddress": "hello@gmail.com",
           "secure": false,
           "auth": {

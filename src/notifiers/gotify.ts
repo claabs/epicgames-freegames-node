@@ -16,7 +16,7 @@ export class GotifyNotifier extends NotifierService {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Gotify notification');
     const jsonPayload = {
-      title: `Epic Games free games needs a Captcha solved`,
+      title: `Epic Games free games needs an action performed`,
       /**
        * ATTENTION: these are markdown, to make it breaking lines correctly, there is two spaces at the end of line and before the retrun
        */

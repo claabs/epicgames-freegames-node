@@ -19,10 +19,10 @@ export class NtfyNotifier extends NotifierService {
     try {
       await axios.post(
         this.config.webhookUrl,
-        `epicgames-freegames-node needs a captcha solved. Reason: ${reason} Account: ${account}`,
+        `epicgames-freegames-node needs an action performed. Reason: ${reason} Account: ${account}`,
         {
           headers: {
-            Title: 'epicgames-freegames-node needs a captcha solved',
+            Title: 'epicgames-freegames-node needs an action performed',
             Priority: this.config.priority,
             Tags: 'closed_lock_with_key',
             Click: url,
