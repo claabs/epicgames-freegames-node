@@ -628,7 +628,7 @@ export enum LogLevel {
  *   "cronSchedule": "0 0/6 * * *",
  *   "logLevel": "info",
  *   "webPortalConfig": {
- *     "baseUrl": "https://epic.exmaple.com",
+ *     "baseUrl": "https://epic.example.com",
  *   },
  *   "accounts": [
  *     {
@@ -672,9 +672,9 @@ export enum LogLevel {
 export class AppConfig {
   /**
    * Cron string of when to run the process.
-   * **It should run at least every 8 hours, otherwise the refresh tokens will expire and a new login will be prompted every run.**
-   * If using TZ=UTC, a value of 5 16 * * * will run 5 minutes after the new games are available
-   * @example 5 16 * * *
+   * **It is recommended to run every 6 hours, otherwise the refresh tokens will expire after 8 hours and a new login will be prompted every run.**
+   * If you want the check to occur immediately after the new free game is released, you can offset the cron schedule. For example in a timezone where the free games release at 11:00am: `0 5,11,17,23 * * *`
+   * @example 0 5,11,17,23 * * *
    * @default 0 0/6 * * * (every six hours)
    * @env CRON_SCHEDULE
    */

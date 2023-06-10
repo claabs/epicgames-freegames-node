@@ -6,7 +6,7 @@ data:
   account1: |
     {
       "runOnStartup": true,
-      "cronSchedule": "5 16 * * *",
+      "cronSchedule": "0 0/6 * * *",
       "logLevel": "info",
       "webPortalConfig": {
         "baseUrl": "https://epic.example.com",
@@ -14,8 +14,6 @@ data:
       "accounts": [
         {
           "email": "example@gmail.com",
-          "password": "abc1234",
-          "totp": "EMNCF83ULU3K3PXPJBSWY3DPEHPK3PXPJWY3DPEHPK3YI69R39NE"
         },
       ],
       "notifiers": [
@@ -26,7 +24,7 @@ data:
           "smtpHost": "smtp.gmail.com",
           "smtpPort": 587,
           "emailSenderAddress": "hello@gmail.com",
-          "emailSenderName": "Epic Games Free Games",
+          "emailSenderName": "Epic Games Captchas",
           "emailRecipientAddress": "hello@gmail.com",
           "secure": false,
           "auth": {
@@ -43,6 +41,8 @@ data:
         },
         {
           "type": "telegram",
+          // Optional Custom TELEGRAM server URL
+          "apiUrl": "https://api.telegram.org",
           "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
           "chatId": "-987654321",
         },
@@ -60,6 +60,29 @@ data:
           "type": "gotify",
           "apiUrl": "https://gotify.net",
           "token": "SnL-wAvmfo_QT",
+        },
+        {
+          "type": "homeassistant",
+          "instance": "https://homeassistant.example.com",
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+          "notifyservice": "mobile_app_smartphone_name",
+        },
+        {
+          "type": "bark",
+          // your bark key
+          "key": "xxxxxxxxxxxxxxxxxxxxxx",
+          // bark title, optional, default: 'epicgames-freegames'
+          "title": "epicgames-freegames",
+          // bark group, optional, default: 'epicgames-freegames'
+          "group": "epicgames-freegames",
+          // bark private service address, optional, default: 'https://api.day.app'
+          "apiUrl": "https://api.day.app"
+        },
+        {
+            "type": "ntfy",
+            "webhookUrl": "https://ntfy.example.com/mytopic",
+            "priority": "urgent",
+            "token": "tk_mytoken"
         },
       ],
     }

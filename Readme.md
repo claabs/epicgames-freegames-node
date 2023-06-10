@@ -17,12 +17,11 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 
 ```jsonc
 {
-  {
   "runOnStartup": true,
   "cronSchedule": "0 0/6 * * *",
   "logLevel": "info",
   "webPortalConfig": {
-    "baseUrl": "https://epic.exmaple.com",
+    "baseUrl": "https://epic.example.com",
   },
   "accounts": [
     {

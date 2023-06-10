@@ -71,7 +71,7 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
 export async function main(): Promise<void> {
   if (process.env.NODE_ENV !== 'test') {
     await checkForUpdate();
-    logger.debug('Starting web server for captcha portals');
+    logger.debug('Starting web server');
     const server = await createServer();
     if (config.testNotifiers) {
       await testNotifiers();
