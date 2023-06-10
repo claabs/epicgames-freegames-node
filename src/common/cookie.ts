@@ -193,13 +193,13 @@ export function convertImportCookies(username: string): void {
   }
 }
 
-export function userHasRememberCookie(username: string): boolean {
+export function userHasValidCookie(username: string, cookieName: string): boolean {
   const cookieFilename = getCookiePath(username);
   const fileExists = fs.existsSync(cookieFilename);
   if (fileExists) {
     try {
       const cookieData: ToughCookieFileStore = fs.readJSONSync(cookieFilename, 'utf8');
-      const rememberCookieExpireDate = cookieData['epicgames.com']?.['/']?.EPIC_SSO_RM?.expires;
+      const rememberCookieExpireDate = cookieData['epicgames.com']?.['/']?.[cookieName]?.expires;
       if (!rememberCookieExpireDate) return false;
       return new Date(rememberCookieExpireDate) > new Date();
     } catch (err) {

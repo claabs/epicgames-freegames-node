@@ -8,7 +8,7 @@ import {
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
-import { getCookiesRaw, setPuppeteerCookies, userHasRememberCookie } from '../common/cookie';
+import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie';
 import { CONFIG_DIR } from '../common/config';
 import { getAccountAuth } from '../common/device-auths';
 
@@ -35,7 +35,7 @@ export default class PuppetBase {
   protected async setupPage(): Promise<Page> {
     // Get cookies or latest access_token cookies
     let puppeteerCookies: Protocol.Network.CookieParam[] = [];
-    if (userHasRememberCookie(this.email)) {
+    if (userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
       this.L.debug('Setting auth from cookies');
       const userCookies = await getCookiesRaw(this.email);
       puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
