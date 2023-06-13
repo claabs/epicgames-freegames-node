@@ -74,7 +74,7 @@ function getCookieJar(username: string): tough.CookieJar {
 }
 
 export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): ToughCookieFileStore {
-  const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP'];
+  const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP', 'EPIC_DEVICE'];
 
   const tcfs: ToughCookieFileStore = {};
   etc.forEach((etcCookie) => {

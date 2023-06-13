@@ -6,7 +6,7 @@ import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
-import { ToughCookieFileStore } from './cookie';
+import { ETCCookie, ToughCookieFileStore } from './cookie';
 import { config } from './config';
 
 const stealth = StealthPlugin();
@@ -73,6 +73,27 @@ export function toughCookieFileStoreToPuppeteerCookie(
     });
   });
   return puppetCookies;
+}
+
+export function puppeteerCookieToEditThisCookie(
+  puppetCookies: Protocol.Network.CookieParam[]
+): ETCCookie[] {
+  return puppetCookies.map(
+    (puppetCookie, index): ETCCookie => ({
+      domain: puppetCookie.domain || '',
+      expirationDate: puppetCookie.expires,
+      hostOnly: !puppetCookie.domain?.startsWith('.'),
+      httpOnly: puppetCookie.httpOnly ?? true,
+      name: puppetCookie.name,
+      path: puppetCookie.path || '/',
+      sameSite: puppetCookie.sameSite === 'Lax' ? 'no_restriction' : 'unspecified',
+      secure: puppetCookie.secure ?? false,
+      session: puppetCookie.expires === -1,
+      storeId: '0',
+      id: index + 1,
+      value: puppetCookie.value,
+    })
+  );
 }
 
 export function getDevtoolsUrl(page: Page): string {
