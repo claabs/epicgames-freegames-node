@@ -6,6 +6,7 @@ import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
+import cronParser from 'cron-parser';
 import { AppConfig } from './classes';
 
 // Declare pino logger as importing would cause dependency cycle
@@ -74,5 +75,18 @@ if (errors.length > 0) {
 }
 
 L.debug({ config: instanceToPlain(config) });
+
+const { cronSchedule } = config;
+const cronExpression = cronParser.parseExpression(cronSchedule);
+const prevDate = cronExpression.prev();
+const nextDate = cronExpression.next();
+const cronIntervalMs = nextDate.getTime() - prevDate.getTime();
+const intervalMinimumMs = 7 * 60 * 60 * 1000; // 7 hours
+if (cronIntervalMs > intervalMinimumMs) {
+  L.warn(
+    { yourCronSchedule: cronSchedule, everySixCronSchedule: '0 0/6 * * *' },
+    'Your cronSchedule configuration is not set to run often enough to ensure the device auth refresh token can stay valid. This can result in device auth login prompts being sent on every run. It is recommended to set the cron schedule to run every 6 hours.'
+  );
+}
 
 export { config };
