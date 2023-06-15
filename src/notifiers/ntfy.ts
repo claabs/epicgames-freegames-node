@@ -12,20 +12,20 @@ export class NtfyNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Ntfy notification');
 
     try {
       await axios.post(
         this.config.webhookUrl,
-        `epicgames-freegames-node needs a captcha solved. Reason: ${reason} Account: ${account}`,
+        `epicgames-freegames-node needs an action performed. Reason: ${reason} Account: ${account}`,
         {
           headers: {
-            Title: 'epicgames-freegames-node needs a captcha solved',
+            Title: 'epicgames-freegames-node needs an action performed',
             Priority: this.config.priority,
             Tags: 'closed_lock_with_key',
-            Click: `${url}`,
+            Click: url,
             Authorization: `Bearer ${this.config.token}`,
           },
           responseType: 'text',

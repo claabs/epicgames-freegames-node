@@ -40,3 +40,8 @@ export const TALON_EXECUTE_ENDPOINT =
 export const TALON_WEBSITE_BASE = 'https://talon-website-prod.ak.epicgames.com';
 export const TALON_REFERRER =
   'https://talon-website-prod.ak.epicgames.com/challenge?env=prod&flow=login_prod&origin=https%3A%2F%2Fwww.epicgames.com';
+export const ACCOUNT_OAUTH_TOKEN =
+  'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token';
+export const ACCOUNT_OAUTH_DEVICE_AUTH =
+  'https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/deviceAuthorization';
+export const ID_LOGIN_ENDPOINT = 'https://www.epicgames.com/id/login';

@@ -1,43 +1,19 @@
 import puppeteer from 'puppeteer-extra';
 import { Page, Protocol, Browser, executablePath } from 'puppeteer';
-import PortalPlugin, { WebPortalConnectionConfig } from 'puppeteer-extra-plugin-portal';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
-import express from 'express';
-import { ToughCookieFileStore } from './cookie';
+import { ETCCookie, ToughCookieFileStore } from './cookie';
 import { config } from './config';
-
-const defaultWebPortalConfig: WebPortalConnectionConfig = {
-  baseUrl: 'http://localhost:3000',
-  listenOpts: {
-    port: 3000,
-  },
-};
-
-const app = express();
-
-const portalPlugin = PortalPlugin({
-  webPortalConfig: objectAssignDeep(defaultWebPortalConfig, config.webPortalConfig),
-});
-const baseUrl = config.webPortalConfig?.baseUrl
-  ? new URL(config.webPortalConfig?.baseUrl)
-  : undefined;
-const basePath = baseUrl?.pathname || '/';
-app.use(basePath, portalPlugin.createExpressMiddleware());
-
-puppeteer.use(portalPlugin);
 
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('iframe.contentWindow'); // fixes "word word word..." and "mmMwWLliI0fiflO&1"
 puppeteer.use(stealth);
 
 export default puppeteer;
-
-export const portalExpressApp = app;
 
 export function puppeteerCookieToToughCookieFileStore(
   puppetCookie: Protocol.Network.Cookie
@@ -97,6 +73,27 @@ export function toughCookieFileStoreToPuppeteerCookie(
     });
   });
   return puppetCookies;
+}
+
+export function puppeteerCookieToEditThisCookie(
+  puppetCookies: Protocol.Network.CookieParam[]
+): ETCCookie[] {
+  return puppetCookies.map(
+    (puppetCookie, index): ETCCookie => ({
+      domain: puppetCookie.domain || '',
+      expirationDate: puppetCookie.expires,
+      hostOnly: !puppetCookie.domain?.startsWith('.'),
+      httpOnly: puppetCookie.httpOnly ?? true,
+      name: puppetCookie.name,
+      path: puppetCookie.path || '/',
+      sameSite: puppetCookie.sameSite === 'Lax' ? 'no_restriction' : 'unspecified',
+      secure: puppetCookie.secure ?? false,
+      session: puppetCookie.expires === -1,
+      storeId: '0',
+      id: index + 1,
+      value: puppetCookie.value,
+    })
+  );
 }
 
 export function getDevtoolsUrl(page: Page): string {

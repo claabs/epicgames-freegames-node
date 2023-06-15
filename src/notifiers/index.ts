@@ -9,3 +9,4 @@ export * from './gotify';
 export * from './slack';
 export * from './bark';
 export * from './ntfy';
+export * from './homeassistant';

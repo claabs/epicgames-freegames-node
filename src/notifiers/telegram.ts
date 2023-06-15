@@ -16,12 +16,13 @@ export class TelegramNotifier extends NotifierService {
   /**
    * @ignore
    */
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending telegram notification');
 
-    const encodedUrl = encodeURI(url);
-    const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}\nurl: [Click here](${encodedUrl})`;
+    const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}${
+      url ? `\nurl: [Click here](${encodeURI(url)})` : ''
+    }`;
     // https://stackoverflow.com/a/60145565/5037239
     const escapedMessage = message.replace(
       /(\[[^\][]*]\(http[^()]*\))|[_*[\]()~>#+=|{}.!-]/gi,

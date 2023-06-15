@@ -12,7 +12,7 @@ export class SlackNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Slack notification');
 
@@ -20,7 +20,7 @@ export class SlackNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         {
-          text: `epicgames-freegames-node needs a captcha solved. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`,
+          text: `epicgames-freegames-node needs an action performed. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`,
         },
         {
           responseType: 'text',

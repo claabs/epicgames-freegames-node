@@ -12,7 +12,7 @@ export class HomeassistantNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending homeassistant notification');
 
@@ -20,8 +20,8 @@ export class HomeassistantNotifier extends NotifierService {
       await axios.post(
         `${this.config.instance}/api/services/notify/${this.config.notifyservice}`,
         {
-          title: `Captcha request from Epic Games`,
-          message: `epicgames needs a captcha solved. Reason: ${reason} {{ '\n' -}} Open this page and solve the captcha: ${url}`,
+          title: `Action request from Epic Games`,
+          message: `epicgames needs an action performed. Reason: ${reason} {{ '\n' -}} Link: ${url}`,
           data: {
             url,
             clickAction: url,

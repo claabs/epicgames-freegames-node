@@ -6,7 +6,8 @@ import fs from 'fs-extra';
 import { validateSync } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
-import { AppConfig, EmailConfig, WebPortalConfig } from './classes';
+import cronParser from 'cron-parser';
+import { AppConfig } from './classes';
 
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({
@@ -63,43 +64,6 @@ if (!configPath) {
   config = plainToInstance(AppConfig, parsedConfig);
 }
 
-/**
- * Handle deprecated options
- */
-if (config.email) {
-  L.warn(
-    '`email` has been deprecated. Please update your config to use `notifiers` with `"type": "email"` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.notifiers) {
-    config.notifiers = [];
-  }
-  if (!config.notifiers.some((notifConfig) => notifConfig instanceof EmailConfig)) {
-    config.notifiers.push(config.email);
-  }
-}
-
-if (config.baseUrl) {
-  L.warn(
-    '`baseUrl` has been deprecated. Please update your config to use `webPortalConfig.baseUrl` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.webPortalConfig) {
-    config.webPortalConfig = new WebPortalConfig();
-  }
-  if (!config.webPortalConfig.baseUrl) {
-    config.webPortalConfig.baseUrl = config.baseUrl;
-  }
-}
-
-if (config.onlyWeekly) {
-  L.warn(
-    '`onlyWeekly` has been deprecated. Please update your config to use `searchStrategy` instead. Go to https://github.com/claabs/epicgames-freegames-node#v3-to-v4-migration for details'
-  );
-  if (!config.searchStrategy) {
-    const newValue = config.onlyWeekly ? 'weekly' : 'promotion';
-    config.searchStrategy = newValue;
-  }
-}
-
 const errors = validateSync(config, {
   validationError: {
     target: false,
@@ -111,5 +75,18 @@ if (errors.length > 0) {
 }
 
 L.debug({ config: instanceToPlain(config) });
+
+const { cronSchedule } = config;
+const cronExpression = cronParser.parseExpression(cronSchedule);
+const prevDate = cronExpression.prev();
+const nextDate = cronExpression.next();
+const cronIntervalMs = nextDate.getTime() - prevDate.getTime();
+const intervalMinimumMs = 7 * 60 * 60 * 1000; // 7 hours
+if (cronIntervalMs > intervalMinimumMs) {
+  L.warn(
+    { yourCronSchedule: cronSchedule, everySixCronSchedule: '0 0/6 * * *' },
+    'Your cronSchedule configuration is not set to run often enough to ensure the device auth refresh token can stay valid. This can result in device auth login prompts being sent on every run. It is recommended to set the cron schedule to run every 6 hours.'
+  );
+}
 
 export { config };

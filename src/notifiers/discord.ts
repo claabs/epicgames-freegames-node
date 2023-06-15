@@ -13,7 +13,7 @@ export class DiscordNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending discord notification');
 
@@ -28,7 +28,7 @@ export class DiscordNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         {
-          content: `${mentions}epicgames-freegames-node needs a captcha solved.`,
+          content: `${mentions}epicgames-freegames-node needs an action performed.`,
           embeds: [
             {
               fields: [
@@ -41,7 +41,7 @@ export class DiscordNotifier extends NotifierService {
                   value: reason.toLowerCase() || 'unknown', // Fallback required to avoid 400 on empty value
                 },
               ],
-              title: 'Click to view captcha',
+              title: 'Click to proceed',
               url,
             },
           ],

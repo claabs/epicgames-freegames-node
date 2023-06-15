@@ -74,7 +74,7 @@ function getCookieJar(username: string): tough.CookieJar {
 }
 
 export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): ToughCookieFileStore {
-  const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP'];
+  const COOKIE_WHITELIST = ['EPIC_SSO_RM', 'EPIC_SESSION_AP', 'EPIC_DEVICE'];
 
   const tcfs: ToughCookieFileStore = {};
   etc.forEach((etcCookie) => {
@@ -191,4 +191,20 @@ export function convertImportCookies(username: string): void {
       fs.rmSync(cookieFilename, { force: true });
     }
   }
+}
+
+export function userHasValidCookie(username: string, cookieName: string): boolean {
+  const cookieFilename = getCookiePath(username);
+  const fileExists = fs.existsSync(cookieFilename);
+  if (fileExists) {
+    try {
+      const cookieData: ToughCookieFileStore = fs.readJSONSync(cookieFilename, 'utf8');
+      const rememberCookieExpireDate = cookieData['epicgames.com']?.['/']?.[cookieName]?.expires;
+      if (!rememberCookieExpireDate) return false;
+      return new Date(rememberCookieExpireDate) > new Date();
+    } catch (err) {
+      L.warn(err);
+    }
+  }
+  return false;
 }

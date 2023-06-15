@@ -12,7 +12,7 @@ export class PushoverNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending pushover notification');
 
@@ -22,7 +22,7 @@ export class PushoverNotifier extends NotifierService {
         {
           token: this.config.token,
           user: this.config.userKey,
-          message: `epicgames-freegames-node needs a captcha solved. Reason: ${reason}`,
+          message: `epicgames-freegames-node needs an action performed. Reason: ${reason}`,
           url,
         },
         {

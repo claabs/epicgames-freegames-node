@@ -12,11 +12,11 @@ export class GotifyNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(url: string, account: string, reason: NotificationReason): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Gotify notification');
     const jsonPayload = {
-      title: `Epic Games free games needs a Captcha solved`,
+      title: `Epic Games free games needs an action performed`,
       /**
        * ATTENTION: these are markdown, to make it breaking lines correctly, there is two spaces at the end of line and before the retrun
        */
