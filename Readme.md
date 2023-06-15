@@ -1,7 +1,8 @@
 # Epic Games Store Weekly Free Games
 
 Automatically login and find available free games the Epic Games Store.
-Handles multiple accounts, login sessions, and scheduled runs.
+Sends you a prepopulated checkout link so you can complete the checkout after logging in.
+Supports multiple accounts, login sessions, and scheduled runs.
 
 ## Setup
 
