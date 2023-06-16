@@ -28,7 +28,7 @@ reason: ${reason}
 account: ${account}${
         url
           ? `
-url: ${encodeURI(url)}`
+url: ${url}`
           : ''
       }`,
       format: 'text', // The text format is ugly, but all the platforms support it.

@@ -21,7 +21,7 @@ export class TelegramNotifier extends NotifierService {
     L.trace('Sending telegram notification');
 
     const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}${
-      url ? `\nurl: [Click here](${encodeURI(url)})` : ''
+      url ? `\nurl: [Click here](${url})` : ''
     }`;
     // https://stackoverflow.com/a/60145565/5037239
     const escapedMessage = message.replace(
