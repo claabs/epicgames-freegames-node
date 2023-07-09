@@ -625,7 +625,7 @@ export enum LogLevel {
  * @example ```jsonc
  * {
  *   "runOnStartup": true,
- *   "cronSchedule": "0 0/6 * * *",
+ *   "cronSchedule": "0 0,6,12,18 * * *",
  *   "logLevel": "info",
  *   "webPortalConfig": {
  *     "baseUrl": "https://epic.example.com",
@@ -675,12 +675,12 @@ export class AppConfig {
    * **It is recommended to run every 6 hours, otherwise the refresh tokens will expire after 8 hours and a new login will be prompted every run.**
    * If you want the check to occur immediately after the new free game is released, you can offset the cron schedule. For example in a timezone where the free games release at 11:00am: `0 5,11,17,23 * * *`
    * @example 0 5,11,17,23 * * *
-   * @default 0 0/6 * * * (every six hours)
+   * @default 0 0,6,12,18 * * * (every six hours)
    * @env CRON_SCHEDULE
    */
   @IsOptional()
   @IsString()
-  cronSchedule = process.env.CRON_SCHEDULE || '0 */6 * * *';
+  cronSchedule = process.env.CRON_SCHEDULE || '0 0,6,12,18 * * *';
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.

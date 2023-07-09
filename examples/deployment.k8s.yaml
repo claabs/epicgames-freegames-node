@@ -6,7 +6,7 @@ data:
   account1: |
     {
       "runOnStartup": true,
-      "cronSchedule": "0 0/6 * * *",
+      "cronSchedule": "0 0,6,12,18 * * *",
       "logLevel": "info",
       "webPortalConfig": {
         "baseUrl": "https://epic.example.com",
