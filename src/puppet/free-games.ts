@@ -343,7 +343,7 @@ export default class PuppetFreeGames extends PuppetBase {
     const extensions = {
       persistedQuery: {
         version: 1,
-        sha256Hash: '6797fe39bfac0e6ea1c5fce0ecbff58684157595fee77e446b4254ec45ee2dcb',
+        sha256Hash: 'c4ad546ad2757b60ff13ace19ffaf134abb23cb663244de34771a0444abfdf33',
       },
     };
     this.L.trace({ url: GRAPHQL_ENDPOINT, variables, extensions }, 'Posting for catalog offer');
