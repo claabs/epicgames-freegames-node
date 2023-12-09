@@ -891,9 +891,10 @@ export class AppConfig {
 
   /**
    * The Epic Games application client ID used for device code authorization to check your account's ownership of a game
-   * List of available clients [here](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/auth_clients.md).
-   * @example 3446cd72694c4a4485d81b77adbb2141
-   * @default 98f7e42c2e3a4f86a74eb43fbb41ed39 (fortniteIOSGameClient client ID)
+   * List of available clients [here](https://github.com/Jaren8r/EpicClients).
+   * @example b070f20729f84693b5d621c904fc5bc2 (Diesel - Dauntless)
+   * @example e645e4b96298419cbffbfa353ebf8b82 (wexAndroidGameClient)
+   * @default 98f7e42c2e3a4f86a74eb43fbb41ed39 (fortniteNewSwitchGameClient client ID)
    * @env DEVICE_AUTH_CLIENT_ID
    */
   @IsOptional()
@@ -902,9 +903,10 @@ export class AppConfig {
 
   /**
    * The Epic Games application secret used for device code authorization to check your account's ownership of a game.
-   * List of available clients [here](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/auth_clients.md).
-   * @example 9209d4a5e25a457fb9b07489d313b41a
-   * @default 0a2449a2-001a-451e-afec-3e812901c4d7 (fortniteIOSGameClient client secret)
+   * List of available clients [here](https://github.com/Jaren8r/EpicClients).
+   * @example HG@XE&TGCxEJsgT#&_p2]=aRo#~>=>+c6PhR)zXP (Diesel - Dauntless)
+   * @example d03089fd-628a-448a-ac39-0e8c5b022a11 (wexAndroidGameClient)
+   * @default 0a2449a2-001a-451e-afec-3e812901c4d7 (fortniteNewSwitchGameClient client secret)
    * @env DEVICE_AUTH_SECRET
    */
   @IsOptional()
