@@ -366,7 +366,9 @@ export default class PuppetFreeGames extends PuppetBase {
     if (offer.productSlug?.endsWith('/beta')) return undefined;
 
     // Creates and checks for blacklisted games, logs and skips if found.
-    const blacklistedGames = (config.blacklistedGames ?? []).map((game: string) => game.trim().toLowerCase());
+    const blacklistedGames = (config.blacklistedGames ?? []).map((game: string) =>
+      game.trim().toLowerCase()
+    );
     const title = offer.title.trim().toLowerCase();
 
     if (blacklistedGames.includes(title)) {
