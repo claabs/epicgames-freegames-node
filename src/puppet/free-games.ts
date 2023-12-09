@@ -365,6 +365,15 @@ export default class PuppetFreeGames extends PuppetBase {
     // HACK: fix for "Knockout City Cross-Play Beta"
     if (offer.productSlug?.endsWith('/beta')) return undefined;
 
+    // Creates and checks for blacklisted games, logs and skips if found.
+    const blacklistedGames = (config.blacklistedGames ?? []).map((game: string) => game.trim().toLowerCase());
+    const title = offer.title.trim().toLowerCase();
+
+    if (blacklistedGames.includes(title)) {
+      console.log(`Skipping blacklisted game: ${title}`);
+      return undefined;
+    }
+
     return {
       offerId: offer.id,
       offerNamespace: offer.namespace,

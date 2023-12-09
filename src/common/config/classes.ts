@@ -683,6 +683,16 @@ export class AppConfig {
   cronSchedule = process.env.CRON_SCHEDULE || '0 0,6,12,18 * * *';
 
   /**
+   * A list of excluded game titles to skip during processing.
+   * @example ['Gigabash Demo', 'Another Blacklisted Game']
+   * @env BLACKLISTED_GAMES
+   */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  blacklistedGames?: string[];
+
+  /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
    * @example weekly
    * @default all
