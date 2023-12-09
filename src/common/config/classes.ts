@@ -685,12 +685,12 @@ export class AppConfig {
   /**
    * A list of excluded game titles to skip during processing.
    * @example ['Gigabash Demo', 'Another Blacklisted Game']
-   * @env BLACKLISTED_GAMES
+   * @env BLACKLISTED_GAMES (comma separated)
    */
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  blacklistedGames?: string[];
+  blacklistedGames: string[] = [];
 
   /**
    * The search criteria for finding free games. Either the weekly promotion, and free promotion, or all free products.
@@ -1131,5 +1131,9 @@ export class AppConfig {
         port: parseInt(SERVER_PORT, 10),
       };
     }
+
+    // Use environment variables to fill blacklisted games list if present
+    const { BLACKLISTED_GAMES } = process.env;
+    if (BLACKLISTED_GAMES) this.blacklistedGames = BLACKLISTED_GAMES.split(',');
   }
 }

@@ -353,26 +353,23 @@ export default class PuppetFreeGames extends PuppetBase {
       extensions: JSON.stringify(extensions),
     });
     const offer = offerResponseBody.data.Catalog.catalogOffer;
-    const isBlacklisted = offer.countriesBlacklist?.includes(
+    const isCountryBlacklisted = offer.countriesBlacklist?.includes(
       config.countryCode?.toUpperCase() || ''
     );
     const isFree = offer.price?.totalPrice?.discountPrice === 0;
-    this.L.trace({ offerId, namespace, isFree, isBlacklisted });
-    if (!isFree || isBlacklisted) {
+    this.L.trace({ offerId, namespace, isFree, isCountryBlacklisted });
+    if (!isFree || isCountryBlacklisted) {
       return undefined;
     }
 
-    // HACK: fix for "Knockout City Cross-Play Beta"
-    if (offer.productSlug?.endsWith('/beta')) return undefined;
-
     // Creates and checks for blacklisted games, logs and skips if found.
-    const blacklistedGames = (config.blacklistedGames ?? []).map((game: string) =>
+    const blacklistedGames = config.blacklistedGames.map((game: string) =>
       game.trim().toLowerCase()
     );
     const title = offer.title.trim().toLowerCase();
 
     if (blacklistedGames.includes(title)) {
-      console.log(`Skipping blacklisted game: ${title}`);
+      this.L.info({ title }, `Skipping blacklisted game`);
       return undefined;
     }
 
