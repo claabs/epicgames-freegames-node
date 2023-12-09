@@ -357,8 +357,9 @@ export default class PuppetFreeGames extends PuppetBase {
       config.countryCode?.toUpperCase() || ''
     );
     const isFree = offer.price?.totalPrice?.discountPrice === 0;
-    this.L.trace({ offerId, namespace, isFree, isCountryBlacklisted });
-    if (!isFree || isCountryBlacklisted) {
+    const isExpired = offer.expiryDate ? new Date(offer.expiryDate) < new Date() : false;
+    this.L.trace({ offerId, namespace, isFree, isCountryBlacklisted, isExpired });
+    if (!isFree || isCountryBlacklisted || isExpired) {
       return undefined;
     }
 

@@ -111,7 +111,7 @@ export interface CatalogOffer {
   developerDisplayName: null;
   description: string;
   effectiveDate: string;
-  expiryDate: null;
+  expiryDate?: string;
   externalLinks: null;
   isCodeRedemptionOnly: boolean;
   keyImages: KeyImage[];
