@@ -305,7 +305,7 @@ export class DeviceLogin {
       if (
         err.response?.data.errorCode !== 'errors.com.epicgames.account.oauth.authorization_pending'
       ) {
-        this.L.debug(err);
+        this.L.error({ err, response: err.response?.data });
         throw new Error('Unable to get device authorization token');
       }
       await new Promise((resolve) => {

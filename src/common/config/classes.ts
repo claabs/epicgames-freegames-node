@@ -915,16 +915,16 @@ export class AppConfig {
 
   /**
    * After redirecting to a device authorization verification URL, how often the Epic Games API is polled for a successful login.
-   * @example 10
-   * @default 5
+   * @example 20
+   * @default 10
    * @env DEVICE_AUTH_POLL_RATE_SECONDS
    */
-  @Min(1)
+  @Min(1) // TODO: breaking change, set to 10
   @IsNumber()
   @IsOptional()
   deviceAuthPollRateSeconds = process.env.DEVICE_AUTH_POLL_RATE_SECONDS
     ? parseInt(process.env.DEVICE_AUTH_POLL_RATE_SECONDS, 10)
-    : 5;
+    : 10;
 
   /**
    * @hidden
@@ -1137,5 +1137,8 @@ export class AppConfig {
     // Use environment variables to fill blacklisted games list if present
     const { BLACKLISTED_GAMES } = process.env;
     if (BLACKLISTED_GAMES) this.blacklistedGames = BLACKLISTED_GAMES.split(',');
+
+    // Don't let the poll rate go below 10. Remove when minimum is enforced.
+    if (this.deviceAuthPollRateSeconds < 10) this.deviceAuthPollRateSeconds = 10;
   }
 }
