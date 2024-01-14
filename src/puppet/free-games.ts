@@ -8,7 +8,7 @@ import {
 import { config, SearchStrategy } from '../common/config';
 import PuppetBase from './base';
 import { OfferInfo } from '../interfaces/types';
-import { GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
+import { CatalogOffer, GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
 import {
   GraphQLErrorResponse,
   Offer,
@@ -212,16 +212,7 @@ export default class PuppetFreeGames extends PuppetBase {
         })
       )
     ).flat();
-    // Then we need to query each offer for its details so we can find its discount
-    // Then we filter to only the free offers
-    const freeOffers: OfferInfo[] = (
-      await Promise.all(
-        allProductOffers.map(async (offer) =>
-          this.getFreeCatalogOffer(offer.offerId, offer.offerNamespace)
-        )
-      )
-    ).filter((offer): offer is OfferInfo => offer !== undefined);
-    return freeOffers;
+    return allProductOffers;
   }
 
   async getPageSlugMapping(pageSlug: string): Promise<PageSlugMappingResult | string> {
@@ -327,10 +318,46 @@ export default class PuppetFreeGames extends PuppetBase {
     return purchasableGames;
   }
 
+  isOfferValid(offer: CatalogOffer): boolean {
+    const isFree = offer.price?.totalPrice?.discountPrice === 0;
+    if (!isFree) return false; // don't log non-free offers (thousands)
+
+    const isCountryBlacklisted = offer.countriesBlacklist?.includes(
+      config.countryCode?.toUpperCase() || ''
+    );
+    const isExpired = offer.expiryDate ? new Date(offer.expiryDate) < new Date() : false;
+    const title = offer.title.trim().toLowerCase();
+    const isBlacklistedTitle = config.blacklistedGames.some(
+      (blacklistedTitle) => blacklistedTitle.trim().toLowerCase() === title
+    );
+
+    this.L.trace({
+      offerId: offer.id,
+      namespace: offer.namespace,
+      isExpired,
+      isCountryBlacklisted,
+      isBlacklistedTitle,
+    });
+    if (isCountryBlacklisted || isExpired || isBlacklistedTitle) {
+      this.L.debug(
+        {
+          offerId: offer.id,
+          namespace: offer.namespace,
+          isExpired,
+          isCountryBlacklisted,
+          isBlacklistedTitle,
+        },
+        'ignoring invalid offer'
+      );
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Gets the details of an offer, only returns if it's free
    */
-  async getFreeCatalogOffer(offerId: string, namespace: string): Promise<OfferInfo | undefined> {
+  async validateOffer(offerId: string, namespace: string): Promise<OfferInfo | undefined> {
     this.L.trace({ offerId, namespace }, 'Getting offer details');
     // variables and extensions can be found at https://store.epicgames.com/en-US/
     // Search for "getCatalogOffer" in source HTML
@@ -353,26 +380,7 @@ export default class PuppetFreeGames extends PuppetBase {
       extensions: JSON.stringify(extensions),
     });
     const offer = offerResponseBody.data.Catalog.catalogOffer;
-    const isCountryBlacklisted = offer.countriesBlacklist?.includes(
-      config.countryCode?.toUpperCase() || ''
-    );
-    const isFree = offer.price?.totalPrice?.discountPrice === 0;
-    const isExpired = offer.expiryDate ? new Date(offer.expiryDate) < new Date() : false;
-    this.L.trace({ offerId, namespace, isFree, isCountryBlacklisted, isExpired });
-    if (!isFree || isCountryBlacklisted || isExpired) {
-      return undefined;
-    }
-
-    // Creates and checks for blacklisted games, logs and skips if found.
-    const blacklistedGames = config.blacklistedGames.map((game: string) =>
-      game.trim().toLowerCase()
-    );
-    const title = offer.title.trim().toLowerCase();
-
-    if (blacklistedGames.includes(title)) {
-      this.L.info({ title }, `Skipping blacklisted game`);
-      return undefined;
-    }
+    if (!this.isOfferValid(offer)) return undefined;
 
     return {
       offerId: offer.id,
@@ -412,6 +420,13 @@ export default class PuppetFreeGames extends PuppetBase {
         (e, i) => validFreeGames.findIndex((a) => a.offerId === e.offerId) === i
       );
     }
+    // Get true offerIds for weekly offers, and use offer data to filter by country restrictions for catalog offers
+    validFreeGames = (
+      await Promise.all(
+        validFreeGames.map(async (offer) => this.validateOffer(offer.offerId, offer.offerNamespace))
+      )
+    ).filter((offer): offer is OfferInfo => offer !== undefined);
+    // TODO: Potential dupes here?
     this.L.info(
       { availableGames: validFreeGames.map((game) => game.productName) },
       'Available free games'
