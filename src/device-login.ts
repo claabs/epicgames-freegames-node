@@ -62,8 +62,6 @@ export interface DeviceLoginProps {
   user: string;
 }
 
-const NOTIFICATION_TIMEOUT = config.notificationTimeoutHours * 60 * 60 * 1000;
-
 const hashAlphabet = 'abcdefghijklmnopqrstuvwxyz';
 const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
@@ -129,11 +127,17 @@ export class DeviceLogin {
 
   public async testServerNotify(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
+    const notificationTimeout = config.getMsUntilNextRun();
+
+    logger.trace(
+      { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
+      'Awaiting test notification response'
+    );
 
     // Wait on a promise to be resolved by the web redirect completing
     await Promise.all([
       promiseTimeout(
-        NOTIFICATION_TIMEOUT,
+        notificationTimeout,
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
         })
@@ -145,11 +149,17 @@ export class DeviceLogin {
 
   public async newDeviceAuthLogin(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
+    const notificationTimeout = config.getMsUntilNextRun();
+
+    logger.trace(
+      { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
+      'Awaiting login notification response'
+    );
 
     // Wait on a promise to be resolved by the web redirect and login completing
     await Promise.all([
       promiseTimeout(
-        NOTIFICATION_TIMEOUT,
+        notificationTimeout,
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
         })

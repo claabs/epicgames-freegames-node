@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function, no-useless-constructor, max-classes-per-file */
 import 'reflect-metadata';
-import { ClassConstructor, Type } from 'class-transformer';
+import { ClassConstructor, Expose, Type } from 'class-transformer';
 import {
   IsEmail,
   IsUrl,
@@ -21,6 +21,7 @@ import {
 } from 'class-validator';
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
+import cronParser from 'cron-parser';
 
 export enum NotificationType {
   EMAIL = 'email',
@@ -682,6 +683,12 @@ export class AppConfig {
   @IsString()
   cronSchedule = process.env.CRON_SCHEDULE || '0 0,6,12,18 * * *';
 
+  @Expose({ toClassOnly: true })
+  getMsUntilNextRun() {
+    const cronExpression = cronParser.parseExpression(this.cronSchedule);
+    return cronExpression.next().getTime() - new Date().getTime();
+  }
+
   /**
    * A list of excluded game titles to skip during processing.
    * @example ['Gigabash Demo', 'Another Blacklisted Game']
@@ -798,21 +805,6 @@ export class AppConfig {
     },
   })
   notifiers?: AnyNotifierConfig[];
-
-  /**
-   * Number of hours to wait for a response for a notification.
-   * The notification wait is blocking, so while other accounts will still continue, the process won't exit until all login requests are solved.
-   * If the timeout is reached, the process will exit, and the URL in the notification will be inaccessible.
-   * @example 168
-   * @default 24
-   * @env NOTIFICATION_TIMEOUT_HOURS
-   */
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  notificationTimeoutHours = process.env.NOTIFICATION_TIMEOUT_HOURS
-    ? parseInt(process.env.NOTIFICATION_TIMEOUT_HOURS, 10)
-    : 24;
 
   /**
    * When true, the process will send test notifications with a test redirect to example.com for all configured accounts.
