@@ -65,6 +65,7 @@ export interface DeviceLoginProps {
 const hashAlphabet = 'abcdefghijklmnopqrstuvwxyz';
 const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
+const timeoutBufferMs = 30 * 1000;
 
 export const promiseTimeout = <T>(
   timeoutMs: number,
@@ -127,7 +128,7 @@ export class DeviceLogin {
 
   public async testServerNotify(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun();
+    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
@@ -149,7 +150,7 @@ export class DeviceLogin {
 
   public async newDeviceAuthLogin(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun();
+    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
