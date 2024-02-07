@@ -14,6 +14,8 @@ import { convertImportCookies } from './common/cookie';
 import { DeviceLogin } from './device-login';
 import { generateCheckoutUrl } from './purchase';
 import { NotificationReason } from './interfaces/notification-reason';
+import { AuthError } from './interfaces/errors';
+import { OfferInfo } from './interfaces/types';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -45,10 +47,24 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     }
 
     // Get purchasable offers
-    const offers = await freeGames.getAllFreeGames();
-    L.debug('Closing browser');
-    await browser.close();
-    L.trace('Browser finished closing');
+    let offers: OfferInfo[];
+    try {
+      offers = await freeGames.getAllFreeGames();
+    } catch (err) {
+      if (err instanceof AuthError) {
+        deviceLogin.deleteSavedAuth();
+        L.info('Error fetching free games, getting new device auth');
+        await deviceLogin.newDeviceAuthLogin();
+        L.info('Retrying free games check with new auth');
+        offers = await freeGames.getAllFreeGames();
+      } else {
+        throw err;
+      }
+    } finally {
+      L.debug('Closing browser');
+      await browser.close();
+      L.trace('Browser finished closing');
+    }
 
     if (offers.length) {
       L.debug(`Sending checkout link for ${offers.length} offer(s)`);

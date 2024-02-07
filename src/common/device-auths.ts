@@ -52,3 +52,11 @@ export function setAccountAuth(account: string, accountAuth: AuthTokenResponse):
   existingDeviceAuths[account] = accountAuth;
   writeDeviceAuths(existingDeviceAuths);
 }
+
+export function deleteAccountAuth(account: string): void {
+  const existingDeviceAuths = getDeviceAuths() || {};
+  if (existingDeviceAuths[account]) {
+    delete existingDeviceAuths[account];
+  }
+  writeDeviceAuths(existingDeviceAuths);
+}

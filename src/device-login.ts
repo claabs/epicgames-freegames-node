@@ -6,7 +6,12 @@ import { RequestHandler } from 'express';
 import { Logger } from 'pino';
 import { NotificationReason } from './interfaces/notification-reason';
 import { config } from './common/config';
-import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths';
+import {
+  AuthTokenResponse,
+  deleteAccountAuth,
+  getAccountAuth,
+  setAccountAuth,
+} from './common/device-auths';
 import { serverRoute } from './common/server';
 import logger from './common/logger';
 import { getLocaltunnelUrl } from './common/localtunnel';
@@ -168,6 +173,11 @@ export class DeviceLogin {
       await this.notify(NotificationReason.LOGIN, url),
     ]);
     pendingRedirects.delete(reqId);
+  }
+
+  public deleteSavedAuth() {
+    this.L.debug('Deleting saved device auth data');
+    deleteAccountAuth(this.user);
   }
 
   private async notify(reason: NotificationReason, inUrl?: string): Promise<void> {

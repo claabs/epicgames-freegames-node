@@ -22,6 +22,7 @@ import {
 } from '../interfaces/search-store-query-response';
 import { OffersValidationResponse } from '../interfaces/offers-validation';
 import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping';
+import { AuthError } from '../interfaces/errors';
 
 export default class PuppetFreeGames extends PuppetBase {
   private page?: Page;
@@ -291,7 +292,16 @@ export default class PuppetFreeGames extends PuppetBase {
     );
     if ('errors' in entitlementRespBody) {
       this.L.debug(entitlementRespBody.errors);
-      throw new Error(entitlementRespBody.errors[0].message);
+      const firstError = entitlementRespBody.errors?.[0];
+      if (firstError) {
+        const serviceResponse = JSON.parse(firstError.serviceResponse);
+        if (serviceResponse.errorStatus === 401) {
+          this.L.warn({ serviceResponse }, 'Authentication error, fetching new device auth');
+          throw new AuthError(firstError.message);
+        }
+        throw new Error(firstError.message);
+      }
+      throw new Error('Error getting offers validation');
     }
     const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
     this.L.debug({ offerId, namespace, validations }, 'Offers validation response');
