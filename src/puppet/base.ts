@@ -11,6 +11,7 @@ import {
 import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie';
 import { CONFIG_DIR } from '../common/config';
 import { getAccountAuth } from '../common/device-auths';
+import { STORE_HOMEPAGE } from '../common/constants';
 
 export interface PuppetBaseProps {
   browser: Browser;
@@ -71,6 +72,7 @@ export default class PuppetBase {
       });
       await cdpClient.detach();
       await page.setCookie(...puppeteerCookies);
+      await page.goto(STORE_HOMEPAGE, { waitUntil: 'networkidle2' });
       return page;
     } catch (err) {
       await this.handlePageError(err, page);
