@@ -12,28 +12,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set environment variables
         run: echo "GIT_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -41,7 +41,7 @@ jobs:
 
       - name: Build and push master (Alpine)
         if: ${{ github.ref == 'refs/heads/master' }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
@@ -60,7 +60,7 @@ jobs:
 
       - name: Build and push master (Debian)
         if: ${{ github.ref == 'refs/heads/master' }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
@@ -69,6 +69,8 @@ jobs:
           tags: |
             charlocharlie/epicgames-freegames:bullseye-slim
             ghcr.io/claabs/epicgames-freegames-node:bullseye-slim
+            charlocharlie/epicgames-freegames:debian
+            ghcr.io/claabs/epicgames-freegames-node:debian
           platforms: linux/amd64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
@@ -78,7 +80,7 @@ jobs:
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
