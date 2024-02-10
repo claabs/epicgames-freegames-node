@@ -43,5 +43,5 @@ export const TALON_REFERRER =
 export const ACCOUNT_OAUTH_TOKEN =
   'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/token';
 export const ACCOUNT_OAUTH_DEVICE_AUTH =
-  'https://account-public-service-prod03.ol.epicgames.com/account/api/oauth/deviceAuthorization';
+  'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/deviceAuthorization';
 export const ID_LOGIN_ENDPOINT = 'https://www.epicgames.com/id/login';
