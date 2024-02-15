@@ -65,6 +65,9 @@ RUN ln -s /usr/local/bin/docker-entrypoint.sh /
 ARG COMMIT_SHA="" \
     BRANCH=""
 
+# Put COMMIT_SHA in a file, since Docker managers like Portainer will not use updated ENVs
+RUN echo $COMMIT_SHA > commit-sha.txt
+
 LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
     org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \
     org.opencontainers.image.description="Automatically redeem free games promotions on the Epic Games store" \

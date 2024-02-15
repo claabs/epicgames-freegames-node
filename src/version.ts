@@ -1,9 +1,16 @@
 import axios from 'axios';
+import { readFileSync } from 'fs-extra';
 import { config } from './common/config';
 import L from './common/logger';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
-const { COMMIT_SHA, BRANCH, DISTRO } = process.env;
+const { BRANCH, DISTRO } = process.env;
+let { COMMIT_SHA } = process.env;
+try {
+  COMMIT_SHA = readFileSync('./commit-sha.txt', { encoding: 'utf-8' }).trim();
+} catch (error) {
+  L.debug('Fallback to environment variable commit SHA');
+}
 
 export async function checkForUpdate(): Promise<void> {
   L.info({ COMMIT_SHA, BRANCH, DISTRO }, `Started ${PROJECT_NAME}`);
