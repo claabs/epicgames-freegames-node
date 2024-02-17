@@ -1,7 +1,7 @@
 import open from 'open';
 import { LocalConfig } from '../common/config';
 import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
+import { NotificationFields } from '../interfaces/notification';
 
 export class LocalNotifier extends NotifierService {
   private config: LocalConfig;
@@ -12,11 +12,8 @@ export class LocalNotifier extends NotifierService {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  async sendNotification(
-    _account: string,
-    _reason: NotificationReason,
-    url?: string
-  ): Promise<void> {
+  async sendNotification(fields: NotificationFields): Promise<void> {
+    const { url } = fields;
     if (url) {
       await open(url);
     }

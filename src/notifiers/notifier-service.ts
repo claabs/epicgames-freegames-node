@@ -1,9 +1,5 @@
-import { NotificationReason } from '../interfaces/notification-reason';
+import { NotificationFields } from '../interfaces/notification';
 
 export abstract class NotifierService {
-  abstract sendNotification(
-    account: string,
-    reason: NotificationReason,
-    url?: string
-  ): Promise<void>;
+  abstract sendNotification(fields: NotificationFields): Promise<void>;
 }

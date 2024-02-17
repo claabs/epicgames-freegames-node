@@ -1,7 +1,7 @@
 import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
+import { NotificationFields } from '../interfaces/notification';
 import { SlackConfig } from '../common/config';
 
 export class SlackNotifier extends NotifierService {
@@ -12,7 +12,8 @@ export class SlackNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(fields: NotificationFields): Promise<void> {
+    const { account, reason, url } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending Slack notification');
 

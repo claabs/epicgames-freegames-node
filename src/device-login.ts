@@ -4,7 +4,7 @@ import Hashids from 'hashids/cjs';
 import urlJoin from 'url-join';
 import { RequestHandler } from 'express';
 import { Logger } from 'pino';
-import { NotificationReason } from './interfaces/notification-reason';
+import { NotificationReason } from './interfaces/notification';
 import { config } from './common/config';
 import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths';
 import { serverRoute } from './common/server';
@@ -167,20 +167,24 @@ export class DeviceLogin {
       ),
       await this.notify(NotificationReason.LOGIN, url),
     ]);
+    logger.debug({ reqId }, 'URL visited, enging redirect');
     pendingRedirects.delete(reqId);
   }
 
   private async notify(reason: NotificationReason, inUrl?: string): Promise<void> {
     let url: string | undefined;
+    let localtunnelPassword: string | undefined;
     if (inUrl) {
       if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(inUrl);
+        const localTunnelResp = await getLocaltunnelUrl(inUrl);
+        url = localTunnelResp.url;
+        localtunnelPassword = localTunnelResp.password;
       } else {
         url = inUrl;
       }
     }
     this.L.info({ reason, url }, 'Dispatching notification');
-    await sendNotification(this.user, reason, url);
+    await sendNotification({ account: this.user, reason, url, localtunnelPassword });
   }
 
   private async startDeviceAuthorization(): Promise<DeviceAuthorizationCodeResponse> {

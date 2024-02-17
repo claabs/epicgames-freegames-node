@@ -13,7 +13,7 @@ import { createServer } from './common/server';
 import { convertImportCookies } from './common/cookie';
 import { DeviceLogin } from './device-login';
 import { generateCheckoutUrl } from './purchase';
-import { NotificationReason } from './interfaces/notification-reason';
+import { NotificationReason } from './interfaces/notification';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -54,7 +54,11 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
       L.debug(`Sending checkout link for ${offers.length} offer(s)`);
       const checkoutUrl = generateCheckoutUrl(offers);
       L.info({ url: checkoutUrl }, 'Dispatching checkout notification');
-      await sendNotification(account.email, NotificationReason.PURCHASE, checkoutUrl);
+      await sendNotification({
+        account: account.email,
+        reason: NotificationReason.PURCHASE,
+        url: checkoutUrl,
+      });
     } else {
       L.info('No free games available');
     }

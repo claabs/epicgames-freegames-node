@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
+import { NotificationFields } from '../interfaces/notification';
 import { EmailConfig } from '../common/config';
 
 export class EmailNotifier extends NotifierService {
@@ -23,7 +23,8 @@ export class EmailNotifier extends NotifierService {
     });
   }
 
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(fields: NotificationFields): Promise<void> {
+    const { account, reason, url } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending email');
 

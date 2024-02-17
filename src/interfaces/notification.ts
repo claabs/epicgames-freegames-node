@@ -5,3 +5,10 @@ export enum NotificationReason {
   TEST = 'TEST',
   PURCHASE_ERROR = 'PURCHASE ERROR',
 }
+
+export interface NotificationFields {
+  account: string;
+  reason: NotificationReason;
+  url?: string;
+  localtunnelPassword?: string;
+}

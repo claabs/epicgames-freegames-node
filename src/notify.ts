@@ -27,23 +27,17 @@ import {
   BarkConfig,
 } from './common/config';
 import L from './common/logger';
-import { NotificationReason } from './interfaces/notification-reason';
+import { NotificationFields } from './interfaces/notification';
 // eslint-disable-next-line import/no-cycle
 import { DeviceLogin } from './device-login';
 
-export async function sendNotification(
-  accountEmail: string,
-  reason: NotificationReason,
-  url?: string
-): Promise<void> {
-  const account = config.accounts.find((acct) => acct.email === accountEmail);
+export async function sendNotification(fields: NotificationFields): Promise<void> {
+  const account = config.accounts.find((acct) => acct.email === fields.account);
   const notifierConfigs = account?.notifiers || config.notifiers;
   if (!notifierConfigs || !notifierConfigs.length) {
     L.warn(
       {
-        url,
-        accountEmail,
-        reason,
+        fields,
       },
       `No notifiers configured globally, or for the account. This log is all you'll get`
     );
@@ -78,9 +72,7 @@ export async function sendNotification(
     }
   });
 
-  await Promise.all(
-    notifiers.map((notifier) => notifier.sendNotification(accountEmail, reason, url))
-  );
+  await Promise.all(notifiers.map((notifier) => notifier.sendNotification(fields)));
 }
 
 export async function testNotifiers(): Promise<void> {
