@@ -22,6 +22,9 @@ import {
 import { ServerOptions } from 'https';
 import { ListenOptions } from 'net';
 import cronParser from 'cron-parser';
+import path from 'path';
+
+export const CONFIG_DIR = process.env.CONFIG_DIR || 'config';
 
 export enum NotificationType {
   EMAIL = 'email',
@@ -917,6 +920,16 @@ export class AppConfig {
   deviceAuthPollRateSeconds = process.env.DEVICE_AUTH_POLL_RATE_SECONDS
     ? parseInt(process.env.DEVICE_AUTH_POLL_RATE_SECONDS, 10)
     : 10;
+
+  /**
+   * The full path where the browser automation error screenshots will be output
+   * @example /errors
+   * @default ${CONFIG_DIR}/errors
+   * @env ERRORS_DIR
+   */
+  @IsOptional()
+  @IsString()
+  errorsDir = process.env.ERRORS_DIR || path.join(CONFIG_DIR, 'errors');
 
   /**
    * @hidden

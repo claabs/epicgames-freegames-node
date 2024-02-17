@@ -1,6 +1,7 @@
 import { Logger } from 'pino';
 import { Protocol, Page, Browser } from 'puppeteer';
 import path from 'path';
+import { ensureDir } from 'fs-extra';
 import logger from '../common/logger';
 import {
   getDevtoolsUrl,
@@ -9,7 +10,7 @@ import {
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer';
 import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie';
-import { CONFIG_DIR } from '../common/config';
+import { config } from '../common/config';
 import { getAccountAuth } from '../common/device-auths';
 import { STORE_HOMEPAGE } from '../common/constants';
 
@@ -98,8 +99,9 @@ export default class PuppetBase {
   protected async handlePageError(err: unknown, page?: Page) {
     if (page) {
       const errorFile = `error-${new Date().toISOString()}.png`;
+      await ensureDir(config.errorsDir);
       await page.screenshot({
-        path: path.join(CONFIG_DIR, errorFile),
+        path: path.join(config.errorsDir, errorFile),
       });
       this.L.error(
         { errorFile },

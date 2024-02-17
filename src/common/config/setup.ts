@@ -7,7 +7,7 @@ import { validateSync } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
 import pino from 'pino';
 import cronParser from 'cron-parser';
-import { AppConfig } from './classes';
+import { AppConfig, CONFIG_DIR } from './classes';
 
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({
@@ -37,7 +37,6 @@ const removeFileExtension = (filename: string): string => {
   return path.basename(filename);
 };
 
-export const CONFIG_DIR = process.env.CONFIG_DIR || 'config';
 export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
   ? removeFileExtension(process.env.CONFIG_FILE_NAME)
   : 'config';
