@@ -25,6 +25,7 @@ export class HomeassistantNotifier extends NotifierService {
           data: {
             url,
             clickAction: url,
+            ...(this.config.customData ?? {}),
           },
         },
         {

@@ -434,6 +434,15 @@ export class HomeassistantConfig extends NotifierConfig {
   notifyservice: string;
 
   /**
+   * A key-value pair object to additionally pass into the service's `data` object
+   * @example { "parse_mode": "html" }
+   * @env HOMEASSISTANT_CUSTOM_DATA (stringified JSON)
+   */
+  @IsObject()
+  @IsOptional()
+  customData: Record<string, boolean | number | string> | undefined;
+
+  /**
    * @ignore
    */
   constructor() {
@@ -1088,6 +1097,7 @@ export class AppConfig {
       HOMEASSISTANT_INSTANCE,
       HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN,
       HOMEASSISTANT_NOTIFYSERVICE,
+      HOMEASSISTANT_CUSTOM_DATA,
     } = process.env;
     if (
       HOMEASSISTANT_INSTANCE &&
@@ -1098,6 +1108,9 @@ export class AppConfig {
       homeassistant.instance = HOMEASSISTANT_INSTANCE;
       homeassistant.token = HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN;
       homeassistant.notifyservice = HOMEASSISTANT_NOTIFYSERVICE;
+      homeassistant.customData = HOMEASSISTANT_CUSTOM_DATA
+        ? JSON.parse(HOMEASSISTANT_CUSTOM_DATA)
+        : undefined;
       if (!this.notifiers) {
         this.notifiers = [];
       }
