@@ -17,21 +17,16 @@ export class AppriseNotifier extends NotifierService {
    * @ignore
    */
   async sendNotification(fields: NotificationFields): Promise<void> {
-    const { account, reason, url } = fields;
+    const { account, reason, url, password } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending Apprise notification');
 
     const jsonPayload = {
       urls: this.config.urls,
       title: 'epicgames-freegames-node',
-      body: `epicgames-freegames-node needs an action performed.
-reason: ${reason}
-account: ${account}${
-        url
-          ? `
-url: ${url}`
-          : ''
-      }`,
+      body: `epicgames-freegames-node needs an action performed.\nreason: ${reason}\naccount: ${account}${
+        url ? `\nurl: ${url}` : ''
+      }${password ? `\npassword: ${password}` : ''}`,
       format: 'text', // The text format is ugly, but all the platforms support it.
       type: 'info',
     };

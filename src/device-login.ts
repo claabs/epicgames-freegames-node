@@ -187,7 +187,7 @@ export class DeviceLogin {
       account: this.user,
       reason,
       url,
-      localtunnelPassword,
+      password: localtunnelPassword,
     };
     this.L.info({ fields }, 'Dispatching notification');
     await sendNotification(fields);

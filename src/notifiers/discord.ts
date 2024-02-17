@@ -14,7 +14,7 @@ export class DiscordNotifier extends NotifierService {
   }
 
   async sendNotification(fields: NotificationFields): Promise<void> {
-    const { account, reason, url } = fields;
+    const { account, reason, url, password } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending discord notification');
 
@@ -25,6 +25,24 @@ export class DiscordNotifier extends NotifierService {
     if (this.config.mentionedRoles) {
       mentions = `${mentions}${this.config.mentionedRoles.map((r) => `<@&${r}>`).join('')}\n`;
     }
+
+    const embedFields = [
+      {
+        name: 'Account',
+        value: account || 'unknown', // Fallback required to avoid 400 on empty value
+      },
+      {
+        name: 'Reason',
+        value: reason.toLowerCase() || 'unknown', // Fallback required to avoid 400 on empty value
+      },
+    ];
+
+    if (password) {
+      embedFields.push({
+        name: 'Password',
+        value: password || 'unknown', // Fallback required to avoid 400 on empty value
+      });
+    }
     try {
       await axios.post(
         this.config.webhookUrl,
@@ -32,16 +50,7 @@ export class DiscordNotifier extends NotifierService {
           content: `${mentions}epicgames-freegames-node needs an action performed.`,
           embeds: [
             {
-              fields: [
-                {
-                  name: 'Account',
-                  value: account || 'unknown', // Fallback required to avoid 400 on empty value
-                },
-                {
-                  name: 'Reason',
-                  value: reason.toLowerCase() || 'unknown', // Fallback required to avoid 400 on empty value
-                },
-              ],
+              fields: embedFields,
               title: 'Click to proceed',
               url,
             },

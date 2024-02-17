@@ -24,7 +24,7 @@ export class EmailNotifier extends NotifierService {
   }
 
   async sendNotification(fields: NotificationFields): Promise<void> {
-    const { account, reason, url } = fields;
+    const { account, reason, url, password } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending email');
 
@@ -36,7 +36,9 @@ export class EmailNotifier extends NotifierService {
         },
         to: this.config.emailRecipientAddress,
         subject: `Epic Games free games needs an action performed`,
-        html: `<p><b>epicgames-freegames-node</b>, reason: ${reason}, account: ${account}.</p>
+        html: `<p><b>epicgames-freegames-node</b>, reason: ${reason}, account: ${account}${
+          password ? `, password: ${password}` : ''
+        }.</p>
              <p>Link: <a href="${url}">${url}</a></p>`,
         textEncoding: 'base64', // Some email clients don't like the '=' in the URL when using quoted-printable?
       });

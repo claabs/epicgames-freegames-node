@@ -13,11 +13,13 @@ export class BarkNotifier extends NotifierService {
   }
 
   async sendNotification(fields: NotificationFields): Promise<void> {
-    const { account, reason, url } = fields;
+    const { account, reason, url, password } = fields;
     const L = logger.child({ user: account, reason });
     L.trace('Sending Bark notification');
 
-    const message = encodeURIComponent(`reason: ${reason}, account: ${account}`);
+    const message = encodeURIComponent(
+      `reason: ${reason}, account: ${account}${password ? `, password: ${password}` : ''}`
+    );
 
     const requestUrl = `${this.config.apiUrl}/${encodeURIComponent(
       this.config.key

@@ -10,5 +10,8 @@ export interface NotificationFields {
   account: string;
   reason: NotificationReason;
   url?: string;
-  localtunnelPassword?: string;
+  /**
+   * Localtunnel password
+   */
+  password?: string;
 }
