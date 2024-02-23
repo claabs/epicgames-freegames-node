@@ -97,7 +97,6 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
         "priority": "urgent",
         "token": "tk_mytoken"
     },
-    
     {
       "type":"webhook",
       //url of your webhook server
