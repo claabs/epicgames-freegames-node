@@ -10,3 +10,4 @@ export * from './slack';
 export * from './bark';
 export * from './ntfy';
 export * from './homeassistant';
+export * from './webhook';

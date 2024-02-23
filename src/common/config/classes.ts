@@ -38,6 +38,7 @@ export enum NotificationType {
   HOMEASSISTANT = 'homeassistant',
   BARK = 'bark',
   NTFY = 'ntfy',
+  WEBHOOK = 'webhook',
 }
 
 /**
@@ -497,6 +498,34 @@ export class BarkConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Sends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL
+ */
+export class WebhookConfig extends NotifierConfig {
+  /**
+   * Webhook URL
+   * @env WEBHOOK_URL
+   */
+  @IsUrl({ require_tld: false })
+  url: string;
+
+  /**
+   * A key-value pair object to pass into the POST request headers
+   * @example { Authorization: "Bearer ABCD" }
+   * @env WEBHOOK_HEADERS (stringified JSON)
+   */
+  @IsObject()
+  @IsOptional()
+  headers: Record<string, string> | undefined;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.WEBHOOK);
+  }
+}
+
 export type AnyNotifierConfig =
   | EmailConfig
   | DiscordConfig
@@ -508,7 +537,8 @@ export type AnyNotifierConfig =
   | SlackConfig
   | HomeassistantConfig
   | BarkConfig
-  | NtfyConfig;
+  | NtfyConfig
+  | WebhookConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -525,6 +555,7 @@ const notifierSubtypes: {
   { value: HomeassistantConfig, name: NotificationType.HOMEASSISTANT },
   { value: BarkConfig, name: NotificationType.BARK },
   { value: NtfyConfig, name: NotificationType.NTFY },
+  { value: WebhookConfig, name: NotificationType.WEBHOOK },
 ];
 
 export class WebPortalConfig {
@@ -1132,6 +1163,20 @@ export class AppConfig {
       }
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof BarkConfig)) {
         this.notifiers.push(bark);
+      }
+    }
+
+    // Use environment variables to fill webhook notification config if present
+    const { WEBHOOK_URL, WEBHOOK_HEADERS } = process.env;
+    if (WEBHOOK_URL) {
+      const webhook = new WebhookConfig();
+      webhook.url = WEBHOOK_URL;
+      webhook.headers = WEBHOOK_HEADERS ? JSON.parse(WEBHOOK_HEADERS) : undefined;
+      if (!this.notifiers) {
+        this.notifiers = [];
+      }
+      if (!this.notifiers.some((notifConfig) => notifConfig instanceof WebhookConfig)) {
+        this.notifiers.push(webhook);
       }
     }
 

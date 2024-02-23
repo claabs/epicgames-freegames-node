@@ -10,6 +10,7 @@ import {
   NtfyNotifier,
   PushoverNotifier,
   HomeassistantNotifier,
+  WebhookNotifier,
 } from './notifiers';
 import {
   config,
@@ -25,6 +26,7 @@ import {
   NtfyConfig,
   HomeassistantConfig,
   BarkConfig,
+  WebhookConfig,
 } from './common/config';
 import L from './common/logger';
 import { NotificationReason } from './interfaces/notification-reason';
@@ -73,6 +75,8 @@ export async function sendNotification(
         return new BarkNotifier(notifierConfig as BarkConfig);
       case NotificationType.NTFY:
         return new NtfyNotifier(notifierConfig as NtfyConfig);
+      case NotificationType.WEBHOOK:
+        return new WebhookNotifier(notifierConfig as WebhookConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }
