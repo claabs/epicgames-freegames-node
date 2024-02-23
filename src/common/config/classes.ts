@@ -526,7 +526,6 @@ export class WebHookConfig extends NotifierConfig {
   }
 }
 
-
 export type AnyNotifierConfig =
   | EmailConfig
   | DiscordConfig

@@ -2,7 +2,7 @@ import axios from 'axios';
 import logger from '../common/logger';
 import { NotifierService } from './notifier-service';
 import { NotificationReason } from '../interfaces/notification-reason';
-import { WebHookConfig } from "../common/config";
+import { WebHookConfig } from '../common/config';
 
 export class WebHookNotifier extends NotifierService {
   private config: WebHookConfig;

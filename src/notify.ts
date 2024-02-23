@@ -9,8 +9,8 @@ import {
   NtfyNotifier,
   PushoverNotifier,
   SlackNotifier,
-  TelegramNotifier
-} from "./notifiers";
+  TelegramNotifier,
+} from './notifiers';
 import {
   AppriseConfig,
   BarkConfig,
@@ -24,13 +24,14 @@ import {
   NtfyConfig,
   PushoverConfig,
   SlackConfig,
-  TelegramConfig, WebHookConfig
-} from "./common/config";
-import L from "./common/logger";
-import { NotificationReason } from "./interfaces/notification-reason";
+  TelegramConfig,
+  WebHookConfig,
+} from './common/config';
+import L from './common/logger';
+import { NotificationReason } from './interfaces/notification-reason';
 // eslint-disable-next-line import/no-cycle
-import { DeviceLogin } from "./device-login";
-import { WebHookNotifier } from "./notifiers/webhook";
+import { DeviceLogin } from './device-login';
+import { WebHookNotifier } from './notifiers/webhook';
 
 export async function sendNotification(
   accountEmail: string,
