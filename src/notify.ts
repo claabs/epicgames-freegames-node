@@ -1,35 +1,36 @@
 import {
   AppriseNotifier,
+  BarkNotifier,
   DiscordNotifier,
   EmailNotifier,
-  LocalNotifier,
-  TelegramNotifier,
   GotifyNotifier,
-  SlackNotifier,
-  BarkNotifier,
+  HomeassistantNotifier,
+  LocalNotifier,
   NtfyNotifier,
   PushoverNotifier,
-  HomeassistantNotifier,
-} from './notifiers';
+  SlackNotifier,
+  TelegramNotifier
+} from "./notifiers";
 import {
+  AppriseConfig,
+  BarkConfig,
   config,
   DiscordConfig,
   EmailConfig,
+  GotifyConfig,
+  HomeassistantConfig,
   LocalConfig,
   NotificationType,
-  TelegramConfig,
-  AppriseConfig,
-  PushoverConfig,
-  GotifyConfig,
-  SlackConfig,
   NtfyConfig,
-  HomeassistantConfig,
-  BarkConfig,
-} from './common/config';
-import L from './common/logger';
-import { NotificationReason } from './interfaces/notification-reason';
+  PushoverConfig,
+  SlackConfig,
+  TelegramConfig, WebHookConfig
+} from "./common/config";
+import L from "./common/logger";
+import { NotificationReason } from "./interfaces/notification-reason";
 // eslint-disable-next-line import/no-cycle
-import { DeviceLogin } from './device-login';
+import { DeviceLogin } from "./device-login";
+import { WebHookNotifier } from "./notifiers/webhook";
 
 export async function sendNotification(
   accountEmail: string,
@@ -73,6 +74,8 @@ export async function sendNotification(
         return new BarkNotifier(notifierConfig as BarkConfig);
       case NotificationType.NTFY:
         return new NtfyNotifier(notifierConfig as NtfyConfig);
+      case NotificationType.WEBHOOK:
+        return new WebHookNotifier(notifierConfig as WebHookConfig);
       default:
         throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
     }

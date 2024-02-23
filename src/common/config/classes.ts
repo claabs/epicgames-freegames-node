@@ -38,6 +38,7 @@ export enum NotificationType {
   HOMEASSISTANT = 'homeassistant',
   BARK = 'bark',
   NTFY = 'ntfy',
+  WEBHOOK = 'webhook',
 }
 
 /**
@@ -497,6 +498,35 @@ export class BarkConfig extends NotifierConfig {
   }
 }
 
+/**
+ * Sends a [webhook](https://en.wikipedia.org/wiki/Webhook) to a server
+ */
+export class WebHookConfig extends NotifierConfig {
+  /**
+   * Webhook URL.
+   * @env WEBHOOK_URL
+   */
+  @IsUrl()
+  url: string;
+
+  /**
+   * key-value pair headers
+   * @example { Authorization: "Bearer ABCD" }
+   * @env WEBHOOK_HEADERS (stringified JSON)
+   */
+  @IsObject()
+  @IsOptional()
+  headers: object;
+
+  /**
+   * @ignore
+   */
+  constructor() {
+    super(NotificationType.WEBHOOK);
+  }
+}
+
+
 export type AnyNotifierConfig =
   | EmailConfig
   | DiscordConfig
@@ -508,7 +538,8 @@ export type AnyNotifierConfig =
   | SlackConfig
   | HomeassistantConfig
   | BarkConfig
-  | NtfyConfig;
+  | NtfyConfig
+  | WebHookConfig;
 
 const notifierSubtypes: {
   value: ClassConstructor<NotifierConfig>;
@@ -525,6 +556,7 @@ const notifierSubtypes: {
   { value: HomeassistantConfig, name: NotificationType.HOMEASSISTANT },
   { value: BarkConfig, name: NotificationType.BARK },
   { value: NtfyConfig, name: NotificationType.NTFY },
+  { value: WebHookConfig, name: NotificationType.WEBHOOK },
 ];
 
 export class WebPortalConfig {
