@@ -1,18 +1,18 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import asyncHandler from 'express-async-handler';
-import Hashids from 'hashids/cjs';
+import Hashids from 'hashids';
 import urlJoin from 'url-join';
 import { RequestHandler } from 'express';
 import { Logger } from 'pino';
-import { NotificationReason } from './interfaces/notification-reason';
-import { config } from './common/config';
-import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths';
-import { serverRoute } from './common/server';
-import logger from './common/logger';
-import { getLocaltunnelUrl } from './common/localtunnel';
-import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants';
+import { NotificationReason } from './interfaces/notification-reason.js';
+import { config } from './common/config/index.js';
+import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths.js';
+import { serverRoute } from './common/server.js';
+import logger from './common/logger.js';
+import { getLocaltunnelUrl } from './common/localtunnel.js';
+import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
 // eslint-disable-next-line import/no-cycle
-import { sendNotification } from './notify';
+import { sendNotification } from './notify.js';
 
 export interface ClientCredentialsTokenResponse {
   access_token: string;
@@ -70,13 +70,13 @@ const timeoutBufferMs = 30 * 1000;
 export const promiseTimeout = <T>(
   timeoutMs: number,
   promise: Promise<T>,
-  error?: Error
+  error?: Error,
 ): Promise<T> => {
   let timeout: NodeJS.Timeout;
   const timeoutPromise = new Promise((_, reject) => {
     timeout = setTimeout(
       () => reject(error || new Error(`Timed out after ${timeoutMs} ms`)),
-      timeoutMs
+      timeoutMs,
     );
   });
 
@@ -104,14 +104,16 @@ serverRoute.get(
   '/:reqId',
   asyncHandler((req, res, next) => {
     const { reqId } = req.params;
-    const reqHandler = pendingRedirects.get(reqId);
-    if (!reqHandler) {
-      logger.error({ reqId }, 'No pending redirect found');
-      res.status(404);
-      return;
+    if (reqId) {
+      const reqHandler = pendingRedirects.get(reqId);
+      if (reqHandler) {
+        reqHandler(req, res, next);
+        return;
+      }
     }
-    reqHandler(req, res, next);
-  })
+    logger.error({ reqId }, 'No pending redirect found');
+    res.status(404);
+  }),
 );
 
 export class DeviceLogin {
@@ -132,7 +134,7 @@ export class DeviceLogin {
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
-      'Awaiting test notification response'
+      'Awaiting test notification response',
     );
 
     // Wait on a promise to be resolved by the web redirect completing
@@ -141,7 +143,7 @@ export class DeviceLogin {
         notificationTimeout,
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
-        })
+        }),
       ),
       await this.notify(NotificationReason.TEST, url),
     ]);
@@ -154,7 +156,7 @@ export class DeviceLogin {
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
-      'Awaiting login notification response'
+      'Awaiting login notification response',
     );
 
     // Wait on a promise to be resolved by the web redirect and login completing
@@ -163,7 +165,7 @@ export class DeviceLogin {
         notificationTimeout,
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
-        })
+        }),
       ),
       await this.notify(NotificationReason.LOGIN, url),
     ]);
@@ -190,7 +192,7 @@ export class DeviceLogin {
 
   private onLoginVisit =
     (resolve: (value: unknown) => void, reject: (reason?: Error) => void): RequestHandler =>
-    async (req, res) => {
+    async (_req, res) => {
       try {
         const deviceAuthorizationCodeResponse = await this.startDeviceAuthorization();
         // Redirect user to Epic Games login page
@@ -199,7 +201,7 @@ export class DeviceLogin {
         res.redirect(verificationUrl);
         // Wait for user to complete Epic Games login
         const deviceCodeResponse = await this.waitForDeviceAuthorization(
-          deviceAuthorizationCodeResponse
+          deviceAuthorizationCodeResponse,
         );
         // TODO: check that the user matches, only possible with accountId hash
         this.L.info('Successful login, saving auth token');
@@ -266,7 +268,7 @@ export class DeviceLogin {
   }
 
   private async getDeviceAuthorizationCode(
-    clientCredentialsToken: string
+    clientCredentialsToken: string,
   ): Promise<DeviceAuthorizationCodeResponse> {
     const reqConfig: AxiosRequestConfig = {
       method: 'POST',
@@ -281,7 +283,7 @@ export class DeviceLogin {
 
   private async waitForDeviceAuthorization(
     deviceCodeResp: DeviceAuthorizationCodeResponse,
-    inExpiresAt?: Date
+    inExpiresAt?: Date,
   ): Promise<AuthTokenResponse> {
     let expiresAt: Date;
     const now = new Date();

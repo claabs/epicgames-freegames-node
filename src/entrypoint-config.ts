@@ -1,7 +1,6 @@
-import 'source-map-support/register';
-import { outputJSONSync } from 'fs-extra';
-import { config } from './common/config';
-import L from './common/logger';
+import { outputJSONSync } from 'fs-extra/esm';
+import { config } from './common/config/index.js';
+import L from './common/logger.js';
 
 try {
   const { runOnStartup, runOnce, cronSchedule, timezone } = config;

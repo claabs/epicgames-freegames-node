@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { DiscordConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { DiscordConfig } from '../common/config/index.js';
 
 // https://birdie0.github.io/discord-webhooks-guide/index.html
 export class DiscordNotifier extends NotifierService {
@@ -48,7 +48,7 @@ export class DiscordNotifier extends NotifierService {
         },
         {
           responseType: 'json',
-        }
+        },
       );
     } catch (err) {
       L.error(err);

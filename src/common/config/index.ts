@@ -1,2 +1,2 @@
-export * from './classes';
-export * from './setup';
+export * from './classes.js';
+export * from './setup.js';

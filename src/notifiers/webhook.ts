@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { WebhookConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { WebhookConfig } from '../common/config/index.js';
 
 export class WebhookNotifier extends NotifierService {
   private config: WebhookConfig;
@@ -27,13 +27,13 @@ export class WebhookNotifier extends NotifierService {
         {
           responseType: 'json',
           headers: this.config.headers,
-        }
+        },
       );
     } catch (err) {
       L.error(err);
       L.error(
         { webhookConfig: this.config },
-        'Error sending webhook message. Please check your configuration'
+        'Error sending webhook message. Please check your configuration',
       );
       throw err;
     }

@@ -3,10 +3,11 @@
   "version": "5.1.0",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "start:ts": "ts-node src/index.ts",
-    "start:debug": "DEBUG=puppeteer-extra-plugin:portal* ts-node src/index.ts",
+    "start": "vite-node src/index.ts",
+    "start:ts": "vite-node src/index.ts",
+    "start:debug": "DEBUG=puppeteer-extra-plugin:portal* vite-node src/index.ts",
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
     "lint": "tsc --noEmit && eslint .",
@@ -27,7 +28,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
-    "filenamify": "^4.3.0",
+    "filenamify": "^6.0.0",
     "find-process": "^1.4.7",
     "fs-extra": "^11.2.0",
     "hashids": "^2.3.0",
@@ -35,9 +36,9 @@
     "localtunnel": "npm:@security-patched/localtunnel@^2.0.2-secpatched.3",
     "nodemailer": "^6.9.10",
     "object-assign-deep": "^0.4.0",
-    "open": "^8.4.2",
+    "open": "^10.0.3",
     "otpauth": "^9.2.2",
-    "p-queue": "^6.6.2",
+    "p-queue": "^8.0.1",
     "pidtree": "^0.6.0",
     "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",
@@ -47,12 +48,13 @@
     "reflect-metadata": "^0.2.1",
     "rimraf": "^5.0.5",
     "set-cookie-parser": "^2.6.0",
-    "source-map-support": "^0.5.21",
     "tough-cookie": "^4.1.3",
     "tough-cookie-file-store": "^2.0.3",
-    "url-join": "^4.0.1"
+    "url-join": "^5.0.0"
   },
   "devDependencies": {
+    "@tsconfig/node20": "^20.1.2",
+    "@tsconfig/strictest": "^2.0.3",
     "@types/express": "^4.17.21",
     "@types/fs-extra": "^11.0.4",
     "@types/localtunnel": "^2.0.4",
@@ -60,7 +62,6 @@
     "@types/nodemailer": "^6.4.14",
     "@types/object-assign-deep": "^0.4.3",
     "@types/set-cookie-parser": "^2.4.7",
-    "@types/source-map-support": "^0.5.10",
     "@types/tough-cookie-file-store": "^2.0.4",
     "@types/url-join": "^4.0.3",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
@@ -72,9 +73,9 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.2.5",
-    "ts-node": "^10.9.2",
     "typedoc": "^0.25.8",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite-node": "^1.3.1"
   },
   "engines": {
     "node": ">=20"

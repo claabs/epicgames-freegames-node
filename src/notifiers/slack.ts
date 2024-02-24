@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { SlackConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { SlackConfig } from '../common/config/index.js';
 
 export class SlackNotifier extends NotifierService {
   private config: SlackConfig;
@@ -24,13 +24,13 @@ export class SlackNotifier extends NotifierService {
         },
         {
           responseType: 'text',
-        }
+        },
       );
     } catch (err) {
       L.error(err);
       L.error(
         { SlackConfig: this.config },
-        'Error sending Slack message. Please check your configuration'
+        'Error sending Slack message. Please check your configuration',
       );
       throw err;
     }

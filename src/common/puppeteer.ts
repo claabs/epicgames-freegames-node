@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-extra';
+import _puppeteer, { PuppeteerExtra } from 'puppeteer-extra';
 import { Page, Protocol, Browser, executablePath } from 'puppeteer';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -6,9 +6,10 @@ import { Logger } from 'pino';
 import { cancelable } from 'cancelable-promise';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
-import { ETCCookie, ToughCookieFileStore } from './cookie';
-import { config } from './config';
+import { ETCCookie, ToughCookieFileStore } from './cookie.js';
+import { config } from './config/index.js';
 
+const puppeteer = _puppeteer as unknown as PuppeteerExtra;
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('iframe.contentWindow'); // fixes "word word word..." and "mmMwWLliI0fiflO&1"
 puppeteer.use(stealth);
@@ -16,7 +17,7 @@ puppeteer.use(stealth);
 export default puppeteer;
 
 export function puppeteerCookieToToughCookieFileStore(
-  puppetCookie: Protocol.Network.Cookie
+  puppetCookie: Protocol.Network.Cookie,
 ): ToughCookieFileStore {
   const domain = puppetCookie.domain.replace(/^\./, '');
   const expires = new Date(puppetCookie.expires * 1000).toISOString();
@@ -42,7 +43,7 @@ export function puppeteerCookieToToughCookieFileStore(
 }
 
 export function puppeteerCookiesToToughCookieFileStore(
-  puppetCookies: Protocol.Network.Cookie[]
+  puppetCookies: Protocol.Network.Cookie[],
 ): ToughCookieFileStore {
   const tcfs: ToughCookieFileStore = {};
   puppetCookies.forEach((puppetCookie) => {
@@ -53,7 +54,7 @@ export function puppeteerCookiesToToughCookieFileStore(
 }
 
 export function toughCookieFileStoreToPuppeteerCookie(
-  tcfs: ToughCookieFileStore
+  tcfs: ToughCookieFileStore,
 ): Protocol.Network.CookieParam[] {
   const puppetCookies: Protocol.Network.CookieParam[] = [];
   Object.values(tcfs).forEach((domain) => {
@@ -76,7 +77,7 @@ export function toughCookieFileStoreToPuppeteerCookie(
 }
 
 export function puppeteerCookieToEditThisCookie(
-  puppetCookies: Protocol.Network.CookieParam[]
+  puppetCookies: Protocol.Network.CookieParam[],
 ): ETCCookie[] {
   return puppetCookies.map(
     (puppetCookie, index): ETCCookie => ({
@@ -92,7 +93,7 @@ export function puppeteerCookieToEditThisCookie(
       storeId: '0',
       id: index + 1,
       value: puppetCookie.value,
-    })
+    }),
   );
 }
 
@@ -128,7 +129,7 @@ const retryFunction = async <T>(
   f: () => Promise<T>,
   L: Logger,
   outputName: string,
-  attempts = 0
+  attempts = 0,
 ): Promise<T> => {
   const TIMEOUT = config.browserLaunchTimeout * 1000;
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
@@ -150,23 +151,23 @@ const retryFunction = async <T>(
   const newProcesses = await Promise.all(
     afterProcesses
       .filter((p) => !beforeProcesses.includes(p))
-      .map(async (p) => (await findProcess('pid', p))[0])
+      .map(async (p) => (await findProcess('pid', p))[0]),
   );
   const chromiumProcesses = newProcesses.filter(
-    (p) =>
-      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n))
+    (p): p is NonNullable<typeof p> =>
+      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
   );
   L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
   chromiumProcesses.forEach((p) => process.kill(p.pid));
   if (attempts >= MAX_ATTEMPTS) {
     L.error(
-      `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`
+      `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
     );
     throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
   }
   L.warn(
     { attempts, MAX_ATTEMPTS },
-    `${outputName} did not work after ${TIMEOUT}ms. Trying again.`
+    `${outputName} did not work after ${TIMEOUT}ms. Trying again.`,
   );
   return retryFunction(f, L, outputName, attempts + 1);
 };

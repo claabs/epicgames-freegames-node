@@ -1,12 +1,13 @@
 import * as tough from 'tough-cookie';
 import { FileCookieStore } from 'tough-cookie-file-store';
-import fs from 'fs-extra';
+import fsx from 'fs-extra/esm';
+import fs from 'node:fs';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
 import { Protocol } from 'puppeteer';
 import path from 'path';
-import L from './logger';
-import { CONFIG_DIR } from './config';
+import L from './logger.js';
+import { CONFIG_DIR } from './config/index.js';
 
 export interface TCFSCookieAttributes {
   key: string;
@@ -114,14 +115,14 @@ export function getCookies(username: string): Record<string, string> {
   const { cookies } = cookieJar.toJSON();
   return cookies.reduce<Record<string, string>>(
     (accum, cookie) => ({ ...accum, [cookie.key]: cookie.value }),
-    {}
+    {},
   );
 }
 
 export async function getCookiesRaw(username: string): Promise<ToughCookieFileStore> {
   const cookieFilename = getCookiePath(username);
   try {
-    const existingCookies: ToughCookieFileStore = await fs.readJSON(cookieFilename);
+    const existingCookies: ToughCookieFileStore = await fsx.readJSON(cookieFilename);
     return existingCookies;
   } catch (err) {
     return {};
@@ -135,7 +136,7 @@ export function setCookie(username: string, key: string, value: string): void {
       key,
       value,
     }),
-    '.epicgames.com'
+    '.epicgames.com',
   );
 }
 
@@ -198,7 +199,7 @@ export function userHasValidCookie(username: string, cookieName: string): boolea
   const fileExists = fs.existsSync(cookieFilename);
   if (fileExists) {
     try {
-      const cookieData: ToughCookieFileStore = fs.readJSONSync(cookieFilename, 'utf8');
+      const cookieData: ToughCookieFileStore = fsx.readJSONSync(cookieFilename, 'utf8');
       const rememberCookieExpireDate = cookieData['epicgames.com']?.['/']?.[cookieName]?.expires;
       if (!rememberCookieExpireDate) return false;
       return new Date(rememberCookieExpireDate) > new Date();

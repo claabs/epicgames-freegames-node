@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { PushoverConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { PushoverConfig } from '../common/config/index.js';
 
 export class PushoverNotifier extends NotifierService {
   private config: PushoverConfig;
@@ -27,13 +27,13 @@ export class PushoverNotifier extends NotifierService {
         },
         {
           responseType: 'json',
-        }
+        },
       );
     } catch (err) {
       L.error(err);
       L.error(
         { pushoverConfig: this.config },
-        'Error sending pushover message. Please check your configuration'
+        'Error sending pushover message. Please check your configuration',
       );
       throw err;
     }

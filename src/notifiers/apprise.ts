@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { AppriseConfig } from '../common/config';
-import { NotificationReason } from '../interfaces/notification-reason';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { AppriseConfig } from '../common/config/index.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class AppriseNotifier extends NotifierService {
   private config: AppriseConfig;

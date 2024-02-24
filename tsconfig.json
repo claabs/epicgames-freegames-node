@@ -1,26 +1,33 @@
 {
+  "extends": [
+    "@tsconfig/strictest/tsconfig",
+    "@tsconfig/node20/tsconfig",
+  ],
   "compilerOptions": {
-    // see https://github.com/tsconfig/bases/blob/main/bases/node18.json
-    "target": "es2021", // Stuck on es2021 due to https://github.com/typestack/class-transformer/issues/1216
-    "module": "commonjs",
-    "outDir": "./dist", /* Redirect output structure to the directory. */
-    "removeComments": true, /* Do not emit comments to output. */
-    "esModuleInterop": true,
-    "strict": true, /* Enable all strict type-checking options. */
-    "moduleResolution": "node", /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+    // ESM
+    "module": "node16",
+    "moduleResolution": "node16",
+    // Disable extra strict rules
+    "exactOptionalPropertyTypes": false,
+    "noPropertyAccessFromIndexSignature": false,
+    // Project requirements
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
+    "useUnknownInCatchVariables": false,
+    // Types    
     "typeRoots": [
       "node_modules/@types",
       "types"
     ], /* List of folders to include type definitions from. */
-    "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
-    "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */
+    // Output
+    "outDir": "./dist", /* Redirect output structure to the directory. */
     "rootDir": ".",
-    "useUnknownInCatchVariables": false,
-    "experimentalDecorators": true,
-    "strictPropertyInitialization": false,
+    "removeComments": true, /* Do not emit comments to output. */
+    "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    ".*.cjs",
   ],
   "exclude": [
     "node_modules",

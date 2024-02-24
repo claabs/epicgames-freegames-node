@@ -3,7 +3,7 @@ import http from 'http';
 import { once } from 'events';
 import express from 'express';
 
-import { config } from './config';
+import { config } from './config/index.js';
 
 const app = express();
 const router = express.Router();
