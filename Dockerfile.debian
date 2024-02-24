@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:18-bullseye-slim as base
+FROM node:20-bookworm-slim as base
 
 ENV DISTRO=debian
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -13,7 +13,6 @@ WORKDIR /usr/app
 ########
 FROM base as deps
 
-# Chromium dependencies https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#running-puppeteer-in-docker
 # The Google Chrome apt list only seems to provide the latest version, so version compatibility with puppeteer is questionable
 RUN apt-get update \
     && apt-get install -y wget gnupg procps \
@@ -77,8 +76,8 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:18-bullseye-slim" \
-    org.opencontainers.image.version="bullseye-slim"
+    org.opencontainers.image.base.name="node:20-bookworm-slim" \
+    org.opencontainers.image.version="debian"
 
 ENV NODE_ENV=production \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
