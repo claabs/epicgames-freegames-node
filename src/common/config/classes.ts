@@ -1,4 +1,4 @@
-/* eslint-disable no-empty-function, no-useless-constructor, max-classes-per-file */
+/* eslint-disable @typescript-eslint/no-empty-function, @typescript-eslint/no-useless-constructor, max-classes-per-file */
 import 'reflect-metadata';
 import { ClassConstructor, Expose, Type } from 'class-transformer';
 import {
