@@ -17,7 +17,7 @@
     // Types    
     "typeRoots": [
       "node_modules/@types",
-      "types"
+      "src/types"
     ], /* List of folders to include type definitions from. */
     // Output
     "outDir": "./dist", /* Redirect output structure to the directory. */

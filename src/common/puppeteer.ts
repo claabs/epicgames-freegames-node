@@ -3,7 +3,8 @@ import { Page, Protocol, Browser, executablePath } from 'puppeteer';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
-import CancelablePromise from 'cancelable-promise';
+// eslint-disable-next-line import/extensions
+import { cancelable } from 'cancelable-promise/esm/CancelablePromise.mjs';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
 import { ETCCookie, ToughCookieFileStore } from './cookie.js';
@@ -134,7 +135,7 @@ const retryFunction = async <T>(
   const TIMEOUT = config.browserLaunchTimeout * 1000;
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
   const beforeProcesses = await pidtree(process.pid);
-  const newPageCancelable = CancelablePromise.cancelable(f());
+  const newPageCancelable = cancelable(f());
   let timeoutInstance: NodeJS.Timeout | undefined;
   const res = await Promise.race([
     newPageCancelable,
