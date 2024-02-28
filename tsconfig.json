@@ -1,7 +1,7 @@
 {
   "extends": [
     "@tsconfig/strictest/tsconfig",
-    "@tsconfig/node20/tsconfig",
+    "@tsconfig/node18/tsconfig",
   ],
   "compilerOptions": {
     // ESM

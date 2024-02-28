@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:20-alpine3.19 as base
+FROM node:18-alpine3.19 as base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -71,7 +71,7 @@ LABEL org.opencontainers.image.title="epicgames-freegames-node" \
     org.opencontainers.image.name="epicgames-freegames-node" \
     org.opencontainers.image.revision=${COMMIT_SHA} \
     org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:20-alpine3.19" \
+    org.opencontainers.image.base.name="node:18-alpine3.19" \
     org.opencontainers.image.version="latest"
 
 ENV NODE_ENV=production \

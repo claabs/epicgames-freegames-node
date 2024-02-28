@@ -225,7 +225,7 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
 1. Create `config` folder in the cloned/unpacked directory
 1. Create [JSON configuration](#json-configuration)
-1. [Install Node.js 20](https://nodejs.org/) or higher
+1. [Install Node.js 18](https://nodejs.org/) or higher
 1. Install Node.js dependencies
     * Start terminal and navigate to cloned/unpacked directory
     * Run `npm i`
