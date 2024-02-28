@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "axios": "^1.6.7",
-    "cancelable-promise": "^4.3.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cron-parser": "^4.9.0",
@@ -39,6 +38,7 @@
     "open": "^10.0.3",
     "otpauth": "^9.2.2",
     "p-queue": "^8.0.1",
+    "p-timeout": "^6.1.2",
     "pidtree": "^0.6.0",
     "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",

@@ -3,8 +3,7 @@ import { Page, Protocol, Browser, executablePath } from 'puppeteer';
 import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
-// eslint-disable-next-line import/extensions
-import { cancelable } from 'cancelable-promise/esm/CancelablePromise.mjs';
+import pTimeout, { TimeoutError } from 'p-timeout';
 import pidtree from 'pidtree';
 import findProcess from 'find-process';
 import { ETCCookie, ToughCookieFileStore } from './cookie.js';
@@ -135,42 +134,37 @@ const retryFunction = async <T>(
   const TIMEOUT = config.browserLaunchTimeout * 1000;
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
   const beforeProcesses = await pidtree(process.pid);
-  const newPageCancelable = cancelable(f());
-  let timeoutInstance: NodeJS.Timeout | undefined;
-  const res = await Promise.race([
-    newPageCancelable,
-    new Promise((resolve) => {
-      timeoutInstance = setTimeout(resolve, TIMEOUT);
-    }).then(() => 'timeout'),
-  ]);
-  if (typeof res !== 'string') {
-    if (timeoutInstance) clearTimeout(timeoutInstance);
-    return res;
-  }
-  newPageCancelable.cancel();
-  const afterProcesses = await pidtree(process.pid);
-  const newProcesses = await Promise.all(
-    afterProcesses
-      .filter((p) => !beforeProcesses.includes(p))
-      .map(async (p) => (await findProcess('pid', p))[0]),
-  );
-  const chromiumProcesses = newProcesses.filter(
-    (p): p is NonNullable<typeof p> =>
-      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
-  );
-  L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
-  chromiumProcesses.forEach((p) => process.kill(p.pid));
-  if (attempts >= MAX_ATTEMPTS) {
-    L.error(
-      `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
+  try {
+    return await pTimeout(f(), { milliseconds: TIMEOUT });
+  } catch (err) {
+    if (!(err instanceof TimeoutError)) {
+      throw err;
+    }
+    // If the function timed out
+    const afterProcesses = await pidtree(process.pid);
+    const newProcesses = await Promise.all(
+      afterProcesses
+        .filter((p) => !beforeProcesses.includes(p))
+        .map(async (p) => (await findProcess('pid', p))[0]),
     );
-    throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
+    const chromiumProcesses = newProcesses.filter(
+      (p): p is NonNullable<typeof p> =>
+        p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
+    );
+    L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
+    chromiumProcesses.forEach((p) => process.kill(p.pid));
+    if (attempts >= MAX_ATTEMPTS) {
+      L.error(
+        `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
+      );
+      throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
+    }
+    L.warn(
+      { attempts, MAX_ATTEMPTS },
+      `${outputName} did not work after ${TIMEOUT}ms. Trying again.`,
+    );
+    return retryFunction(f, L, outputName, attempts + 1);
   }
-  L.warn(
-    { attempts, MAX_ATTEMPTS },
-    `${outputName} did not work after ${TIMEOUT}ms. Trying again.`,
-  );
-  return retryFunction(f, L, outputName, attempts + 1);
 };
 
 /**
