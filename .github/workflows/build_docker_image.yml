@@ -19,6 +19,8 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        with:
+          image: tonistiigi/binfmt:master
 
       - name: Set up Docker Buildx
         id: buildx
@@ -89,6 +91,24 @@ jobs:
             charlocharlie/epicgames-freegames:dev
             ghcr.io/claabs/epicgames-freegames-node:dev
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+            BRANCH=${{ env.GIT_BRANCH }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
+
+      - name: Build and push dev (Debian)
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        uses: docker/build-push-action@v5
+        with:
+          provenance: false # enable later when runtime support is better
+          target: deploy
+          push: true
+          file: Dockerfile.debian
+          tags: |
+            charlocharlie/epicgames-freegames:dev-debian
+            ghcr.io/claabs/epicgames-freegames-node:dev-debian
+          platforms: linux/amd64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
             BRANCH=${{ env.GIT_BRANCH }}
