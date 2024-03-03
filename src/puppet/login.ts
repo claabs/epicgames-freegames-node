@@ -1,15 +1,15 @@
 /* eslint-disable class-methods-use-this */
 import { Page, Protocol } from 'puppeteer';
-import { STORE_CART_EN } from '../common/constants';
-import PuppetBase from './base';
-import { getCookiesRaw, userHasValidCookie } from '../common/cookie';
+import { STORE_CART_EN } from '../common/constants.js';
+import PuppetBase from './base.js';
+import { getCookiesRaw, userHasValidCookie } from '../common/cookie.js';
 import {
   toughCookieFileStoreToPuppeteerCookie,
   safeLaunchBrowser,
   safeNewPage,
   getDevtoolsUrl,
-} from '../common/puppeteer';
-import { generateLoginRedirect } from '../purchase';
+} from '../common/puppeteer.js';
+import { generateLoginRedirect } from '../purchase.js';
 
 export default class PuppetLogin extends PuppetBase {
   async refreshCookieLogin(): Promise<boolean> {

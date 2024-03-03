@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { NtfyConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { NtfyConfig } from '../common/config/index.js';
 
 export class NtfyNotifier extends NotifierService {
   private config: NtfyConfig;
@@ -29,13 +29,13 @@ export class NtfyNotifier extends NotifierService {
             Authorization: `Bearer ${this.config.token}`,
           },
           responseType: 'text',
-        }
+        },
       );
     } catch (err) {
       L.error(err);
       L.error(
         { NtfyConfig: this.config },
-        'Error sending Ntfy message. Please check your configuration'
+        'Error sending Ntfy message. Please check your configuration',
       );
       throw err;
     }

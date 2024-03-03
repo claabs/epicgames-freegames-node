@@ -1,7 +1,7 @@
-import fs from 'fs-extra';
+import fsx from 'fs-extra/esm';
 import path from 'path';
-import L from './logger';
-import { CONFIG_DIR } from './config';
+import L from './logger.js';
+import { CONFIG_DIR } from './config/index.js';
 
 export interface AuthTokenResponse {
   access_token: string;
@@ -30,7 +30,7 @@ const deviceAuthsFilename = path.join(CONFIG_DIR, `device-auths.json`);
 
 export function getDeviceAuths(): DeviceAuthsFile | undefined {
   try {
-    const deviceAuths: DeviceAuthsFile = fs.readJSONSync(deviceAuthsFilename, 'utf-8');
+    const deviceAuths: DeviceAuthsFile = fsx.readJSONSync(deviceAuthsFilename, 'utf-8');
     return deviceAuths;
   } catch (err) {
     L.trace(err.message);
@@ -44,7 +44,7 @@ export function getAccountAuth(account: string): AuthTokenResponse | undefined {
 }
 
 export function writeDeviceAuths(deviceAuths: DeviceAuthsFile): void {
-  fs.outputJSONSync(deviceAuthsFilename, deviceAuths, 'utf-8');
+  fsx.outputJSONSync(deviceAuthsFilename, deviceAuths, 'utf-8');
 }
 
 export function setAccountAuth(account: string, accountAuth: AuthTokenResponse): void {

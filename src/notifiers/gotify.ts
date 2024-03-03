@@ -1,8 +1,8 @@
 import axios from 'axios';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { GotifyConfig } from '../common/config/classes';
-import { NotificationReason } from '../interfaces/notification-reason';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { GotifyConfig } from '../common/config/index.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class GotifyNotifier extends NotifierService {
   private config: GotifyConfig;

@@ -1,9 +1,9 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
-import logger from '../common/logger';
-import { NotifierService } from './notifier-service';
-import { NotificationReason } from '../interfaces/notification-reason';
-import { EmailConfig } from '../common/config';
+import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
+import { EmailConfig } from '../common/config/index.js';
 
 export class EmailNotifier extends NotifierService {
   private readonly emailTransporter: Mail;
@@ -44,7 +44,7 @@ export class EmailNotifier extends NotifierService {
           from: this.config.emailSenderAddress,
           to: this.config.emailRecipientAddress,
         },
-        'Email sent.'
+        'Email sent.',
       );
     } catch (err) {
       L.error({ emailConfig: this.config }, 'Error sending email. Please check your configuration');

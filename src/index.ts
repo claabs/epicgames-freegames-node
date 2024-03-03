@@ -1,19 +1,17 @@
-/* eslint-disable no-await-in-loop */
-import 'source-map-support/register';
 import { exit } from 'process';
 import PQueue from 'p-queue';
-import { config, AccountConfig } from './common/config';
-import logger from './common/logger';
-import { sendNotification, testNotifiers } from './notify';
-import { checkForUpdate, logVersionOnError } from './version';
-import PuppetLogin from './puppet/login';
-import { safeLaunchBrowser } from './common/puppeteer';
-import PuppetFreeGames from './puppet/free-games';
-import { createServer } from './common/server';
-import { convertImportCookies } from './common/cookie';
-import { DeviceLogin } from './device-login';
-import { generateCheckoutUrl } from './purchase';
-import { NotificationReason } from './interfaces/notification-reason';
+import { config, AccountConfig } from './common/config/index.js';
+import logger from './common/logger.js';
+import { sendNotification, testNotifiers } from './notify.js';
+import { checkForUpdate, logVersionOnError } from './version.js';
+import PuppetLogin from './puppet/login.js';
+import { safeLaunchBrowser } from './common/puppeteer.js';
+import PuppetFreeGames from './puppet/free-games.js';
+import { createServer } from './common/server.js';
+import { convertImportCookies } from './common/cookie.js';
+import { DeviceLogin } from './device-login.js';
+import { generateCheckoutUrl } from './purchase.js';
+import { NotificationReason } from './interfaces/notification-reason.js';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -82,7 +80,7 @@ export async function main(): Promise<void> {
       intervalCap: 1,
     });
     const accountPromises = config.accounts.map(async (account) =>
-      queue.add(() => redeemAccount(account))
+      queue.add(() => redeemAccount(account)),
     );
     await Promise.all(accountPromises);
     server.close();

@@ -8,15 +8,13 @@
             "type": "node",
             "request": "launch",
             "name": "Debug Main",
-            "runtimeArgs": [
-                "-r",
-                "ts-node/register"
-            ],
+            "autoAttachChildProcesses": true,
+            "program": "${workspaceRoot}/node_modules/vite-node/dist/cli.mjs",
             "args": [
                 "${workspaceFolder}/src/index.ts"
             ],
             "outputCapture": "std",
             "console": "integratedTerminal"
-        }
+        },
     ]
 }

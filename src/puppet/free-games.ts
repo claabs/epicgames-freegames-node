@@ -4,24 +4,24 @@ import {
   GRAPHQL_ENDPOINT,
   STORE_CART_EN,
   STORE_CONTENT,
-} from '../common/constants';
-import { config, SearchStrategy } from '../common/config';
-import PuppetBase from './base';
-import { OfferInfo } from '../interfaces/types';
-import { CatalogOffer, GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response';
+} from '../common/constants.js';
+import { config, SearchStrategy } from '../common/config/index.js';
+import PuppetBase from './base.js';
+import { OfferInfo } from '../interfaces/types.js';
+import { CatalogOffer, GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response.js';
 import {
   GraphQLErrorResponse,
   Offer,
   ProductInfo,
   Page as ProductInfoPage,
-} from '../interfaces/product-info';
-import { PromotionsQueryResponse } from '../interfaces/promotions-response';
+} from '../interfaces/product-info.js';
+import { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
 import {
   SearchStoreQueryResponse,
   Element as SearchStoreElement,
-} from '../interfaces/search-store-query-response';
-import { OffersValidationResponse } from '../interfaces/offers-validation';
-import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping';
+} from '../interfaces/search-store-query-response.js';
+import { OffersValidationResponse } from '../interfaces/offers-validation.js';
+import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping.js';
 
 export default class PuppetFreeGames extends PuppetBase {
   private page?: Page;
@@ -29,7 +29,7 @@ export default class PuppetFreeGames extends PuppetBase {
   private async request<T = unknown>(
     method: string,
     url: string,
-    params?: Record<string, string>
+    params?: Record<string, string>,
   ): Promise<T> {
     if (!this.page) {
       this.page = await this.setupPage();
@@ -48,12 +48,12 @@ export default class PuppetFreeGames extends PuppetBase {
         const response = await fetch(inFetchUrl, {
           method: inMethod,
         });
-        const json: T = await response.json();
+        const json = (await response.json()) as T;
         if (!response.ok) throw new Error(JSON.stringify(json));
         return json;
       },
       fetchUrl.toString(),
-      method
+      method,
     );
     return resp;
   }
@@ -87,7 +87,7 @@ export default class PuppetFreeGames extends PuppetBase {
     };
     this.L.trace(
       { url: GRAPHQL_ENDPOINT, variables, extensions },
-      'Posting for all games in catalog'
+      'Posting for all games in catalog',
     );
 
     // Paginate through the GraphQL API responses
@@ -148,7 +148,7 @@ export default class PuppetFreeGames extends PuppetBase {
     const body = await this.request<PromotionsQueryResponse>(
       'GET',
       FREE_GAMES_PROMOTIONS_ENDPOINT,
-      searchParams
+      searchParams,
     );
     const nowDate = new Date();
     const elements = body.data?.Catalog?.searchStore?.elements;
@@ -209,7 +209,7 @@ export default class PuppetFreeGames extends PuppetBase {
               productSlug: pageSlug,
             },
           ];
-        })
+        }),
       )
     ).flat();
     return allProductOffers;
@@ -287,11 +287,11 @@ export default class PuppetFreeGames extends PuppetBase {
         operationName: 'getOffersValidation',
         variables: JSON.stringify(variables),
         extensions: JSON.stringify(extensions),
-      }
+      },
     );
     if ('errors' in entitlementRespBody) {
       this.L.debug(entitlementRespBody.errors);
-      throw new Error(entitlementRespBody.errors[0].message);
+      throw new Error(entitlementRespBody.errors[0]?.message);
     }
     const validations = entitlementRespBody.data?.Entitlements?.cartOffersValidation;
     this.L.debug({ offerId, namespace, validations }, 'Offers validation response');
@@ -310,7 +310,7 @@ export default class PuppetFreeGames extends PuppetBase {
     const canPurchaseSet = await Promise.all(
       offers.map((offer) => {
         return this.canPurchase(offer.offerId, offer.offerNamespace);
-      })
+      }),
     );
     const purchasableGames: OfferInfo[] = offers.filter((_offer, index) => {
       return canPurchaseSet[index];
@@ -323,12 +323,12 @@ export default class PuppetFreeGames extends PuppetBase {
     if (!isFree) return false; // don't log non-free offers (thousands)
 
     const isCountryBlacklisted = offer.countriesBlacklist?.includes(
-      config.countryCode?.toUpperCase() || ''
+      config.countryCode?.toUpperCase() || '',
     );
     const isExpired = offer.expiryDate ? new Date(offer.expiryDate) < new Date() : false;
     const title = offer.title.trim().toLowerCase();
     const isBlacklistedTitle = config.blacklistedGames.some(
-      (blacklistedTitle) => blacklistedTitle.trim().toLowerCase() === title
+      (blacklistedTitle) => blacklistedTitle.trim().toLowerCase() === title,
     );
 
     this.L.trace({
@@ -347,7 +347,7 @@ export default class PuppetFreeGames extends PuppetBase {
           isCountryBlacklisted,
           isBlacklistedTitle,
         },
-        'ignoring invalid offer'
+        'ignoring invalid offer',
       );
       return false;
     }
@@ -417,24 +417,26 @@ export default class PuppetFreeGames extends PuppetBase {
       this.L.trace({ dupedFreeGames: validFreeGames });
       // dedupe
       validFreeGames = validFreeGames.filter(
-        (e, i) => validFreeGames.findIndex((a) => a.offerId === e.offerId) === i
+        (e, i) => validFreeGames.findIndex((a) => a.offerId === e.offerId) === i,
       );
     }
     // Get true offerIds for weekly offers, and use offer data to filter by country restrictions for catalog offers
     validFreeGames = (
       await Promise.all(
-        validFreeGames.map(async (offer) => this.validateOffer(offer.offerId, offer.offerNamespace))
+        validFreeGames.map(async (offer) =>
+          this.validateOffer(offer.offerId, offer.offerNamespace),
+        ),
       )
     ).filter((offer): offer is OfferInfo => offer !== undefined);
     // TODO: Potential dupes here?
     this.L.info(
       { availableGames: validFreeGames.map((game) => game.productName) },
-      'Available free games'
+      'Available free games',
     );
     const purchasableGames = await this.getPurchasableFreeGames(validFreeGames);
     this.L.info(
       { purchasableGames: purchasableGames.map((game) => game.productName) },
-      'Unpurchased free games'
+      'Unpurchased free games',
     );
     if (this.page) await this.page.close();
     return purchasableGames;
