@@ -11,9 +11,14 @@ RUN_ON_STARTUP=$(cat $TEMP_CONFIG | jq -r ".runOnStartup")
 RUN_ONCE=$(cat $TEMP_CONFIG | jq -r ".runOnce")
 CRON_SCHEDULE=$(cat $TEMP_CONFIG | jq -r ".cronSchedule")
 
-echo "Setting timezone: $TZ"
-ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime
-echo "$TZ" > /etc/timezone
+if [ ! -e /etc/localtime ]; then
+    echo "Setting localtime: $TZ"
+    ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime
+fi
+if [ ! -e /etc/timezone ]; then
+    echo "Setting timezone: $TZ"
+    echo "$TZ" > /etc/timezone
+fi
 
 # If runOnStartup is set, run it once before setting up the schedule
 echo "Run on startup: ${RUN_ON_STARTUP}"
