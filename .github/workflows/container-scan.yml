@@ -9,6 +9,8 @@ jobs:
   trivy:
     runs-on: ubuntu-latest
     steps:
+      - name: Create folder
+        run: mkdir -p sarif-results
       - name: Scan Alpine image
         uses: aquasecurity/trivy-action@master
         with:
