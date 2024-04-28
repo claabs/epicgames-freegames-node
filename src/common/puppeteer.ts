@@ -115,7 +115,6 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     '--no-sandbox', // For Docker root user
     '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
     '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
-    '--single-process',
     // For debugging in Docker
     // '--remote-debugging-port=3001',
     // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
