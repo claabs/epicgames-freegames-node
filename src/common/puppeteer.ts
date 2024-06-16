@@ -8,6 +8,7 @@ import pidtree from 'pidtree';
 import findProcess from 'find-process';
 import { ETCCookie, ToughCookieFileStore } from './cookie.js';
 import { config } from './config/index.js';
+import { getCommitSha } from '../version.js';
 
 const puppeteer = _puppeteer as unknown as PuppeteerExtra;
 const stealth = StealthPlugin();
@@ -154,7 +155,7 @@ const retryFunction = async <T>(
     chromiumProcesses.forEach((p) => process.kill(p.pid));
     if (attempts >= MAX_ATTEMPTS) {
       L.error(
-        `If not already, consider using the Debian (:bullseye-slim) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
+        `If not already, consider using the Debian (:debian) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
       );
       throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
     }
@@ -164,6 +165,20 @@ const retryFunction = async <T>(
     );
     return retryFunction(f, L, outputName, attempts + 1);
   }
+};
+
+export const killBrowserProcesses = async (L: Logger) => {
+  if (!getCommitSha()) return; // Don't kill processes if not in docker
+  const afterProcesses = await pidtree(process.pid);
+  const newProcesses = await Promise.all(
+    afterProcesses.map(async (p) => (await findProcess('pid', p))[0]),
+  );
+  const browserProcesses = newProcesses.filter(
+    (p): p is NonNullable<typeof p> =>
+      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
+  );
+  L.debug({ browserProcesses }, 'Killing dangling browser processes');
+  browserProcesses.forEach((p) => process.kill(p.pid));
 };
 
 /**

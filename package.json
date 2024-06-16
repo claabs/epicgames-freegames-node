@@ -11,7 +11,7 @@
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
     "lint": "tsc --noEmit && eslint .",
-    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
+    "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
     "docker:build-debian": "docker build . -t charlocharlie/epicgames-freegames-node:debian --target deploy --file Dockerfile.debian",
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy",
     "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3000:3000 -p 3001:3001 -e DEBUG=puppeteer-extra-plugin:portal* charlocharlie/epicgames-freegames-node:latest",

@@ -43,6 +43,10 @@ export async function checkForUpdate(): Promise<void> {
   }
 }
 
+export const getCommitSha = () => {
+  return COMMIT_SHA;
+};
+
 export function logVersionOnError(): void {
   if (COMMIT_SHA || BRANCH || DISTRO) {
     L.warn({ COMMIT_SHA, BRANCH, DISTRO }, 'Current version');
