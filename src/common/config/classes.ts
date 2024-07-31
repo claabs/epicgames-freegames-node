@@ -135,6 +135,13 @@ export class DiscordConfig extends NotifierConfig {
   mentionedRoles: string[];
 
   /**
+   * Should show the URL on the message content
+   */
+  @IsBoolean()
+  @IsOptional()
+  showUrl?: boolean;
+
+  /**
    * @ignore
    */
   constructor() {

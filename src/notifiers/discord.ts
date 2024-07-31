@@ -28,7 +28,7 @@ export class DiscordNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         {
-          content: `${mentions}epicgames-freegames-node needs an action performed. ${url}`,
+          content: `${mentions}epicgames-freegames-node needs an action performed. ${this.config.showUrl ? url : null}`,
           embeds: [
             {
               fields: [
