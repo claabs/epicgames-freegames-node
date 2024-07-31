@@ -135,11 +135,14 @@ export class DiscordConfig extends NotifierConfig {
   mentionedRoles: string[];
 
   /**
-   * Should show the URL on the message content
+   * If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL.
+   * @example true
+   * @default false
+   * @env DISCORD_SHOW_URL
    */
   @IsBoolean()
   @IsOptional()
-  showUrl?: boolean;
+  showUrl = false;
 
   /**
    * @ignore
@@ -1031,12 +1034,14 @@ export class AppConfig {
     }
 
     // Use environment variables to fill discord notification config if present
-    const { DISCORD_WEBHOOK, DISCORD_MENTIONED_USERS, DISCORD_MENTIONED_ROLES } = process.env;
+    const { DISCORD_WEBHOOK, DISCORD_MENTIONED_USERS, DISCORD_MENTIONED_ROLES, DISCORD_SHOW_URL } =
+      process.env;
     if (DISCORD_WEBHOOK) {
       const discord = new DiscordConfig();
       discord.webhookUrl = DISCORD_WEBHOOK;
       if (DISCORD_MENTIONED_USERS) discord.mentionedUsers = DISCORD_MENTIONED_USERS.split(',');
       if (DISCORD_MENTIONED_ROLES) discord.mentionedRoles = DISCORD_MENTIONED_ROLES.split(',');
+      discord.showUrl = DISCORD_SHOW_URL === 'true';
       if (!this.notifiers) {
         this.notifiers = [];
       }
