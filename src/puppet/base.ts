@@ -1,5 +1,5 @@
 import { Logger } from 'pino';
-import { Protocol, Page, Browser } from 'puppeteer';
+import { Protocol, Page, Browser, CookieParam } from 'puppeteer';
 import path from 'path';
 import { ensureDir } from 'fs-extra/esm';
 import logger from '../common/logger.js';
@@ -36,7 +36,7 @@ export default class PuppetBase {
 
   protected async setupPage(): Promise<Page> {
     // Get cookies or latest access_token cookies
-    let puppeteerCookies: Protocol.Network.CookieParam[] = [];
+    let puppeteerCookies: CookieParam[] = [];
     if (userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
       this.L.debug('Setting auth from cookies');
       const userCookies = await getCookiesRaw(this.email);
@@ -45,7 +45,7 @@ export default class PuppetBase {
       const deviceAuth = getAccountAuth(this.email);
       if (!deviceAuth) throw new Error(`Unable to get auth for user ${this.email}`);
       this.L.debug({ deviceAuth }, 'Setting auth from device auth');
-      const bearerCookies: Protocol.Network.CookieParam[] = [
+      const bearerCookies: CookieParam[] = [
         '.epicgames.com',
         '.twinmotion.com',
         '.fortnite.com',
@@ -67,11 +67,6 @@ export default class PuppetBase {
     const page = await safeNewPage(browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(page));
-      const cdpClient = await page.target().createCDPSession();
-      await cdpClient.send('Network.setCookies', {
-        cookies: puppeteerCookies,
-      });
-      await cdpClient.detach();
       await page.setCookie(...puppeteerCookies);
       await page.goto(STORE_HOMEPAGE, { waitUntil: 'networkidle2' });
       return page;
@@ -84,7 +79,7 @@ export default class PuppetBase {
   protected async teardownPage(page: Page): Promise<void> {
     try {
       this.L.trace('Saving new cookies');
-      const cdpClient = await page.target().createCDPSession();
+      const cdpClient = await page.createCDPSession();
       const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
         cookies: Protocol.Network.Cookie[];
       };

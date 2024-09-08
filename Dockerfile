@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:18-alpine3.19 AS base
+FROM node:18-alpine3.20 AS base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -18,7 +18,7 @@ FROM base AS deps
 # and note the Chromium version available. Then go to https://pptr.dev/chromium-support
 # and find the latest version that supports that Chromium version, and update it in the package.json.
 RUN apk add --no-cache \
-    'chromium=~124' \
+    'chromium=~128' \
     ca-certificates \
     ttf-freefont \
     # App dependencies

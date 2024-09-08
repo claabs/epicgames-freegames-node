@@ -1,6 +1,5 @@
 import _puppeteer, { PuppeteerExtra } from 'puppeteer-extra';
-import { Page, Protocol, Browser, executablePath } from 'puppeteer';
-import objectAssignDeep from 'object-assign-deep';
+import { Page, Browser, executablePath, CookieParam } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import pTimeout, { TimeoutError } from 'p-timeout';
@@ -17,47 +16,8 @@ puppeteer.use(stealth);
 
 export default puppeteer;
 
-export function puppeteerCookieToToughCookieFileStore(
-  puppetCookie: Protocol.Network.Cookie,
-): ToughCookieFileStore {
-  const domain = puppetCookie.domain.replace(/^\./, '');
-  const expires = new Date(puppetCookie.expires * 1000).toISOString();
-  const { path, name } = puppetCookie;
-
-  const tcfsCookie: ToughCookieFileStore = {
-    [domain]: {
-      [path]: {
-        [name]: {
-          key: name,
-          value: puppetCookie.value,
-          expires,
-          domain,
-          path,
-          secure: puppetCookie.secure,
-          httpOnly: puppetCookie.httpOnly,
-          hostOnly: !puppetCookie.domain.startsWith('.'),
-        },
-      },
-    },
-  };
-  return tcfsCookie;
-}
-
-export function puppeteerCookiesToToughCookieFileStore(
-  puppetCookies: Protocol.Network.Cookie[],
-): ToughCookieFileStore {
-  const tcfs: ToughCookieFileStore = {};
-  puppetCookies.forEach((puppetCookie) => {
-    const temp = puppeteerCookieToToughCookieFileStore(puppetCookie);
-    objectAssignDeep(tcfs, temp);
-  });
-  return tcfs;
-}
-
-export function toughCookieFileStoreToPuppeteerCookie(
-  tcfs: ToughCookieFileStore,
-): Protocol.Network.CookieParam[] {
-  const puppetCookies: Protocol.Network.CookieParam[] = [];
+export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore): CookieParam[] {
+  const puppetCookies: CookieParam[] = [];
   Object.values(tcfs).forEach((domain) => {
     Object.values(domain).forEach((path) => {
       Object.values(path).forEach((tcfsCookie) => {
@@ -77,9 +37,7 @@ export function toughCookieFileStoreToPuppeteerCookie(
   return puppetCookies;
 }
 
-export function puppeteerCookieToEditThisCookie(
-  puppetCookies: Protocol.Network.CookieParam[],
-): ETCCookie[] {
+export function puppeteerCookieToEditThisCookie(puppetCookies: CookieParam[]): ETCCookie[] {
   return puppetCookies.map(
     (puppetCookie, index): ETCCookie => ({
       domain: puppetCookie.domain || '',
@@ -116,6 +74,7 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     '--no-sandbox', // For Docker root user
     '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
     '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
+    '--disable-gpu', // https://github.com/puppeteer/puppeteer/issues/12189#issuecomment-2264825572
     // For debugging in Docker
     // '--remote-debugging-port=3001',
     // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
