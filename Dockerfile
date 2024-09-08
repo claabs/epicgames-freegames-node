@@ -3,7 +3,6 @@
 ########
 FROM node:18-alpine3.20 AS base
 
-ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
 WORKDIR /usr/app

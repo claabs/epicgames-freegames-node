@@ -20,6 +20,10 @@ if [ ! -e /etc/timezone ]; then
     echo "$TZ" > /etc/timezone
 fi
 
+# Set the DISTRO variable
+export DISTRO=$(grep '^ID=' /etc/os-release | cut -d'=' -f2)
+echo "Detected distro: $DISTRO"
+
 # If runOnStartup is set, run it once before setting up the schedule
 echo "Run on startup: ${RUN_ON_STARTUP}"
 if [ "$RUN_ON_STARTUP" = "true" ]; then
