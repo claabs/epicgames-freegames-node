@@ -63,7 +63,7 @@ ARG COMMIT_SHA="" \
     BRANCH=""
 
 # Put COMMIT_SHA in a file, since Docker managers like Portainer will not use updated ENVs
-RUN echo $COMMIT_SHA > commit-sha.txt
+RUN echo $COMMIT_SHA > commit-sha.txt && echo $BRANCH > branch.txt
 
 LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
     org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \

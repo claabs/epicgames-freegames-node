@@ -4,12 +4,17 @@ import { config } from './common/config/index.js';
 import L from './common/logger.js';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
-const { BRANCH, DISTRO } = process.env;
-let { COMMIT_SHA } = process.env;
+const { DISTRO } = process.env;
+let { COMMIT_SHA, BRANCH } = process.env;
 try {
   COMMIT_SHA = readFileSync('./commit-sha.txt', { encoding: 'utf-8' }).trim();
 } catch (error) {
   L.debug('Fallback to environment variable commit SHA');
+}
+try {
+  BRANCH = readFileSync('./branch.txt', { encoding: 'utf-8' }).trim();
+} catch (error) {
+  L.debug('Fallback to environment variable branch');
 }
 
 export async function checkForUpdate(): Promise<void> {
