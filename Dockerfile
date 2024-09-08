@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:18-alpine3.19 as base
+FROM node:18-alpine3.19 AS base
 
 ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
@@ -11,7 +11,7 @@ WORKDIR /usr/app
 ########
 # DEPS
 ########
-FROM base as deps
+FROM base AS deps
 
 # Go to https://hub.docker.com/_/node/ and note the latest stable Alpine version available (e.g. alpine3.19).
 # Go to https://pkgs.alpinelinux.org/package/v3.19/community/x86_64/chromium (replace with the latest Alpine version)
@@ -29,7 +29,7 @@ RUN apk add --no-cache \
 ########
 # BUILD
 ########
-FROM base as build
+FROM base AS build
 
 # Copy all source files
 COPY package*.json tsconfig.json ./
@@ -45,7 +45,7 @@ RUN npm run build
 ########
 # DEPLOY
 ########
-FROM deps as deploy
+FROM deps AS deploy
 
 # Copy package.json for version number
 COPY package*.json ./
