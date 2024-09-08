@@ -4,8 +4,8 @@ import objectAssignDeep from 'object-assign-deep';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import pTimeout, { TimeoutError } from 'p-timeout';
-import pidtree from 'pidtree';
-import findProcess from 'find-process';
+import psList from 'ps-list';
+
 import { ETCCookie, ToughCookieFileStore } from './cookie.js';
 import { config } from './config/index.js';
 import { getCommitSha } from '../version.js';
@@ -133,26 +133,12 @@ const retryFunction = async <T>(
 ): Promise<T> => {
   const TIMEOUT = config.browserLaunchTimeout * 1000;
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
-  const beforeProcesses = await pidtree(process.pid);
   try {
     return await pTimeout(f(), { milliseconds: TIMEOUT });
   } catch (err) {
     if (!(err instanceof TimeoutError)) {
       throw err;
     }
-    // If the function timed out
-    const afterProcesses = await pidtree(process.pid);
-    const newProcesses = await Promise.all(
-      afterProcesses
-        .filter((p) => !beforeProcesses.includes(p))
-        .map(async (p) => (await findProcess('pid', p))[0]),
-    );
-    const chromiumProcesses = newProcesses.filter(
-      (p): p is NonNullable<typeof p> =>
-        p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
-    );
-    L.debug({ chromiumProcesses }, 'Killing new browser processes spawned');
-    chromiumProcesses.forEach((p) => process.kill(p.pid));
     if (attempts >= MAX_ATTEMPTS) {
       L.error(
         `If not already, consider using the Debian (:debian) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
@@ -169,15 +155,18 @@ const retryFunction = async <T>(
 
 export const killBrowserProcesses = async (L: Logger) => {
   if (!getCommitSha()) return; // Don't kill processes if not in docker
-  const afterProcesses = await pidtree(process.pid);
-  const newProcesses = await Promise.all(
-    afterProcesses.map(async (p) => (await findProcess('pid', p))[0]),
+  const runningProcesses = await psList();
+  L.trace({ runningProcesses }, 'Currently running processes');
+  const chromiumProcessNames = ['chromium', 'chrome', 'headless_shell'];
+  const browserProcesses = runningProcesses.filter((p) =>
+    chromiumProcessNames.some((n) => p.cmd?.includes(n)),
   );
-  const browserProcesses = newProcesses.filter(
-    (p): p is NonNullable<typeof p> =>
-      p !== undefined && ['chromium', 'chrome', 'headless_shell'].some((n) => p.name.includes(n)),
-  );
-  L.debug({ browserProcesses }, 'Killing dangling browser processes');
+  const processNames = browserProcesses.map((p) => {
+    if (!p.cmd) return '';
+    const processName = p.cmd.match(/\s(\/.*?(chromium|chome|headless_shell).*?)\s/)?.[1];
+    return processName;
+  });
+  L.debug({ processNames }, 'Killing dangling browser processes');
   browserProcesses.forEach((p) => process.kill(p.pid));
 };
 
