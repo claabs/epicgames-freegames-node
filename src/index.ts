@@ -5,7 +5,7 @@ import logger from './common/logger.js';
 import { sendNotification, testNotifiers } from './notify.js';
 import { checkForUpdate, logVersionOnError } from './version.js';
 import PuppetLogin from './puppet/login.js';
-import { killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
+import { cleanupDevProfiles, killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
 import PuppetFreeGames from './puppet/free-games.js';
 import { createServer } from './common/server.js';
 import { convertImportCookies } from './common/cookie.js';
@@ -85,6 +85,7 @@ export async function main(): Promise<void> {
     await Promise.all(accountPromises);
     server.close();
     await killBrowserProcesses(logger);
+    await cleanupDevProfiles(logger);
     logger.info('Exiting successfully');
     exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
@@ -92,7 +93,8 @@ export async function main(): Promise<void> {
 
 main().catch(async (err) => {
   logger.error(err);
-  await killBrowserProcesses(logger);
   logVersionOnError();
+  await killBrowserProcesses(logger);
+  await cleanupDevProfiles(logger);
   exit(1);
 });

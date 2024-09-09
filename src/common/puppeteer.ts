@@ -4,6 +4,10 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import pTimeout, { TimeoutError } from 'p-timeout';
 import psList from 'ps-list';
+import os from 'node:os';
+import fs from 'node:fs/promises';
+import fsx from 'fs-extra/esm';
+import path from 'node:path';
 
 import { ETCCookie, ToughCookieFileStore } from './cookie.js';
 import { config } from './config/index.js';
@@ -19,8 +23,8 @@ export default puppeteer;
 export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore): CookieParam[] {
   const puppetCookies: CookieParam[] = [];
   Object.values(tcfs).forEach((domain) => {
-    Object.values(domain).forEach((path) => {
-      Object.values(path).forEach((tcfsCookie) => {
+    Object.values(domain).forEach((urlPath) => {
+      Object.values(urlPath).forEach((tcfsCookie) => {
         puppetCookies.push({
           name: tcfsCookie.key,
           value: tcfsCookie.value,
@@ -127,6 +131,16 @@ export const killBrowserProcesses = async (L: Logger) => {
   });
   L.debug({ processNames }, 'Killing dangling browser processes');
   browserProcesses.forEach((p) => process.kill(p.pid));
+};
+
+export const cleanupDevProfiles = async (L: Logger) => {
+  if (!getCommitSha()) return; // Don't clear if not in docker
+  const tempDir = os.tmpdir();
+  const profileMatcher = /^puppeteer_dev_profile-\w+$/;
+  const tempFiles = await fs.readdir(tempDir);
+  const devProfiles = tempFiles.filter((file) => profileMatcher.test(file));
+  L.debug({ devProfiles }, 'Deleting temp puppeteer dev profile folders');
+  await Promise.all([devProfiles.map((file) => fsx.remove(path.join(tempDir, file)))]);
 };
 
 /**
