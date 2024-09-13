@@ -140,7 +140,7 @@ export const cleanupDevProfiles = async (L: Logger) => {
   const tempFiles = await fs.readdir(tempDir);
   const devProfiles = tempFiles.filter((file) => profileMatcher.test(file));
   L.debug({ devProfiles }, 'Deleting temp puppeteer dev profile folders');
-  await Promise.all([devProfiles.map((file) => fsx.remove(path.join(tempDir, file)))]);
+  await Promise.all(devProfiles.map((file) => fsx.remove(path.join(tempDir, file))));
 };
 
 /**
