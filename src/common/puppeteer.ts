@@ -124,23 +124,28 @@ export const killBrowserProcesses = async (L: Logger) => {
   const browserProcesses = runningProcesses.filter((p) =>
     chromiumProcessNames.some((n) => p.cmd?.includes(n)),
   );
-  const processNames = browserProcesses.map((p) => {
-    if (!p.cmd) return '';
-    const processName = p.cmd.match(/\s(\/.*?(chromium|chome|headless_shell).*?)\s/)?.[1];
-    return processName;
-  });
+  const processNames = browserProcesses
+    .map((p) => {
+      if (!p.cmd) return '';
+      const processName = p.cmd.match(/\s(\/.*?(chromium|chome|headless_shell).*?)\s/)?.[1];
+      return processName;
+    })
+    .filter((name): name is string => typeof name === 'string');
   L.debug({ processNames }, 'Killing dangling browser processes');
   browserProcesses.forEach((p) => process.kill(p.pid));
 };
 
-export const cleanupDevProfiles = async (L: Logger) => {
+export const cleanupTempFiles = async (L: Logger) => {
   if (!getCommitSha()) return; // Don't clear if not in docker
   const tempDir = os.tmpdir();
-  const profileMatcher = /^puppeteer_dev_profile-\w+$/;
   const tempFiles = await fs.readdir(tempDir);
+  const profileMatcher = /^puppeteer_dev_profile-\w+$/;
   const devProfiles = tempFiles.filter((file) => profileMatcher.test(file));
-  L.debug({ devProfiles }, 'Deleting temp puppeteer dev profile folders');
-  await Promise.all(devProfiles.map((file) => fsx.remove(path.join(tempDir, file))));
+  const chromiumMatcher = /^\.org\.chromium\.Chromium\.\w+$/;
+  const chromiumTempfiles = tempFiles.filter((file) => chromiumMatcher.test(file));
+  const deletedFiles = [...devProfiles, ...chromiumTempfiles];
+  L.debug({ deletedFiles }, 'Deleting temp puppeteer dev profile and chromium folders');
+  await Promise.all(deletedFiles.map((file) => fsx.remove(path.join(tempDir, file))));
 };
 
 /**
