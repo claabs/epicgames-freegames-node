@@ -1,9 +1,8 @@
 ########
 # BASE
 ########
-FROM node:18-bookworm-slim as base
+FROM node:18-bookworm-slim AS base
 
-ENV DISTRO=debian
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
 WORKDIR /usr/app
@@ -11,7 +10,7 @@ WORKDIR /usr/app
 ########
 # DEPS
 ########
-FROM base as deps
+FROM base AS deps
 
 # The Google Chrome apt list only seems to provide the latest version, so version compatibility with puppeteer is questionable
 RUN apt-get update \
@@ -37,7 +36,7 @@ RUN apt-get update \
 ########
 # BUILD
 ########
-FROM base as build
+FROM base AS build
 
 # Copy all source files
 COPY package*.json tsconfig.json ./
@@ -53,7 +52,7 @@ RUN npm run build
 ########
 # DEPLOY
 ########
-FROM deps as deploy
+FROM deps AS deploy
 
 # Copy package.json for version number
 COPY package*.json ./

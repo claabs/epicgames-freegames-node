@@ -1,9 +1,8 @@
 ########
 # BASE
 ########
-FROM node:18-alpine3.19 AS base
+FROM node:18-alpine3.20 AS base
 
-ENV DISTRO=alpine
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
 WORKDIR /usr/app
@@ -18,7 +17,7 @@ FROM base AS deps
 # and note the Chromium version available. Then go to https://pptr.dev/chromium-support
 # and find the latest version that supports that Chromium version, and update it in the package.json.
 RUN apk add --no-cache \
-    'chromium=~124' \
+    'chromium=~128' \
     ca-certificates \
     ttf-freefont \
     # App dependencies
@@ -63,7 +62,7 @@ ARG COMMIT_SHA="" \
     BRANCH=""
 
 # Put COMMIT_SHA in a file, since Docker managers like Portainer will not use updated ENVs
-RUN echo $COMMIT_SHA > commit-sha.txt
+RUN echo $COMMIT_SHA > commit-sha.txt && echo $BRANCH > branch.txt
 
 LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
     org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \

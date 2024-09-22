@@ -21,7 +21,7 @@ export default class PuppetLogin extends PuppetBase {
       await page.goto(url, {
         waitUntil: 'networkidle0',
       });
-      const cdpClient = await page.target().createCDPSession();
+      const cdpClient = await page.createCDPSession();
       const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
         cookies: Protocol.Network.Cookie[];
       };
@@ -47,11 +47,6 @@ export default class PuppetLogin extends PuppetBase {
     const page = await safeNewPage(browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(page));
-      const cdpClient = await page.target().createCDPSession();
-      await cdpClient.send('Network.setCookies', {
-        cookies: puppeteerCookies,
-      });
-      await cdpClient.detach();
       await page.setCookie(...puppeteerCookies);
       return page;
     } catch (err) {
