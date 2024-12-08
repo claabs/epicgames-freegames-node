@@ -132,7 +132,13 @@ export const killBrowserProcesses = async (L: Logger) => {
     })
     .filter((name): name is string => typeof name === 'string');
   L.debug({ processNames }, 'Killing dangling browser processes');
-  browserProcesses.forEach((p) => process.kill(p.pid));
+  browserProcesses.forEach((p) => {
+    try {
+      process.kill(p.pid);
+    } catch (err) {
+      L.warn({ pid: p.pid, name: p.name, err }, 'Unable to kill process');
+    }
+  });
 };
 
 export const cleanupTempFiles = async (L: Logger) => {
@@ -145,7 +151,15 @@ export const cleanupTempFiles = async (L: Logger) => {
   const chromiumTempfiles = tempFiles.filter((file) => chromiumMatcher.test(file));
   const deletedFiles = [...devProfiles, ...chromiumTempfiles];
   L.debug({ deletedFiles }, 'Deleting temp puppeteer dev profile and chromium folders');
-  await Promise.all(deletedFiles.map((file) => fsx.remove(path.join(tempDir, file))));
+  await Promise.all(
+    deletedFiles.map(async (file) => {
+      try {
+        await fsx.remove(path.join(tempDir, file));
+      } catch (err) {
+        L.warn({ file, err }, 'Unable to delete folder');
+      }
+    }),
+  );
 };
 
 /**
