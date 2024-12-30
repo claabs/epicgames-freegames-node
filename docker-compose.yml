@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  epicgames-freegames-node:
+    image: ghcr.io/claabs/epicgames-freegames-node:latest
+    volumes:
+      - /my/host/dir/:/usr/app/config
+    ports:
+      - "3000:3000"

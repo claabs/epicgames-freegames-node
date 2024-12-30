@@ -1,0 +1,34 @@
+{
+  "runOnStartup": false,
+  "runOnce": false,
+  "cronSchedule": "0 0,6,12,18 * * *",
+  "timezone": "UTC",
+  "blacklistedGames": [],
+  "searchStrategy": "all",
+  "intervalTime": 60,
+  "accountConcurrency": 3,
+  "logLevel": "info",
+  "webPortalConfig": {
+    "baseUrl": "http://localhost:3000",
+    "listenOpts": {},
+    "serverOpts": {},
+    "localtunnel": false
+  },
+  "accounts": [
+    {
+      "email": "example@gmail.com",
+      "notifiers": []
+    }
+  ],
+  "notifiers": [],
+  "testNotifiers": false,
+  "skipVersionCheck": false,
+  "browserLaunchTimeout": 15,
+  "browserLaunchRetryAttempts": 5,
+  "browserNavigationTimeout": 30000,
+  "countryCode": "",
+  "deviceAuthClientId": "98f7e42c2e3a4f86a74eb43fbb41ed39",
+  "deviceAuthSecret": "0a2449a2-001a-451e-afec-3e812901c4d7",
+  "deviceAuthPollRateSeconds": 10,
+  "errorsDir": "config/errors"
+}
