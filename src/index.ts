@@ -60,11 +60,11 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     if (e.response) {
       if (e.response.body) {
         L.error(e.response.body);
-        await sendNotification(account.email, NotificationReason.FAILURE, e.response.body);
+        await sendNotification(account.email, NotificationReason.PURCHASE_ERROR, e.response.body);
       }
       else {
         L.error(e.response);
-        await sendNotification(account.email, NotificationReason.FAILURE, e.response);
+        await sendNotification(account.email, NotificationReason.PURCHASE_ERROR, e.response);
       }
     }
     L.error(e);
