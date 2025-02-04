@@ -58,8 +58,14 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     }
   } catch (e) {
     if (e.response) {
-      if (e.response.body) L.error(e.response.body);
-      else L.error(e.response);
+      if (e.response.body) {
+        L.error(e.response.body);
+        await sendNotification(account.email, NotificationReason.FAILURE, e.response.body);
+      }
+      else {
+        L.error(e.response);
+        await sendNotification(account.email, NotificationReason.FAILURE, e.response);
+      }
     }
     L.error(e);
     logVersionOnError();
