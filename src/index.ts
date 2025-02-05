@@ -58,11 +58,11 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     }
   } catch (e) {
     if (e.response) {
-      if (e.response.body) L.error(e.response.body);
-      else L.error(e.response);
+      L.error(e.response.body ?? e.response);
     }
     L.error(e);
     logVersionOnError();
+    await sendNotification(account.email, NotificationReason.PURCHASE_ERROR);
   }
 }
 
