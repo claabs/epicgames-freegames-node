@@ -42,7 +42,7 @@ export class DiscordNotifier extends NotifierService {
                 },
               ],
               title: 'Click to proceed',
-              url,
+              ...(url ? { url } : {}),
             },
           ],
         },

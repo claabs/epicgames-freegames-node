@@ -23,8 +23,7 @@ export class HomeassistantNotifier extends NotifierService {
           title: `Action request from Epic Games`,
           message: `epicgames needs an action performed. Reason: ${reason} {{ '\n' -}} Link: ${url}`,
           data: {
-            url,
-            clickAction: url,
+            ...(url ? { url, clickAction: url } : {}),
             ...(this.config.customData ?? {}),
           },
         },

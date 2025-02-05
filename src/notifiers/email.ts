@@ -36,7 +36,7 @@ export class EmailNotifier extends NotifierService {
         to: this.config.emailRecipientAddress,
         subject: `Epic Games free games needs an action performed`,
         html: `<p><b>epicgames-freegames-node</b>, reason: ${reason}, account: ${account}.</p>
-             <p>Link: <a href="${url}">${url}</a></p>`,
+             ${url ? `<p>Link: <a href="${url}">${url}</a></p>` : ''}`,
         textEncoding: 'base64', // Some email clients don't like the '=' in the URL when using quoted-printable?
       });
       L.debug(

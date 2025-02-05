@@ -18,21 +18,26 @@ export class GotifyNotifier extends NotifierService {
     const jsonPayload = {
       title: `Epic Games free games needs an action performed`,
       /**
-       * ATTENTION: these are markdown, to make it breaking lines correctly, there is two spaces at the end of line and before the retrun
+       * ATTENTION: these are markdown; to make lines break correctly, there
+       *            are two spaces at the end of line and before the retrun
        */
       message: `* Reason: ${reason}  
 * Account: ${account}  
-* URL: [${url}](${url})`,
+${url ? `* URL: [${url}](${url})` : ''}`,
       priority: this.config.priority,
       extras: {
         'client::display': {
           contentType: 'text/markdown',
         },
-        'client::notification': {
-          click: {
-            url,
-          },
-        },
+        ...(url
+          ? {
+              'client::notification': {
+                click: {
+                  url,
+                },
+              },
+            }
+          : {}),
       },
     };
 
