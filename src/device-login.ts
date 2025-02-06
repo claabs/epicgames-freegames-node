@@ -145,7 +145,8 @@ export class DeviceLogin {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
         }),
       ),
-      await this.notify(NotificationReason.TEST, url),
+      await this.notify(NotificationReason.TEST_WITH_URL, url),
+      await this.notify(NotificationReason.TEST_WITHOUT_URL),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -175,10 +176,9 @@ export class DeviceLogin {
   private async notify(reason: NotificationReason, inUrl?: string): Promise<void> {
     let url: string | undefined;
     if (inUrl) {
+      url = inUrl;
       if (config.webPortalConfig?.localtunnel) {
         url = await getLocaltunnelUrl(inUrl);
-      } else {
-        url = inUrl;
       }
     }
     this.L.info({ reason, url }, 'Dispatching notification');

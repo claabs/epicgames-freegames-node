@@ -22,7 +22,7 @@ export class WebhookNotifier extends NotifierService {
         {
           account,
           reason,
-          url,
+          ...(url ? { url } : {}),
         },
         {
           responseType: 'json',
