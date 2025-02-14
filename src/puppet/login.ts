@@ -12,6 +12,9 @@ import {
 import { generateLoginRedirect } from '../purchase.js';
 
 export default class PuppetLogin extends PuppetBase {
+  /**
+   * @returns true if auth is ready to be used
+   */
   async refreshCookieLogin(): Promise<boolean> {
     if (!userHasValidCookie(this.email, 'EPIC_SSO_RM')) return false;
     const page = await this.setupPage();
@@ -27,13 +30,13 @@ export default class PuppetLogin extends PuppetBase {
       };
       if (currentUrlCookies.cookies.find((c) => c.name === 'EPIC_BEARER_TOKEN')) {
         this.L.debug('Successfully refreshed cookie auth');
-        await this.teardownPage(page);
+        await this.teardownPage();
         return true;
       }
     } catch (err) {
-      await this.handlePageError(err, page);
+      await this.handlePageError(err);
     }
-    await this.teardownPage(page);
+    await this.teardownPage();
     return false;
   }
 
@@ -50,7 +53,7 @@ export default class PuppetLogin extends PuppetBase {
       await page.setCookie(...puppeteerCookies);
       return page;
     } catch (err) {
-      await this.handlePageError(err, page);
+      await this.handlePageError(err);
       throw err;
     }
   }

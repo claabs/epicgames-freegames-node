@@ -12,7 +12,11 @@ import {
 import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
 import { config } from '../common/config/index.js';
 import { getAccountAuth } from '../common/device-auths.js';
-import { STORE_HOMEPAGE } from '../common/constants.js';
+import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.js';
+import { generateIdRedirect, generateLoginRedirect } from '../purchase.js';
+import { IdRedirectReponseGood, IdRedirectResponseBad } from '../interfaces/id.js';
+import { sendNotification } from '../notify.js';
+import { NotificationReason } from '../interfaces/notification-reason.js';
 
 export interface PuppetBaseProps {
   browser: Browser;
@@ -26,12 +30,64 @@ export default class PuppetBase {
 
   protected browser: Browser;
 
+  protected page?: Page;
+
   constructor(props: PuppetBaseProps) {
     this.browser = props.browser;
     this.email = props.email;
     this.L = logger.child({
       user: this.email,
     });
+  }
+
+  protected async request<T = unknown>(
+    method: string,
+    url: string,
+    params?: Record<string, string>,
+    throwForError = false,
+  ): Promise<T> {
+    if (!this.page) {
+      this.page = await this.setupPage();
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+    }
+
+    let fetchUrl: URL;
+    if (params) {
+      const searchParams = new URLSearchParams(params);
+      fetchUrl = new URL(`${url}?${searchParams}`);
+    } else {
+      fetchUrl = new URL(url);
+    }
+    const resp = await this.page.evaluate(
+      async (inFetchUrl: string, inMethod: string) => {
+        const response = await fetch(inFetchUrl, {
+          method: inMethod,
+        });
+        const json = (await response.json()) as T;
+        if (!response.ok && throwForError) throw new Error(JSON.stringify(json));
+        return json;
+      },
+      fetchUrl.toString(),
+      method,
+    );
+    return resp;
+  }
+
+  private async checkEula(): Promise<void> {
+    const idRedirectUrl = generateIdRedirect(STORE_CART_EN);
+    this.L.trace({ url: idRedirectUrl }, 'Checking for account corrective actions');
+    const resp = await this.request<IdRedirectReponseGood | IdRedirectResponseBad>(
+      'GET',
+      idRedirectUrl,
+      undefined,
+      true,
+    );
+    this.L.debug({ resp }, 'Account corrective action response');
+    if ('errorCode' in resp && resp.metadata.correctiveAction === 'PRIVACY_POLICY_ACCEPTANCE') {
+      const actionUrl = generateLoginRedirect(STORE_HOMEPAGE);
+      sendNotification(this.email, NotificationReason.PRIVACY_POLICY_ACCEPTANCE, actionUrl);
+      throw new Error(resp.message);
+    }
   }
 
   protected async setupPage(): Promise<Page> {
@@ -64,45 +120,49 @@ export default class PuppetBase {
     }
     this.L.debug('Logging in with puppeteer');
     const browser = await safeLaunchBrowser(this.L);
-    const page = await safeNewPage(browser, this.L);
+    this.page = await safeNewPage(browser, this.L);
     try {
-      this.L.trace(getDevtoolsUrl(page));
-      await page.setCookie(...puppeteerCookies);
-      await page.goto(STORE_HOMEPAGE, { waitUntil: 'networkidle2' });
-      return page;
+      this.L.trace(getDevtoolsUrl(this.page));
+      await this.page.setCookie(...puppeteerCookies);
+      await this.page.goto(STORE_HOMEPAGE, { waitUntil: 'networkidle2' });
+      await this.checkEula();
+      return this.page;
     } catch (err) {
-      await this.handlePageError(err, page);
+      await this.handlePageError(err);
       throw err;
     }
   }
 
-  protected async teardownPage(page: Page): Promise<void> {
+  protected async teardownPage(): Promise<void> {
+    if (!this.page) return;
     try {
       this.L.trace('Saving new cookies');
-      const cdpClient = await page.createCDPSession();
+      const cdpClient = await this.page.createCDPSession();
       const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
         cookies: Protocol.Network.Cookie[];
       };
       setPuppeteerCookies(this.email, currentUrlCookies.cookies);
       this.L.trace('Saved cookies, closing browser');
-      await page.close();
+      await this.page.close();
+      this.page = undefined;
     } catch (err) {
-      await this.handlePageError(err, page);
+      await this.handlePageError(err);
     }
   }
 
-  protected async handlePageError(err: unknown, page?: Page) {
-    if (page) {
+  protected async handlePageError(err: unknown) {
+    if (this.page) {
       const errorFile = `error-${new Date().toISOString()}.png`;
       await ensureDir(config.errorsDir);
-      await page.screenshot({
+      await this.page.screenshot({
         path: path.join(config.errorsDir, errorFile),
       });
       this.L.error(
         { errorFile },
         'Encountered an error during browser automation. Saved a screenshot for debugging purposes.',
       );
-      await page.close();
+      await this.page.close();
+      this.page = undefined;
     }
     throw err;
   }

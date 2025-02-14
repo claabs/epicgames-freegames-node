@@ -13,7 +13,7 @@ export class DiscordNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending discord notification');
 
@@ -28,7 +28,7 @@ export class DiscordNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         {
-          content: `${mentions}epicgames-freegames-node needs an action performed. ${this.config.showUrl && url ? `\n${url}` : ''}`,
+          content: `${mentions}epicgames-freegames-node needs an action performed. ${this.config.showUrl ? `\n${url}` : ''}`,
           embeds: [
             {
               fields: [

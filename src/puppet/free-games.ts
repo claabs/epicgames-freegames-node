@@ -1,8 +1,6 @@
-import { Page } from 'puppeteer';
 import {
   FREE_GAMES_PROMOTIONS_ENDPOINT,
   GRAPHQL_ENDPOINT,
-  STORE_CART_EN,
   STORE_CONTENT,
 } from '../common/constants.js';
 import { config, SearchStrategy } from '../common/config/index.js';
@@ -24,40 +22,6 @@ import { OffersValidationResponse } from '../interfaces/offers-validation.js';
 import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping.js';
 
 export default class PuppetFreeGames extends PuppetBase {
-  private page?: Page;
-
-  private async request<T = unknown>(
-    method: string,
-    url: string,
-    params?: Record<string, string>,
-  ): Promise<T> {
-    if (!this.page) {
-      this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
-    }
-
-    let fetchUrl: URL;
-    if (params) {
-      const searchParams = new URLSearchParams(params);
-      fetchUrl = new URL(`${url}?${searchParams}`);
-    } else {
-      fetchUrl = new URL(url);
-    }
-    const resp = await this.page.evaluate(
-      async (inFetchUrl: string, inMethod: string) => {
-        const response = await fetch(inFetchUrl, {
-          method: inMethod,
-        });
-        const json = (await response.json()) as T;
-        if (!response.ok) throw new Error(JSON.stringify(json));
-        return json;
-      },
-      fetchUrl.toString(),
-      method,
-    );
-    return resp;
-  }
-
   async getCatalogFreeGames(onSale = true): Promise<OfferInfo[]> {
     this.L.debug('Getting global free games');
     const pageLimit = 1000;
@@ -438,7 +402,7 @@ export default class PuppetFreeGames extends PuppetBase {
       { purchasableGames: purchasableGames.map((game) => game.productName) },
       'Unpurchased free games',
     );
-    if (this.page) await this.page.close();
+    this.teardownPage();
     return purchasableGames;
   }
 }

@@ -16,7 +16,7 @@ export class AppriseNotifier extends NotifierService {
   /**
    * @ignore
    */
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Apprise notification');
 
@@ -25,12 +25,8 @@ export class AppriseNotifier extends NotifierService {
       title: 'epicgames-freegames-node',
       body: `epicgames-freegames-node needs an action performed.
 reason: ${reason}
-account: ${account}${
-        url
-          ? `
-url: ${url}`
-          : ''
-      }`,
+account: ${account}
+url: ${url}`,
       format: 'text', // The text format is ugly, but all the platforms support it.
       type: 'info',
     };

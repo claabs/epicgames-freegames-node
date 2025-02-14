@@ -35,7 +35,7 @@ import { DeviceLogin } from './device-login.js';
 export async function sendNotification(
   accountEmail: string,
   reason: NotificationReason,
-  url?: string,
+  url: string,
 ): Promise<void> {
   const account = config.accounts.find((acct) => acct.email === accountEmail);
   const notifierConfigs = account?.notifiers || config.notifiers;

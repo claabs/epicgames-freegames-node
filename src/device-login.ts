@@ -172,15 +172,15 @@ export class DeviceLogin {
     pendingRedirects.delete(reqId);
   }
 
-  private async notify(reason: NotificationReason, inUrl?: string): Promise<void> {
-    let url: string | undefined;
-    if (inUrl) {
-      if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(inUrl);
-      } else {
-        url = inUrl;
-      }
+  private async notify(reason: NotificationReason, inUrl: string): Promise<void> {
+    let url: string;
+
+    if (config.webPortalConfig?.localtunnel) {
+      url = await getLocaltunnelUrl(inUrl);
+    } else {
+      url = inUrl;
     }
+
     this.L.info({ reason, url }, 'Dispatching notification');
     await sendNotification(this.user, reason, url);
   }
