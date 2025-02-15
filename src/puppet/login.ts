@@ -1,11 +1,9 @@
-/* eslint-disable class-methods-use-this */
-import { Page, Protocol } from 'puppeteer';
+import { Page } from 'puppeteer';
 import { STORE_CART_EN } from '../common/constants.js';
 import PuppetBase from './base.js';
 import { getCookiesRaw, userHasValidCookie } from '../common/cookie.js';
 import {
   toughCookieFileStoreToPuppeteerCookie,
-  safeLaunchBrowser,
   safeNewPage,
   getDevtoolsUrl,
 } from '../common/puppeteer.js';
@@ -17,18 +15,10 @@ export default class PuppetLogin extends PuppetBase {
    */
   async refreshCookieLogin(): Promise<boolean> {
     if (!userHasValidCookie(this.email, 'EPIC_SSO_RM')) return false;
-    const page = await this.setupPage();
     try {
-      const url = generateLoginRedirect(STORE_CART_EN);
-      this.L.trace({ url }, 'Visiting login cart redirect');
-      await page.goto(url, {
-        waitUntil: 'networkidle0',
-      });
-      const cdpClient = await page.createCDPSession();
-      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-        cookies: Protocol.Network.Cookie[];
-      };
-      if (currentUrlCookies.cookies.find((c) => c.name === 'EPIC_BEARER_TOKEN')) {
+      if (!this.page) this.page = await this.setupPage();
+      const currentCookies = await this.browser.cookies();
+      if (currentCookies.find((c) => c.name === 'EPIC_BEARER_TOKEN')) {
         this.L.debug('Successfully refreshed cookie auth');
         await this.teardownPage();
         return true;
@@ -46,12 +36,16 @@ export default class PuppetLogin extends PuppetBase {
     const puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
 
     this.L.debug('Logging in with puppeteer');
-    const browser = await safeLaunchBrowser(this.L);
-    const page = await safeNewPage(browser, this.L);
+    this.page = await safeNewPage(this.browser, this.L);
     try {
-      this.L.trace(getDevtoolsUrl(page));
-      await page.setCookie(...puppeteerCookies);
-      return page;
+      this.L.trace(getDevtoolsUrl(this.page));
+      const url = generateLoginRedirect(STORE_CART_EN);
+      this.L.trace({ url }, 'Visiting login cart redirect');
+      await this.page.goto(url, {
+        waitUntil: 'networkidle0',
+      });
+      await this.browser.setCookie(...puppeteerCookies);
+      return this.page;
     } catch (err) {
       await this.handlePageError(err);
       throw err;

@@ -1,22 +1,25 @@
 import { Logger } from 'pino';
-import { Protocol, Page, Browser, CookieParam } from 'puppeteer';
+import { Page, Browser, Cookie } from 'puppeteer';
 import path from 'path';
 import { ensureDir } from 'fs-extra/esm';
 import logger from '../common/logger.js';
 import {
   getDevtoolsUrl,
-  safeLaunchBrowser,
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer.js';
 import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
 import { config } from '../common/config/index.js';
 import { getAccountAuth } from '../common/device-auths.js';
-import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.js';
-import { generateIdRedirect, generateLoginRedirect } from '../purchase.js';
-import { IdRedirectReponseGood, IdRedirectResponseBad } from '../interfaces/id.js';
+import {
+  ACCOUNT_EULA_HISTORY_ENDPOINT,
+  STORE_CART_EN,
+  STORE_HOMEPAGE,
+} from '../common/constants.js';
+import { generateLoginRedirect } from '../purchase.js';
 import { sendNotification } from '../notify.js';
 import { NotificationReason } from '../interfaces/notification-reason.js';
+import { EulaResponse } from '../interfaces/accounts.js';
 
 export interface PuppetBaseProps {
   browser: Browser;
@@ -73,26 +76,56 @@ export default class PuppetBase {
     return resp;
   }
 
-  private async checkEula(): Promise<void> {
-    const idRedirectUrl = generateIdRedirect(STORE_CART_EN);
-    this.L.trace({ url: idRedirectUrl }, 'Checking for account corrective actions');
-    const resp = await this.request<IdRedirectReponseGood | IdRedirectResponseBad>(
-      'GET',
-      idRedirectUrl,
-      undefined,
-      true,
+  protected async requestRaw(method: string, url: string, headers?: Record<string, string>) {
+    if (!this.page) {
+      this.page = await this.setupPage();
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+    }
+
+    const fetchUrl = new URL(url);
+
+    const resp = await this.page.evaluate(
+      async (inFetchUrl: string, inMethod: string, inHeaders) => {
+        const response = await fetch(inFetchUrl, {
+          method: inMethod,
+          headers: inHeaders,
+        });
+        const body = await response.text();
+        return { headers: Object.fromEntries(response.headers), body, status: response.status };
+      },
+      fetchUrl.toString(),
+      method,
+      headers,
     );
-    this.L.debug({ resp }, 'Account corrective action response');
-    if ('errorCode' in resp && resp.metadata.correctiveAction === 'PRIVACY_POLICY_ACCEPTANCE') {
+    return resp;
+  }
+
+  private async checkEula(): Promise<void> {
+    const REQUIRED_EULAS = ['epicgames_privacy_policy_no_table', 'egstore'];
+    this.L.trace(
+      { url: ACCOUNT_EULA_HISTORY_ENDPOINT, requiredEulas: REQUIRED_EULAS },
+      'Checking acount EULA history',
+    );
+    const resp = await this.request<EulaResponse>('GET', ACCOUNT_EULA_HISTORY_ENDPOINT);
+    this.L.debug({ resp }, 'Eula history response');
+    const acceptedEulaKeys = resp.data
+      .filter((eulaEntry) => eulaEntry.accepted)
+      .map((eulaEntry) => eulaEntry.key);
+    const hasRequiredEulas = REQUIRED_EULAS.every((requiredKey) =>
+      acceptedEulaKeys.includes(requiredKey),
+    );
+
+    if (!hasRequiredEulas) {
+      this.L.error('User needs to log in an accept an updated EULA');
       const actionUrl = generateLoginRedirect(STORE_HOMEPAGE);
       sendNotification(this.email, NotificationReason.PRIVACY_POLICY_ACCEPTANCE, actionUrl);
-      throw new Error(resp.message);
+      throw new Error(`${this.email} needs to accept an updated EULA`);
     }
   }
 
   protected async setupPage(): Promise<Page> {
     // Get cookies or latest access_token cookies
-    let puppeteerCookies: CookieParam[] = [];
+    let puppeteerCookies: Cookie[] = [];
     if (userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
       this.L.debug('Setting auth from cookies');
       const userCookies = await getCookiesRaw(this.email);
@@ -101,30 +134,36 @@ export default class PuppetBase {
       const deviceAuth = getAccountAuth(this.email);
       if (!deviceAuth) throw new Error(`Unable to get auth for user ${this.email}`);
       this.L.debug({ deviceAuth }, 'Setting auth from device auth');
-      const bearerCookies: CookieParam[] = [
+      const bearerCookies: Cookie[] = [
         '.epicgames.com',
         '.twinmotion.com',
         '.fortnite.com',
         '.unrealengine.com',
-      ].map((domain) => ({
-        name: 'EPIC_BEARER_TOKEN',
-        value: deviceAuth.access_token,
-        expires: new Date(deviceAuth.expires_at).getTime() / 1000,
-        domain,
-        path: '/',
-        secure: true,
-        httpOnly: true,
-        sameSite: 'Lax',
-      }));
+      ].map((domain) => {
+        const name = 'EPIC_BEARER_TOKEN';
+        const value = deviceAuth.access_token;
+        const size = name.length + value.length;
+        return {
+          name,
+          value,
+          expires: new Date(deviceAuth.expires_at).getTime() / 1000,
+          domain,
+          path: '/',
+          secure: true,
+          httpOnly: true,
+          sameSite: 'Lax',
+          session: false,
+          size,
+        };
+      });
       puppeteerCookies.push(...bearerCookies);
     }
     this.L.debug('Logging in with puppeteer');
-    const browser = await safeLaunchBrowser(this.L);
-    this.page = await safeNewPage(browser, this.L);
+    this.page = await safeNewPage(this.browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(this.page));
-      await this.page.setCookie(...puppeteerCookies);
-      await this.page.goto(STORE_HOMEPAGE, { waitUntil: 'networkidle2' });
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+      await this.browser.setCookie(...puppeteerCookies); // must happen **after** navigating
       await this.checkEula();
       return this.page;
     } catch (err) {
@@ -137,11 +176,8 @@ export default class PuppetBase {
     if (!this.page) return;
     try {
       this.L.trace('Saving new cookies');
-      const cdpClient = await this.page.createCDPSession();
-      const currentUrlCookies = (await cdpClient.send('Network.getAllCookies')) as {
-        cookies: Protocol.Network.Cookie[];
-      };
-      setPuppeteerCookies(this.email, currentUrlCookies.cookies);
+      const currentCookies = await this.browser.cookies();
+      setPuppeteerCookies(this.email, currentCookies);
       this.L.trace('Saved cookies, closing browser');
       await this.page.close();
       this.page = undefined;
