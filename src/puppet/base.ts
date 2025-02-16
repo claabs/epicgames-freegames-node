@@ -11,15 +11,7 @@ import {
 import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
 import { config } from '../common/config/index.js';
 import { getAccountAuth } from '../common/device-auths.js';
-import {
-  ACCOUNT_EULA_HISTORY_ENDPOINT,
-  STORE_CART_EN,
-  STORE_HOMEPAGE,
-} from '../common/constants.js';
-import { generateLoginRedirect } from '../purchase.js';
-import { sendNotification } from '../notify.js';
-import { NotificationReason } from '../interfaces/notification-reason.js';
-import { EulaResponse } from '../interfaces/accounts.js';
+import { STORE_CART_EN } from '../common/constants.js';
 
 export interface PuppetBaseProps {
   browser: Browser;
@@ -100,34 +92,11 @@ export default class PuppetBase {
     return resp;
   }
 
-  private async checkEula(): Promise<void> {
-    const REQUIRED_EULAS = ['epicgames_privacy_policy_no_table', 'egstore'];
-    this.L.trace(
-      { url: ACCOUNT_EULA_HISTORY_ENDPOINT, requiredEulas: REQUIRED_EULAS },
-      'Checking acount EULA history',
-    );
-    const resp = await this.request<EulaResponse>('GET', ACCOUNT_EULA_HISTORY_ENDPOINT);
-    this.L.debug({ resp }, 'Eula history response');
-    const acceptedEulaKeys = resp.data
-      .filter((eulaEntry) => eulaEntry.accepted)
-      .map((eulaEntry) => eulaEntry.key);
-    const hasRequiredEulas = REQUIRED_EULAS.every((requiredKey) =>
-      acceptedEulaKeys.includes(requiredKey),
-    );
-
-    if (!hasRequiredEulas) {
-      this.L.error('User needs to log in an accept an updated EULA');
-      const actionUrl = generateLoginRedirect(STORE_HOMEPAGE);
-      sendNotification(this.email, NotificationReason.PRIVACY_POLICY_ACCEPTANCE, actionUrl);
-      throw new Error(`${this.email} needs to accept an updated EULA`);
-    }
-  }
-
   protected async setupPage(): Promise<Page> {
     // Get cookies or latest access_token cookies
     let puppeteerCookies: Cookie[] = [];
     if (userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
-      this.L.debug('Setting auth from cookies');
+      this.L.debug('Setting auth from bearer token cookies');
       const userCookies = await getCookiesRaw(this.email);
       puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     } else {
@@ -162,9 +131,8 @@ export default class PuppetBase {
     this.page = await safeNewPage(this.browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(this.page));
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
-      await this.browser.setCookie(...puppeteerCookies); // must happen **after** navigating
-      await this.checkEula();
+      await this.browser.setCookie(...puppeteerCookies);
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' }); // Get EG1 cookie
       return this.page;
     } catch (err) {
       await this.handlePageError(err);
@@ -179,7 +147,7 @@ export default class PuppetBase {
       const currentCookies = await this.browser.cookies();
       setPuppeteerCookies(this.email, currentCookies);
       this.L.trace('Saved cookies, closing browser');
-      await this.page.close();
+      // await this.page.close(); // Getting `Protocol error (Target.createTarget): Target closed` with this for some reason
       this.page = undefined;
     } catch (err) {
       await this.handlePageError(err);
@@ -187,7 +155,7 @@ export default class PuppetBase {
   }
 
   protected async handlePageError(err: unknown) {
-    if (this.page) {
+    if (this.page && !this.page.isClosed()) {
       const errorFile = `error-${new Date().toISOString()}.png`;
       await ensureDir(config.errorsDir);
       await this.page.screenshot({
@@ -198,8 +166,8 @@ export default class PuppetBase {
         'Encountered an error during browser automation. Saved a screenshot for debugging purposes.',
       );
       await this.page.close();
-      this.page = undefined;
     }
+    this.page = undefined;
     throw err;
   }
 }

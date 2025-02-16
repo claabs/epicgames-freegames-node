@@ -17,6 +17,11 @@ export default class PuppetLogin extends PuppetBase {
     if (!userHasValidCookie(this.email, 'EPIC_SSO_RM')) return false;
     try {
       if (!this.page) this.page = await this.setupPage();
+      const url = generateLoginRedirect(STORE_CART_EN);
+      this.L.trace({ url }, 'Visiting login cart redirect');
+      await this.page.goto(url, {
+        waitUntil: 'networkidle0',
+      });
       const currentCookies = await this.browser.cookies();
       if (currentCookies.find((c) => c.name === 'EPIC_BEARER_TOKEN')) {
         this.L.debug('Successfully refreshed cookie auth');
@@ -39,11 +44,6 @@ export default class PuppetLogin extends PuppetBase {
     this.page = await safeNewPage(this.browser, this.L);
     try {
       this.L.trace(getDevtoolsUrl(this.page));
-      const url = generateLoginRedirect(STORE_CART_EN);
-      this.L.trace({ url }, 'Visiting login cart redirect');
-      await this.page.goto(url, {
-        waitUntil: 'networkidle0',
-      });
       await this.browser.setCookie(...puppeteerCookies);
       return this.page;
     } catch (err) {

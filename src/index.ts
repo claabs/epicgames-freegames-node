@@ -12,6 +12,7 @@ import { convertImportCookies } from './common/cookie.js';
 import { DeviceLogin } from './device-login.js';
 import { generateCheckoutUrl } from './purchase.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
+import { EulaManager } from './eula-manager.js';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -32,14 +33,22 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     });
 
     // Login
+    let usedDeviceAuth = false;
     let successfulLogin = await cookieLogin.refreshCookieLogin();
     if (!successfulLogin) {
       // attempt token refresh
       successfulLogin = await deviceLogin.refreshDeviceAuth();
+      usedDeviceAuth = true;
     }
     if (!successfulLogin) {
       // get new device auth
       await deviceLogin.newDeviceAuthLogin();
+      usedDeviceAuth = true;
+    }
+
+    if (usedDeviceAuth) {
+      const eulaManager = new EulaManager(account.email);
+      await eulaManager.checkEulaStatus();
     }
 
     // Get purchasable offers
