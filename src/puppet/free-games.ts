@@ -355,6 +355,7 @@ export default class PuppetFreeGames extends PuppetBase {
   }
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
+    await this.setupPage();
     let validFreeGames: OfferInfo[];
     if (config.searchStrategy === SearchStrategy.WEEKLY) {
       validFreeGames = await this.getWeeklyFreeGames();
