@@ -34,11 +34,11 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
 
     // Login
     let usedDeviceAuth = false;
-    let successfulLogin = await cookieLogin.refreshCookieLogin();
+    // attempt token refresh
+    let successfulLogin = await deviceLogin.refreshDeviceAuth();
+    usedDeviceAuth = successfulLogin;
     if (!successfulLogin) {
-      // attempt token refresh
-      successfulLogin = await deviceLogin.refreshDeviceAuth();
-      usedDeviceAuth = true;
+      successfulLogin = await cookieLogin.refreshCookieLogin();
     }
     if (!successfulLogin) {
       // get new device auth
