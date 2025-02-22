@@ -99,9 +99,9 @@ export default class PuppetBase {
       this.L.debug('Setting auth from bearer token cookies');
       const userCookies = await getCookiesRaw(this.email);
       puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    } else {
-      const deviceAuth = getAccountAuth(this.email);
-      if (!deviceAuth) throw new Error(`Unable to get auth for user ${this.email}`);
+    }
+    const deviceAuth = getAccountAuth(this.email);
+    if (deviceAuth) {
       this.L.debug({ deviceAuth }, 'Setting auth from device auth');
       const bearerCookies: Cookie[] = [
         '.epicgames.com',
@@ -126,6 +126,8 @@ export default class PuppetBase {
         };
       });
       puppeteerCookies.push(...bearerCookies);
+    } else {
+      this.L.warn('No device auth found, auth issues may occur');
     }
     this.L.debug('Logging in with puppeteer');
     this.page = await safeNewPage(this.browser, this.L);
