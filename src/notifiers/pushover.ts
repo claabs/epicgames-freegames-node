@@ -12,7 +12,7 @@ export class PushoverNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending pushover notification');
 

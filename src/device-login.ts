@@ -172,15 +172,15 @@ export class DeviceLogin {
     pendingRedirects.delete(reqId);
   }
 
-  private async notify(reason: NotificationReason, inUrl?: string): Promise<void> {
-    let url: string | undefined;
-    if (inUrl) {
-      if (config.webPortalConfig?.localtunnel) {
-        url = await getLocaltunnelUrl(inUrl);
-      } else {
-        url = inUrl;
-      }
+  private async notify(reason: NotificationReason, inUrl: string): Promise<void> {
+    let url: string;
+
+    if (config.webPortalConfig?.localtunnel) {
+      url = await getLocaltunnelUrl(inUrl);
+    } else {
+      url = inUrl;
     }
+
     this.L.info({ reason, url }, 'Dispatching notification');
     await sendNotification(this.user, reason, url);
   }
@@ -227,6 +227,13 @@ export class DeviceLogin {
   public async refreshDeviceAuth(): Promise<boolean> {
     try {
       const existingAuth = getAccountAuth(this.user);
+      this.L.trace(
+        {
+          existingAuthRefreshExpiry: existingAuth?.refresh_expires_at,
+          existingAuthAccessExpiry: existingAuth?.expires_at,
+        },
+        'Pre-refresh auth expiry',
+      );
       if (!(existingAuth && new Date(existingAuth.refresh_expires_at) > new Date())) return false;
 
       const reqConfig: AxiosRequestConfig = {

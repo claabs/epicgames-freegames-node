@@ -45,3 +45,6 @@ export const ACCOUNT_OAUTH_TOKEN =
 export const ACCOUNT_OAUTH_DEVICE_AUTH =
   'https://account-public-service-prod.ol.epicgames.com/account/api/oauth/deviceAuthorization';
 export const ID_LOGIN_ENDPOINT = 'https://www.epicgames.com/id/login';
+export const EULA_AGREEMENTS_ENDPOINT =
+  'https://eulatracking-public-service-prod-m.ol.epicgames.com/eulatracking/api/public/agreements';
+export const REQUIRED_EULAS = ['epicgames_privacy_policy_no_table', 'egstore'];

@@ -4,7 +4,7 @@ import fsx from 'fs-extra/esm';
 import fs from 'node:fs';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
-import { Protocol } from 'puppeteer';
+import { Cookie } from 'puppeteer';
 import path from 'path';
 import L from './logger.js';
 import { CONFIG_DIR } from './config/index.js';
@@ -140,7 +140,7 @@ export function setCookie(username: string, key: string, value: string): void {
   );
 }
 
-export function setPuppeteerCookies(username: string, newCookies: Protocol.Network.Cookie[]): void {
+export function setPuppeteerCookies(username: string, newCookies: Cookie[]): void {
   const cookieJar = getCookieJar(username);
   newCookies.forEach((cookie) => {
     const domain = cookie.domain.replace(/^\./, '');

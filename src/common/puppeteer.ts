@@ -1,5 +1,5 @@
 import _puppeteer, { PuppeteerExtra } from 'puppeteer-extra';
-import { Page, Browser, executablePath, CookieParam } from 'puppeteer';
+import { Page, Browser, executablePath, Cookie } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Logger } from 'pino';
 import pTimeout, { TimeoutError } from 'p-timeout';
@@ -20,20 +20,25 @@ puppeteer.use(stealth);
 
 export default puppeteer;
 
-export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore): CookieParam[] {
-  const puppetCookies: CookieParam[] = [];
+export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore): Cookie[] {
+  const puppetCookies: Cookie[] = [];
   Object.values(tcfs).forEach((domain) => {
     Object.values(domain).forEach((urlPath) => {
       Object.values(urlPath).forEach((tcfsCookie) => {
+        const name = tcfsCookie.key;
+        const { value } = tcfsCookie;
+        const size = name.length + value.length;
         puppetCookies.push({
-          name: tcfsCookie.key,
-          value: tcfsCookie.value,
-          expires: tcfsCookie.expires ? new Date(tcfsCookie.expires).getTime() / 1000 : undefined,
+          name,
+          value,
+          expires: tcfsCookie.expires ? new Date(tcfsCookie.expires).getTime() / 1000 : -1,
           domain: `${!tcfsCookie.hostOnly ? '.' : ''}${tcfsCookie.domain}`,
           path: tcfsCookie.path,
-          secure: tcfsCookie.secure,
-          httpOnly: tcfsCookie.httpOnly,
+          secure: tcfsCookie.secure ?? false,
+          httpOnly: tcfsCookie.httpOnly ?? true,
           sameSite: 'Lax',
+          session: !tcfsCookie.expires,
+          size,
         });
       });
     });
@@ -41,7 +46,7 @@ export function toughCookieFileStoreToPuppeteerCookie(tcfs: ToughCookieFileStore
   return puppetCookies;
 }
 
-export function puppeteerCookieToEditThisCookie(puppetCookies: CookieParam[]): ETCCookie[] {
+export function puppeteerCookieToEditThisCookie(puppetCookies: Cookie[]): ETCCookie[] {
   return puppetCookies.map(
     (puppetCookie, index): ETCCookie => ({
       domain: puppetCookie.domain || '',
