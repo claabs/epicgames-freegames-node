@@ -52,6 +52,7 @@ export class EulaManager {
   }
 
   public async checkEulaStatus(): Promise<void> {
+    this.L.debug('Checking EULA status');
     const pendingEulas = await this.fetchPendingEulas();
 
     if (pendingEulas.length) {

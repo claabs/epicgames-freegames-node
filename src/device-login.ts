@@ -227,6 +227,13 @@ export class DeviceLogin {
   public async refreshDeviceAuth(): Promise<boolean> {
     try {
       const existingAuth = getAccountAuth(this.user);
+      this.L.trace(
+        {
+          existingAuthRefreshExpiry: existingAuth?.refresh_expires_at,
+          existingAuthAccessExpiry: existingAuth?.expires_at,
+        },
+        'Pre-refresh auth expiry',
+      );
       if (!(existingAuth && new Date(existingAuth.refresh_expires_at) > new Date())) return false;
 
       const reqConfig: AxiosRequestConfig = {
