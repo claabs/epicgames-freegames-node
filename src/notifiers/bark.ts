@@ -12,7 +12,7 @@ export class BarkNotifier extends NotifierService {
     this.config = config;
   }
 
-  async sendNotification(account: string, reason: NotificationReason, url?: string): Promise<void> {
+  async sendNotification(account: string, reason: NotificationReason, url: string): Promise<void> {
     const L = logger.child({ user: account, reason });
     L.trace('Sending Bark notification');
 
@@ -20,9 +20,7 @@ export class BarkNotifier extends NotifierService {
 
     const requestUrl = `${this.config.apiUrl}/${encodeURIComponent(
       this.config.key,
-    )}/${encodeURIComponent(this.config.title)}/${message}?${
-      url ? `url=${encodeURIComponent(url)}&` : ''
-    }group=${encodeURIComponent(this.config.group)}`;
+    )}/${encodeURIComponent(this.config.title)}/${message}?url=${encodeURIComponent(url)}&group=${encodeURIComponent(this.config.group)}`;
 
     L.trace({ requestUrl }, 'Sending request');
     try {

@@ -982,6 +982,16 @@ export class AppConfig {
   errorsDir = process.env.ERRORS_DIR || path.join(CONFIG_DIR, 'errors');
 
   /**
+   * If false, EULA updates will be automatically accepted. If true, the user will receive a notification to accept the EULA.
+   * @example true
+   * @default false
+   * @env NOTIFY_EULA
+   */
+  @IsBoolean()
+  @IsOptional()
+  notifyEula = process.env.NOTIFY_EULA?.toLowerCase() === 'true' || false;
+
+  /**
    * @hidden
    */
   constructor() {

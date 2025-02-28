@@ -7,10 +7,8 @@ export class LocalNotifier extends NotifierService {
   async sendNotification(
     _account: string,
     _reason: NotificationReason,
-    url?: string,
+    url: string,
   ): Promise<void> {
-    if (url) {
-      await open(url);
-    }
+    await open(url);
   }
 }
