@@ -1,12 +1,11 @@
 import nodemailer from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer';
 import logger from '../common/logger.js';
 import { NotifierService } from './notifier-service.js';
 import { NotificationReason } from '../interfaces/notification-reason.js';
 import { EmailConfig } from '../common/config/index.js';
 
 export class EmailNotifier extends NotifierService {
-  private readonly emailTransporter: Mail;
+  private readonly emailTransporter: nodemailer.Transporter;
 
   private config: EmailConfig;
 

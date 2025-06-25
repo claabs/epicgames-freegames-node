@@ -41,7 +41,7 @@ jobs:
 
       - name: Build and push master (Alpine)
         if: ${{ github.ref == 'refs/heads/master' }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
@@ -60,7 +60,7 @@ jobs:
 
       - name: Build and push master (Debian)
         if: ${{ github.ref == 'refs/heads/master' }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
@@ -80,7 +80,7 @@ jobs:
 
       - name: Build and push dev
         if: ${{ github.ref == 'refs/heads/develop' }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           provenance: false # enable later when runtime support is better
           target: deploy
