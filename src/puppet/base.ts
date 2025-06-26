@@ -161,7 +161,7 @@ export default class PuppetBase {
       const errorFile = `error-${new Date().toISOString()}.png`;
       await ensureDir(config.errorsDir);
       await this.page.screenshot({
-        path: path.join(config.errorsDir, errorFile),
+        path: path.join(config.errorsDir, errorFile) as `${string}.png`,
       });
       this.L.error(
         { errorFile },
