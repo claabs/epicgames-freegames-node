@@ -31,7 +31,7 @@
     "fs-extra": "^11.2.0",
     "hashids": "^2.3.0",
     "json5": "^2.2.3",
-    "localtunnel": "npm:@security-patched/localtunnel@^2.0.2-secpatched.3",
+    "localtunnel": "npm:@security-patched/localtunnel@^2.0.2-secpatched.4",
     "nodemailer": "^6.9.11",
     "object-assign-deep": "^0.4.0",
     "open": "^10.0.4",
@@ -41,7 +41,7 @@
     "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",
     "ps-list": "^8.1.1",
-    "puppeteer": "23.10",
+    "puppeteer": "24.10",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "reflect-metadata": "^0.2.1",
@@ -75,15 +75,15 @@
     "prettier": "^3.2.5",
     "typedoc": "^0.28.5",
     "typescript": "^5.8.3",
-    "vite-node": "^1.3.1"
-  },
-  "overrides": {
-    "localtunnel": {
-      "axios": "~1.7.0"
-    }
+    "vite-node": "^3.2.4"
   },
   "engines": {
     "node": ">=22"
+  },
+  "overrides": {
+    "localtunnel": {
+      "axios": "~1.8.2"
+    }
   },
   "repository": {
     "type": "git",
