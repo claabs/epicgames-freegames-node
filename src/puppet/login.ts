@@ -1,4 +1,4 @@
-import { Page } from 'puppeteer';
+import type { Page } from 'puppeteer';
 import { STORE_CART_EN } from '../common/constants.js';
 import PuppetBase from './base.js';
 import { getCookiesRaw, userHasValidCookie } from '../common/cookie.js';
@@ -14,9 +14,9 @@ export default class PuppetLogin extends PuppetBase {
    * @returns true if auth is ready to be used
    */
   async refreshCookieLogin(): Promise<boolean> {
-    if (!userHasValidCookie(this.email, 'EPIC_SSO_RM')) return false;
+    if (!(await userHasValidCookie(this.email, 'EPIC_SSO_RM'))) return false;
     try {
-      if (!this.page) this.page = await this.setupPage();
+      this.page ??= await this.setupPage();
       const url = generateLoginRedirect(STORE_CART_EN);
       this.L.trace({ url }, 'Visiting login cart redirect');
       await this.page.goto(url, {

@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-empty-function, @typescript-eslint/no-useless-constructor, max-classes-per-file */
+/* eslint-disable @typescript-eslint/no-empty-function, @typescript-eslint/no-useless-constructor, max-classes-per-file, @typescript-eslint/prefer-nullish-coalescing */
 import 'reflect-metadata';
-import { ClassConstructor, Expose, Type } from 'class-transformer';
+import type { ClassConstructor } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import {
   IsEmail,
   IsUrl,
@@ -19,10 +20,10 @@ import {
   IsNotEmpty,
   IsNumber,
 } from 'class-validator';
-import { ServerOptions } from 'https';
-import { ListenOptions } from 'net';
+import type { ServerOptions } from 'node:https';
+import type { ListenOptions } from 'node:net';
 import cronParser from 'cron-parser';
-import path from 'path';
+import path from 'node:path';
 
 export const CONFIG_DIR = process.env.CONFIG_DIR || 'config';
 
@@ -737,7 +738,7 @@ export class AppConfig {
   cronSchedule = process.env.CRON_SCHEDULE || '0 0,6,12,18 * * *';
 
   @Expose({ toClassOnly: true })
-  getMsUntilNextRun() {
+  getMsUntilNextRun(): number {
     const cronExpression = cronParser.parseExpression(this.cronSchedule);
     return cronExpression.next().getTime() - new Date().getTime();
   }
@@ -760,7 +761,7 @@ export class AppConfig {
    */
   @IsOptional()
   @IsEnum(SearchStrategy)
-  searchStrategy = process.env.SEARCH_STRATEGY || SearchStrategy.ALL;
+  searchStrategy = (process.env.SEARCH_STRATEGY || SearchStrategy.ALL) as SearchStrategy;
 
   /**
    * If true, the process will run on startup in addition to the scheduled time.
@@ -1035,9 +1036,7 @@ export class AppConfig {
         auth.pass = SMTP_PASSWORD;
         email.auth = auth;
       }
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof EmailConfig)) {
         this.notifiers.push(email);
       }
@@ -1052,9 +1051,7 @@ export class AppConfig {
       if (DISCORD_MENTIONED_USERS) discord.mentionedUsers = DISCORD_MENTIONED_USERS.split(',');
       if (DISCORD_MENTIONED_ROLES) discord.mentionedRoles = DISCORD_MENTIONED_ROLES.split(',');
       discord.showUrl = DISCORD_SHOW_URL === 'true';
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof DiscordConfig)) {
         this.notifiers.push(discord);
       }
@@ -1066,9 +1063,7 @@ export class AppConfig {
       const pushover = new PushoverConfig();
       pushover.token = PUSHOVER_TOKEN;
       pushover.userKey = PUSHOVER_USER_ID;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof PushoverConfig)) {
         this.notifiers.push(pushover);
       }
@@ -1080,9 +1075,7 @@ export class AppConfig {
       const telegram = new TelegramConfig();
       telegram.token = TELEGRAM_TOKEN;
       telegram.chatId = TELEGRAM_CHAT_ID;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof TelegramConfig)) {
         this.notifiers.push(telegram);
       }
@@ -1094,9 +1087,7 @@ export class AppConfig {
       const apprise = new AppriseConfig();
       apprise.apiUrl = APPRISE_API;
       apprise.urls = APPRISE_URLS;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof AppriseConfig)) {
         this.notifiers.push(apprise);
       }
@@ -1109,9 +1100,7 @@ export class AppConfig {
       gotify.apiUrl = GOTIFY_API_URL;
       gotify.token = GOTIFY_TOKEN;
       if (GOTIFY_PRIORITY) gotify.priority = parseInt(GOTIFY_PRIORITY, 10);
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof GotifyConfig)) {
         this.notifiers.push(gotify);
       }
@@ -1122,9 +1111,7 @@ export class AppConfig {
     if (SLACK_WEBHOOK) {
       const slack = new SlackConfig();
       slack.webhookUrl = SLACK_WEBHOOK;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof SlackConfig)) {
         this.notifiers.push(slack);
       }
@@ -1137,9 +1124,7 @@ export class AppConfig {
       ntfy.webhookUrl = NTFY_WEBHOOK;
       ntfy.priority = NTFY_PRIORITY;
       ntfy.token = NTFY_TOKEN;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof NtfyConfig)) {
         this.notifiers.push(ntfy);
       }
@@ -1164,9 +1149,7 @@ export class AppConfig {
       homeassistant.customData = HOMEASSISTANT_CUSTOM_DATA
         ? JSON.parse(HOMEASSISTANT_CUSTOM_DATA)
         : undefined;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
         this.notifiers.push(homeassistant);
       }
@@ -1180,9 +1163,7 @@ export class AppConfig {
       if (BARK_TITLE) bark.title = BARK_TITLE;
       if (BARK_GROUP) bark.group = BARK_GROUP;
       if (BARK_API_URL) bark.apiUrl = BARK_API_URL;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof BarkConfig)) {
         this.notifiers.push(bark);
       }
@@ -1194,9 +1175,7 @@ export class AppConfig {
       const webhook = new WebhookConfig();
       webhook.url = WEBHOOK_URL;
       webhook.headers = WEBHOOK_HEADERS ? JSON.parse(WEBHOOK_HEADERS) : undefined;
-      if (!this.notifiers) {
-        this.notifiers = [];
-      }
+      this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof WebhookConfig)) {
         this.notifiers.push(webhook);
       }
@@ -1205,15 +1184,11 @@ export class AppConfig {
     // Use environment variables to fill webPortalConfig if present
     const { BASE_URL, SERVER_PORT } = process.env;
     if (BASE_URL) {
-      if (!this.webPortalConfig) {
-        this.webPortalConfig = new WebPortalConfig();
-      }
+      this.webPortalConfig ??= new WebPortalConfig();
       this.webPortalConfig.baseUrl = BASE_URL;
     }
     if (SERVER_PORT) {
-      if (!this.webPortalConfig) {
-        this.webPortalConfig = new WebPortalConfig();
-      }
+      this.webPortalConfig ??= new WebPortalConfig();
       this.webPortalConfig.listenOpts = {
         port: parseInt(SERVER_PORT, 10),
       };

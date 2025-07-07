@@ -90,7 +90,7 @@ export interface Error {
   correlationId: string;
   serviceResponse: string;
   stack: null;
-  path: Array<number | string>;
+  path: (number | string)[];
 }
 
 export interface Element {

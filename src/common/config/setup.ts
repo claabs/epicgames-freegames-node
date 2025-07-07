@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import json5 from 'json5';
-import path from 'path';
+import path from 'node:path';
 import fs from 'fs-extra';
-import { validateSync } from 'class-validator';
+import { validate } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
 import { pino } from 'pino';
 import cronParser from 'cron-parser';
@@ -14,7 +14,7 @@ const L = pino({
   transport: {
     target: 'pino-pretty',
     options: {
-      translateTime: `SYS:standard`,
+      translateTime: 'SYS:standard',
     },
   },
   formatters: {
@@ -22,6 +22,7 @@ const L = pino({
       return { level: label };
     },
   },
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   level: process.env.LOG_LEVEL || 'info',
   base: undefined,
 });
@@ -42,8 +43,10 @@ export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
   : 'config';
 
 const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}${ext}`));
-const configPath = configPaths.find((p) => fs.existsSync(p));
-// eslint-disable-next-line import/no-mutable-exports
+const configPath = (
+  await Promise.all(configPaths.map(async (p) => ((await fs.exists(p)) ? p : undefined)))
+).find(Boolean);
+// eslint-disable-next-line import-x/no-mutable-exports
 let config: AppConfig;
 if (!configPath) {
   L.warn('No config file detected');
@@ -51,7 +54,7 @@ if (!configPath) {
   config = new AppConfig();
   try {
     L.debug({ newConfigPath }, 'Creating new config file');
-    fs.writeJSONSync(newConfigPath, instanceToPlain(config), { spaces: 2 });
+    await fs.writeJSON(newConfigPath, instanceToPlain(config), { spaces: 2 });
     L.info({ newConfigPath }, 'Wrote new default config file');
   } catch (err) {
     L.debug(err);
@@ -59,11 +62,11 @@ if (!configPath) {
   }
 } else {
   L.debug({ configPath });
-  const parsedConfig = json5.parse(fs.readFileSync(configPath, 'utf8'));
+  const parsedConfig = json5.parse(await fs.readFile(configPath, 'utf8'));
   config = plainToInstance(AppConfig, parsedConfig);
 }
 
-const errors = validateSync(config, {
+const errors = await validate(config, {
   validationError: {
     target: false,
   },

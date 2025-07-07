@@ -1,11 +1,12 @@
 import * as tough from 'tough-cookie';
-import { FileCookieStore } from 'tough-cookie-file-store';
+import FileCookieStore from 'tough-cookie-file-store';
 import fsx from 'fs-extra/esm';
 import fs from 'node:fs';
 import filenamify from 'filenamify';
 import objectAssignDeep from 'object-assign-deep';
-import { Cookie } from 'puppeteer';
-import path from 'path';
+import type { Cookie } from 'puppeteer';
+import path from 'node:path';
+// eslint-disable-next-line import-x/no-rename-default
 import L from './logger.js';
 import { CONFIG_DIR } from './config/index.js';
 
@@ -24,17 +25,11 @@ export interface TCFSCookieAttributes {
   lastAccessed?: string;
 }
 
-export interface TCFSCookies {
-  [cookieName: string]: TCFSCookieAttributes;
-}
+export type TCFSCookies = Record<string, TCFSCookieAttributes>;
 
-export interface TCFSPaths {
-  [path: string]: TCFSCookies;
-}
+export type TCFSPaths = Record<string, TCFSCookies>;
 
-export interface ToughCookieFileStore {
-  [site: string]: TCFSPaths;
-}
+export type ToughCookieFileStore = Record<string, TCFSPaths>;
 
 export interface ETCCookie {
   domain: string;
@@ -55,7 +50,7 @@ export type EditThisCookie = ETCCookie[];
 
 const DEFAULT_COOKIE_NAME = 'default';
 
-const cookieJars: Map<string, tough.CookieJar> = new Map();
+const cookieJars = new Map<string, tough.CookieJar>();
 
 function getCookiePath(username: string): string {
   const fileSafeUsername = filenamify(username);
@@ -112,11 +107,13 @@ export function editThisCookieToToughCookieFileStore(etc: EditThisCookie): Tough
 
 export function getCookies(username: string): Record<string, string> {
   const cookieJar = getCookieJar(username);
-  const { cookies } = cookieJar.toJSON();
-  return cookies.reduce<Record<string, string>>(
-    (accum, cookie) => ({ ...accum, [cookie.key]: cookie.value }),
-    {},
-  );
+  const cookies = cookieJar.toJSON()?.cookies ?? [];
+  return cookies.reduce<Record<string, string>>((accum, cookie) => {
+    if (cookie.key && cookie.value) {
+      return { ...accum, [cookie.key]: cookie.value };
+    }
+    return accum;
+  }, {});
 }
 
 export async function getCookiesRaw(username: string): Promise<ToughCookieFileStore> {
@@ -124,14 +121,14 @@ export async function getCookiesRaw(username: string): Promise<ToughCookieFileSt
   try {
     const existingCookies: ToughCookieFileStore = await fsx.readJSON(cookieFilename);
     return existingCookies;
-  } catch (err) {
+  } catch {
     return {};
   }
 }
 
 export function setCookie(username: string, key: string, value: string): void {
   const cookieJar = getCookieJar(username);
-  cookieJar.setCookieSync(
+  cookieJar.setCookie(
     new tough.Cookie({
       key,
       value,
@@ -140,66 +137,68 @@ export function setCookie(username: string, key: string, value: string): void {
   );
 }
 
-export function setPuppeteerCookies(username: string, newCookies: Cookie[]): void {
+export async function setPuppeteerCookies(username: string, newCookies: Cookie[]): Promise<void> {
   const cookieJar = getCookieJar(username);
-  newCookies.forEach((cookie) => {
-    const domain = cookie.domain.replace(/^\./, '');
-    const tcfsCookie = new tough.Cookie({
-      key: cookie.name,
-      value: cookie.value,
-      expires: new Date(cookie.expires * 1000),
-      domain,
-      path: cookie.path,
-      secure: cookie.secure,
-      httpOnly: cookie.httpOnly,
-      hostOnly: !cookie.domain.startsWith('.'),
-    });
-    try {
-      cookieJar.setCookieSync(tcfsCookie, `https://${domain}`);
-    } catch (err) {
-      L.error({ tcfsCookie }, 'Error setting cookie');
-      throw err;
-    }
-  });
+  await Promise.all(
+    newCookies.map(async (cookie) => {
+      const domain = cookie.domain.replace(/^\./, '');
+      const tcfsCookie = new tough.Cookie({
+        key: cookie.name,
+        value: cookie.value,
+        expires: new Date(cookie.expires * 1000),
+        domain,
+        path: cookie.path,
+        secure: cookie.secure,
+        httpOnly: cookie.httpOnly,
+        hostOnly: !cookie.domain.startsWith('.'),
+      });
+      try {
+        await cookieJar.setCookie(tcfsCookie, `https://${domain}`);
+      } catch (err) {
+        L.error({ tcfsCookie }, 'Error setting cookie');
+        throw err;
+      }
+    }),
+  );
 }
 
-export function deleteCookies(username?: string): void {
+export async function deleteCookies(username?: string): Promise<void> {
   if (username) {
     const cookieFilename = getCookiePath(username);
-    fs.unlinkSync(cookieFilename);
+    await fs.promises.unlink(cookieFilename);
   } else {
     const cookieFilename = getCookiePath(DEFAULT_COOKIE_NAME);
-    fs.unlinkSync(cookieFilename);
+    await fs.promises.unlink(cookieFilename);
   }
 }
 
-export function convertImportCookies(username: string): void {
+export async function convertImportCookies(username: string): Promise<void> {
   const cookieFilename = getCookiePath(username);
-  const fileExists = fs.existsSync(cookieFilename);
+  const fileExists = await fsx.pathExists(cookieFilename);
   if (fileExists) {
     let cookieData;
     try {
-      cookieData = fs.readFileSync(cookieFilename, 'utf8');
+      cookieData = await fs.promises.readFile(cookieFilename, 'utf8');
       const cookieTest = JSON.parse(cookieData);
       if (Array.isArray(cookieTest)) {
         L.info(`Converting ${cookieFilename} cookie format`);
         const tcfsCookies = editThisCookieToToughCookieFileStore(cookieTest);
-        fs.writeFileSync(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
+        await fs.promises.writeFile(cookieFilename, JSON.stringify(tcfsCookies), 'utf8');
       }
     } catch (err) {
       L.warn(err);
       L.warn({ cookieData }, `Could not parse ${cookieFilename}, deleting it`);
-      fs.rmSync(cookieFilename, { force: true });
+      await fs.promises.rm(cookieFilename, { force: true });
     }
   }
 }
 
-export function userHasValidCookie(username: string, cookieName: string): boolean {
+export async function userHasValidCookie(username: string, cookieName: string): Promise<boolean> {
   const cookieFilename = getCookiePath(username);
-  const fileExists = fs.existsSync(cookieFilename);
+  const fileExists = await fsx.pathExists(cookieFilename);
   if (fileExists) {
     try {
-      const cookieData: ToughCookieFileStore = fsx.readJSONSync(cookieFilename, 'utf8');
+      const cookieData: ToughCookieFileStore = await fsx.readJSON(cookieFilename, 'utf8');
       const rememberCookieExpireDate = cookieData['epicgames.com']?.['/']?.[cookieName]?.expires;
       if (!rememberCookieExpireDate) return false;
       return new Date(rememberCookieExpireDate) > new Date();

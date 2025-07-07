@@ -1,6 +1,7 @@
-import { exit } from 'process';
+/* eslint-disable n/no-process-exit */
 import PQueue from 'p-queue';
-import { config, AccountConfig } from './common/config/index.js';
+import type { AccountConfig } from './common/config/index.js';
+import { config } from './common/config/index.js';
 import logger from './common/logger.js';
 import { sendNotification, testNotifiers } from './notify.js';
 import { checkForUpdate, logVersionOnError } from './version.js';
@@ -91,14 +92,14 @@ export async function main(): Promise<void> {
       intervalCap: 1,
     });
     const accountPromises = config.accounts.map(async (account) =>
-      queue.add(() => redeemAccount(account)),
+      queue.add(async () => redeemAccount(account)),
     );
     await Promise.all(accountPromises);
     server.close();
     await killBrowserProcesses(logger);
     await cleanupTempFiles(logger);
     logger.info('Exiting successfully');
-    exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
+    process.exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
 }
 
@@ -107,5 +108,5 @@ main().catch(async (err) => {
   logVersionOnError();
   await killBrowserProcesses(logger);
   await cleanupTempFiles(logger);
-  exit(1);
+  process.exit(1);
 });

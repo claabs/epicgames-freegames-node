@@ -1,8 +1,8 @@
 import axios from 'axios';
 import logger from '../common/logger.js';
 import { NotifierService } from './notifier-service.js';
-import { NotificationReason } from '../interfaces/notification-reason.js';
-import { DiscordConfig } from '../common/config/index.js';
+import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type { DiscordConfig } from '../common/config/index.js';
 
 // https://birdie0.github.io/discord-webhooks-guide/index.html
 export class DiscordNotifier extends NotifierService {

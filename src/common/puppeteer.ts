@@ -1,7 +1,9 @@
-import _puppeteer, { PuppeteerExtra } from 'puppeteer-extra';
-import { Page, Browser, executablePath, Cookie } from 'puppeteer';
+import type { PuppeteerExtra } from 'puppeteer-extra';
+import _puppeteer from 'puppeteer-extra';
+import type { Page, Browser, Cookie } from 'puppeteer';
+import { executablePath } from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import { Logger } from 'pino';
+import type { Logger } from 'pino';
 import pTimeout, { TimeoutError } from 'p-timeout';
 import psList from 'ps-list';
 import os from 'node:os';
@@ -9,7 +11,7 @@ import fs from 'node:fs/promises';
 import fsx from 'fs-extra/esm';
 import path from 'node:path';
 
-import { ETCCookie, ToughCookieFileStore } from './cookie.js';
+import type { ETCCookie, ToughCookieFileStore } from './cookie.js';
 import { config } from './config/index.js';
 import { getCommitSha } from '../version.js';
 
@@ -121,7 +123,7 @@ const retryFunction = async <T>(
   }
 };
 
-export const killBrowserProcesses = async (L: Logger) => {
+export const killBrowserProcesses = async (L: Logger): Promise<void> => {
   if (!getCommitSha()) return; // Don't kill processes if not in docker
   const runningProcesses = await psList();
   L.trace({ runningProcesses }, 'Currently running processes');
@@ -132,7 +134,7 @@ export const killBrowserProcesses = async (L: Logger) => {
   const processNames = browserProcesses
     .map((p) => {
       if (!p.cmd) return '';
-      const processName = p.cmd.match(/\s(\/.*?(chromium|chome|headless_shell).*?)\s/)?.[1];
+      const processName = /\s(\/.*?(chromium|chome|headless_shell).*?)\s/.exec(p.cmd)?.[1];
       return processName;
     })
     .filter((name): name is string => typeof name === 'string');
@@ -146,7 +148,7 @@ export const killBrowserProcesses = async (L: Logger) => {
   });
 };
 
-export const cleanupTempFiles = async (L: Logger) => {
+export const cleanupTempFiles = async (L: Logger): Promise<void> => {
   if (!getCommitSha()) return; // Don't clear if not in docker
   const tempDir = os.tmpdir();
   const tempFiles = await fs.readdir(tempDir);
@@ -172,7 +174,7 @@ export const cleanupTempFiles = async (L: Logger) => {
  */
 export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> => {
   L.debug('Launching a new page');
-  const page = await retryFunction(() => browser.newPage(), L, 'new page');
+  const page = await retryFunction(async () => browser.newPage(), L, 'new page');
   page.setDefaultTimeout(config.browserNavigationTimeout);
   return page;
 };
@@ -180,7 +182,7 @@ export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> =>
 /**
  * Launcha new browser within a wrapper that will retry if it hangs for 30 seconds
  */
-export const safeLaunchBrowser = (L: Logger): Promise<Browser> => {
+export const safeLaunchBrowser = async (L: Logger): Promise<Browser> => {
   L.debug('Launching a new browser');
-  return retryFunction(() => puppeteer.launch(launchArgs), L, 'browser launch');
+  return retryFunction(async () => puppeteer.launch(launchArgs), L, 'browser launch');
 };

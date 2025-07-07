@@ -5,21 +5,27 @@ import {
 } from '../common/constants.js';
 import { config, SearchStrategy } from '../common/config/index.js';
 import PuppetBase from './base.js';
-import { OfferInfo } from '../interfaces/types.js';
-import { CatalogOffer, GetCatalogOfferResponse } from '../interfaces/get-catalog-offer-response.js';
-import {
+import type { OfferInfo } from '../interfaces/types.js';
+import type {
+  CatalogOffer,
+  GetCatalogOfferResponse,
+} from '../interfaces/get-catalog-offer-response.js';
+import type {
   GraphQLErrorResponse,
   Offer,
   ProductInfo,
   Page as ProductInfoPage,
 } from '../interfaces/product-info.js';
-import { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
-import {
+import type { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
+import type {
   SearchStoreQueryResponse,
   Element as SearchStoreElement,
 } from '../interfaces/search-store-query-response.js';
-import { OffersValidationResponse } from '../interfaces/offers-validation.js';
-import { PageSlugMappingResponse, PageSlugMappingResult } from '../interfaces/page-slug-mapping.js';
+import type { OffersValidationResponse } from '../interfaces/offers-validation.js';
+import type {
+  PageSlugMappingResponse,
+  PageSlugMappingResult,
+} from '../interfaces/page-slug-mapping.js';
 
 export default class PuppetFreeGames extends PuppetBase {
   async getCatalogFreeGames(onSale = true): Promise<OfferInfo[]> {
@@ -95,7 +101,7 @@ export default class PuppetFreeGames extends PuppetBase {
       offerId: game.id,
       offerNamespace: game.namespace,
       productName: game.title,
-      productSlug: game.productSlug || game.urlSlug,
+      productSlug: game.productSlug ?? game.urlSlug,
     }));
     this.L.trace({ offers }, 'Free games in catalog');
     return offers;
@@ -142,7 +148,7 @@ export default class PuppetFreeGames extends PuppetBase {
         freeOfferedGames.map(async (game) => {
           let pageSlug =
             game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
-              ?.pageSlug || game.productSlug;
+              ?.pageSlug ?? game.productSlug;
           const { productSlug, offerType } = game;
           let { id: offerId, namespace } = game;
 
@@ -208,7 +214,7 @@ export default class PuppetFreeGames extends PuppetBase {
     return storePageMapping.pageSlug;
   }
 
-  async getCmsProduct(productSlug: string, offerType?: 'BUNDLE' | string): Promise<Offer[]> {
+  async getCmsProduct(productSlug: string, offerType?: string): Promise<Offer[]> {
     const isBundle = offerType === 'BUNDLE';
     this.L.debug({ productSlug, offerType }, 'Getting product info using productSlug');
     const itemPath = isBundle ? 'bundles' : 'products';
@@ -272,7 +278,7 @@ export default class PuppetFreeGames extends PuppetBase {
   async getPurchasableFreeGames(offers: OfferInfo[]): Promise<OfferInfo[]> {
     this.L.debug('Checking ownership and prerequesites on available games');
     const canPurchaseSet = await Promise.all(
-      offers.map((offer) => {
+      offers.map(async (offer) => {
         return this.canPurchase(offer.offerId, offer.offerNamespace);
       }),
     );
@@ -287,7 +293,7 @@ export default class PuppetFreeGames extends PuppetBase {
     if (!isFree) return false; // don't log non-free offers (thousands)
 
     const isCountryBlacklisted = offer.countriesBlacklist?.includes(
-      config.countryCode?.toUpperCase() || '',
+      config.countryCode?.toUpperCase() ?? '',
     );
     const isExpired = offer.expiryDate ? new Date(offer.expiryDate) < new Date() : false;
     const title = offer.title.trim().toLowerCase();
@@ -378,7 +384,7 @@ export default class PuppetFreeGames extends PuppetBase {
       if (weeklyFreeGames === null && catalogFreeGames === null) {
         throw new Error('Both free game API lookups failed');
       }
-      validFreeGames = [...(weeklyFreeGames || []), ...(catalogFreeGames || [])];
+      validFreeGames = [...(weeklyFreeGames ?? []), ...(catalogFreeGames ?? [])];
       this.L.trace({ dupedFreeGames: validFreeGames });
       // dedupe
       validFreeGames = validFreeGames.filter(

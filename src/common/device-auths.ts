@@ -1,6 +1,6 @@
 import fsx from 'fs-extra/esm';
-import path from 'path';
-import L from './logger.js';
+import path from 'node:path';
+import logger from './logger.js';
 import { CONFIG_DIR } from './config/index.js';
 
 export interface AuthTokenResponse {
@@ -22,33 +22,34 @@ export interface AuthTokenResponse {
   application_id: string;
 }
 
-export interface DeviceAuthsFile {
-  [account: string]: AuthTokenResponse;
-}
+export type DeviceAuthsFile = Record<string, AuthTokenResponse>;
 
 const deviceAuthsFilename = path.join(CONFIG_DIR, `device-auths.json`);
 
-export function getDeviceAuths(): DeviceAuthsFile | undefined {
+export async function getDeviceAuths(): Promise<DeviceAuthsFile | undefined> {
   try {
-    const deviceAuths: DeviceAuthsFile = fsx.readJSONSync(deviceAuthsFilename, 'utf-8');
+    const deviceAuths: DeviceAuthsFile = await fsx.readJSON(deviceAuthsFilename, 'utf-8');
     return deviceAuths;
   } catch (err) {
-    L.trace(err.message);
+    logger.trace(err.message);
     return undefined;
   }
 }
 
-export function getAccountAuth(account: string): AuthTokenResponse | undefined {
-  const deviceAuths = getDeviceAuths();
+export async function getAccountAuth(account: string): Promise<AuthTokenResponse | undefined> {
+  const deviceAuths = await getDeviceAuths();
   return deviceAuths?.[account];
 }
 
-export function writeDeviceAuths(deviceAuths: DeviceAuthsFile): void {
-  fsx.outputJSONSync(deviceAuthsFilename, deviceAuths, 'utf-8');
+export async function writeDeviceAuths(deviceAuths: DeviceAuthsFile): Promise<void> {
+  await fsx.outputJSON(deviceAuthsFilename, deviceAuths, 'utf-8');
 }
 
-export function setAccountAuth(account: string, accountAuth: AuthTokenResponse): void {
-  const existingDeviceAuths = getDeviceAuths() || {};
+export async function setAccountAuth(
+  account: string,
+  accountAuth: AuthTokenResponse,
+): Promise<void> {
+  const existingDeviceAuths = (await getDeviceAuths()) ?? {};
   existingDeviceAuths[account] = accountAuth;
   writeDeviceAuths(existingDeviceAuths);
 }

@@ -1,17 +1,19 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import asyncHandler from 'express-async-handler';
 import Hashids from 'hashids';
 import urlJoin from 'url-join';
-import { RequestHandler } from 'express';
-import { Logger } from 'pino';
+import type { RequestHandler } from 'express';
+import type { Logger } from 'pino';
 import { NotificationReason } from './interfaces/notification-reason.js';
 import { config } from './common/config/index.js';
-import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths.js';
+import type { AuthTokenResponse } from './common/device-auths.js';
+import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
 import { serverRoute } from './common/server.js';
 import logger from './common/logger.js';
 import { getLocaltunnelUrl } from './common/localtunnel.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
-// eslint-disable-next-line import/no-cycle
+// eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
 
 export interface ClientCredentialsTokenResponse {
@@ -67,7 +69,7 @@ const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
-export const promiseTimeout = <T>(
+export const promiseTimeout = async <T>(
   timeoutMs: number,
   promise: Promise<T>,
   error?: Error,
@@ -75,7 +77,7 @@ export const promiseTimeout = <T>(
   let timeout: NodeJS.Timeout;
   const timeoutPromise = new Promise((_, reject) => {
     timeout = setTimeout(
-      () => reject(error || new Error(`Timed out after ${timeoutMs} ms`)),
+      () => reject(error ?? new Error(`Timed out after ${timeoutMs} ms`)),
       timeoutMs,
     );
   });
@@ -91,7 +93,7 @@ export const promiseTimeout = <T>(
 };
 
 const getUniqueUrl = (): { reqId: string; url: string } => {
-  const baseUrl = config.webPortalConfig?.baseUrl || 'http://localhost:3000';
+  const baseUrl = config.webPortalConfig?.baseUrl ?? 'http://localhost:3000';
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
   const reqId = hashids.encode(randInt);
   const url = urlJoin(baseUrl, `/${reqId}`);
@@ -145,7 +147,7 @@ export class DeviceLogin {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
         }),
       ),
-      await this.notify(NotificationReason.TEST, url),
+      this.notify(NotificationReason.TEST, url),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -167,7 +169,7 @@ export class DeviceLogin {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
         }),
       ),
-      await this.notify(NotificationReason.LOGIN, url),
+      this.notify(NotificationReason.LOGIN, url),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -226,7 +228,7 @@ export class DeviceLogin {
 
   public async refreshDeviceAuth(): Promise<boolean> {
     try {
-      const existingAuth = getAccountAuth(this.user);
+      const existingAuth = await getAccountAuth(this.user);
       this.L.trace(
         {
           existingAuthRefreshExpiry: existingAuth?.refresh_expires_at,

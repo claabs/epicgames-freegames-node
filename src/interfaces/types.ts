@@ -14,8 +14,8 @@ export interface MFABody {
 
 export interface GraphQLBody {
   query: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  variables?: { [key: string]: any };
+
+  variables?: Record<string, any>;
 }
 
 export interface RedirectResponse {
@@ -88,7 +88,7 @@ export interface ArkoseData {
 
 export interface ReputationData {
   verdict: string;
-  // eslint-disable-next-line camelcase
+
   arkose_data: ArkoseData;
 }
 
@@ -110,7 +110,7 @@ export interface OrderPreviewResponse {
   offers: string[];
   orderComplete: boolean | null;
   orderError: boolean | null;
-  orderId: null | null;
+  orderId: null;
   orderPending: boolean | null;
   orderResponse: PreviewOrderResponseInner;
   showCurrencyChangeMessage: boolean;

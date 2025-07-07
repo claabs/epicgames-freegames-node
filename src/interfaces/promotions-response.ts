@@ -105,7 +105,7 @@ export interface Element {
   namespace: string;
   description: string;
   effectiveDate: Date;
-  offerType?: string | 'BUNDLE';
+  offerType?: string;
   keyImages: KeyImage[];
   seller: Seller;
   productSlug: string;
