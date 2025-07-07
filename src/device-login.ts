@@ -191,7 +191,7 @@ export class DeviceLogin {
         );
         // TODO: check that the user matches, only possible with accountId hash
         this.L.info('Successful login, saving auth token');
-        setAccountAuth(this.user, deviceCodeResponse);
+        await setAccountAuth(this.user, deviceCodeResponse);
         resolve(undefined);
       } catch (err) {
         reject(err);
@@ -236,7 +236,7 @@ export class DeviceLogin {
 
       const resp = await axios.request<AuthTokenResponse>(reqConfig);
       this.L.debug({ authResp: resp.data }, 'Refresh auth token response');
-      setAccountAuth(this.user, resp.data);
+      await setAccountAuth(this.user, resp.data);
       return true;
     } catch (err) {
       this.L.warn({ err }, 'Failed to refresh auth, getting it fresh');

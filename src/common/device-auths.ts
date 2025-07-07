@@ -51,5 +51,5 @@ export async function setAccountAuth(
 ): Promise<void> {
   const existingDeviceAuths = (await getDeviceAuths()) ?? {};
   existingDeviceAuths[account] = accountAuth;
-  writeDeviceAuths(existingDeviceAuths);
+  await writeDeviceAuths(existingDeviceAuths);
 }

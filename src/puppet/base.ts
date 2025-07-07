@@ -157,7 +157,7 @@ export default class PuppetBase {
     try {
       this.L.trace('Saving new cookies');
       const currentCookies = await this.browser.cookies();
-      setPuppeteerCookies(this.email, currentCookies);
+      await setPuppeteerCookies(this.email, currentCookies);
       this.L.trace('Saved cookies, closing browser');
       // await this.page.close(); // Getting `Protocol error (Target.createTarget): Target closed` with this for some reason
       this.page = undefined;
