@@ -5,6 +5,7 @@ import Hashids from 'hashids';
 import urlJoin from 'url-join';
 import type { RequestHandler } from 'express';
 import type { Logger } from 'pino';
+import pTimeout from 'p-timeout';
 import { NotificationReason } from './interfaces/notification-reason.js';
 import { config } from './common/config/index.js';
 import type { AuthTokenResponse } from './common/device-auths.js';
@@ -69,29 +70,6 @@ const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
-export const promiseTimeout = async <T>(
-  timeoutMs: number,
-  promise: Promise<T>,
-  error?: Error,
-): Promise<T> => {
-  let timeout: NodeJS.Timeout;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeout = setTimeout(
-      () => reject(error ?? new Error(`Timed out after ${timeoutMs} ms`)),
-      timeoutMs,
-    );
-  });
-
-  return Promise.race([
-    promise.then((res) => {
-      // Cancel timeout to prevent open handles
-      clearTimeout(timeout);
-      return res;
-    }),
-    timeoutPromise,
-  ]) as Promise<T>;
-};
-
 const getUniqueUrl = (): { reqId: string; url: string } => {
   const baseUrl = config.webPortalConfig?.baseUrl ?? 'http://localhost:3000';
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
@@ -141,11 +119,14 @@ export class DeviceLogin {
 
     // Wait on a promise to be resolved by the web redirect completing
     await Promise.all([
-      promiseTimeout(
-        notificationTimeout,
+      pTimeout(
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
         }),
+        {
+          milliseconds: notificationTimeout,
+          message: 'Test notification timed out',
+        },
       ),
       this.notify(NotificationReason.TEST, url),
     ]);
@@ -163,11 +144,14 @@ export class DeviceLogin {
 
     // Wait on a promise to be resolved by the web redirect and login completing
     await Promise.all([
-      promiseTimeout(
-        notificationTimeout,
+      pTimeout(
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
         }),
+        {
+          milliseconds: notificationTimeout,
+          message: 'Device login timed out',
+        },
       ),
       this.notify(NotificationReason.LOGIN, url),
     ]);

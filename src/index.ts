@@ -103,10 +103,12 @@ export async function main(): Promise<void> {
   }
 }
 
-main().catch(async (err) => {
+try {
+  await main();
+} catch (err) {
   logger.error(err);
   logVersionOnError();
   await killBrowserProcesses(logger);
   await cleanupTempFiles(logger);
   process.exit(1);
-});
+}

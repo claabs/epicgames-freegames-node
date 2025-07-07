@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import { configs, plugins, rules } from 'eslint-config-airbnb-extended';
 import prettierPlugin from 'eslint-plugin-prettier/recommended';
 import { globalIgnores } from 'eslint/config';
+import pluginPromise from 'eslint-plugin-promise';
 
 const jsConfig = [
   // ESLint Recommended Rules
@@ -15,6 +16,15 @@ const jsConfig = [
   plugins.importX,
   // Airbnb Base Recommended Config
   ...configs.base.recommended,
+  pluginPromise.configs['flat/recommended'],
+  {
+    name: 'promise/flat/all',
+    rules: {
+      'promise/prefer-await-to-callbacks': 'error',
+      'promise/prefer-await-to-then': 'error',
+      'promise/prefer-catch': 'error',
+    },
+  },
 ];
 
 const nodeConfig = [
