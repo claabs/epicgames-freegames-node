@@ -1,19 +1,21 @@
 /* eslint-disable n/no-process-exit */
 import PQueue from 'p-queue';
-import type { AccountConfig } from './common/config/index.js';
+
 import { config } from './common/config/index.js';
-import logger from './common/logger.js';
-import { sendNotification, testNotifiers } from './notify.js';
-import { checkForUpdate, logVersionOnError } from './version.js';
-import PuppetLogin from './puppet/login.js';
-import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
-import PuppetFreeGames from './puppet/free-games.js';
-import { createServer } from './common/server.js';
 import { convertImportCookies } from './common/cookie.js';
+import logger from './common/logger.js';
+import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
+import { createServer } from './common/server.js';
 import { DeviceLogin } from './device-login.js';
-import { generateCheckoutUrl } from './purchase.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
 import { EulaManager } from './eula-manager.js';
+import { NotificationReason } from './interfaces/notification-reason.js';
+import { sendNotification, testNotifiers } from './notify.js';
+import PuppetFreeGames from './puppet/free-games.js';
+import PuppetLogin from './puppet/login.js';
+import { generateCheckoutUrl } from './purchase.js';
+import { checkForUpdate, logVersionOnError } from './version.js';
+
+import type { AccountConfig } from './common/config/index.js';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });

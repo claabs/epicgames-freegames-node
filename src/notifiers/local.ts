@@ -1,5 +1,7 @@
 import open from 'open';
+
 import { NotifierService } from './notifier-service.js';
+
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class LocalNotifier extends NotifierService {

@@ -1,21 +1,24 @@
-import type { AxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import asyncHandler from 'express-async-handler';
 import Hashids from 'hashids';
-import urlJoin from 'url-join';
-import type { RequestHandler } from 'express';
-import type { Logger } from 'pino';
 import pTimeout from 'p-timeout';
-import { NotificationReason } from './interfaces/notification-reason.js';
+import urlJoin from 'url-join';
+
 import { config } from './common/config/index.js';
-import type { AuthTokenResponse } from './common/device-auths.js';
-import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
-import { serverRoute } from './common/server.js';
-import logger from './common/logger.js';
-import { getLocaltunnelUrl } from './common/localtunnel.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
+import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
+import { getLocaltunnelUrl } from './common/localtunnel.js';
+import logger from './common/logger.js';
+import { serverRoute } from './common/server.js';
+import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
+
+import type { AxiosRequestConfig } from 'axios';
+import type { RequestHandler } from 'express';
+import type { Logger } from 'pino';
+
+import type { AuthTokenResponse } from './common/device-auths.js';
 
 export interface ClientCredentialsTokenResponse {
   access_token: string;

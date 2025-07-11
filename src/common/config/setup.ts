@@ -1,12 +1,14 @@
-import 'reflect-metadata';
-import 'dotenv/config';
-import json5 from 'json5';
 import path from 'node:path';
-import fs from 'fs-extra';
+
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { plainToInstance, instanceToPlain } from 'class-transformer';
-import { pino } from 'pino';
 import cronParser from 'cron-parser';
+import 'dotenv/config';
+import fs from 'fs-extra';
+import json5 from 'json5';
+import { pino } from 'pino';
+import 'reflect-metadata';
+
 import { AppConfig, CONFIG_DIR } from './classes.js';
 
 // Declare pino logger as importing would cause dependency cycle

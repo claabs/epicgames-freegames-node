@@ -1,14 +1,17 @@
-import * as tough from 'tough-cookie';
-import FileCookieStore from 'tough-cookie-file-store';
-import fsx from 'fs-extra/esm';
 import fs from 'node:fs';
-import filenamify from 'filenamify';
-import objectAssignDeep from 'object-assign-deep';
-import type { Cookie } from 'puppeteer';
 import path from 'node:path';
+
+import filenamify from 'filenamify';
+import fsx from 'fs-extra/esm';
+import objectAssignDeep from 'object-assign-deep';
+import tough from 'tough-cookie';
+import FileCookieStore from 'tough-cookie-file-store';
+
+import { CONFIG_DIR } from './config/index.js';
 // eslint-disable-next-line import-x/no-rename-default
 import L from './logger.js';
-import { CONFIG_DIR } from './config/index.js';
+
+import type { Cookie } from 'puppeteer';
 
 export interface TCFSCookieAttributes {
   key: string;

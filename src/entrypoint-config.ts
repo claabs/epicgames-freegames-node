@@ -1,4 +1,5 @@
 import { outputJSON } from 'fs-extra/esm';
+
 import { config } from './common/config/index.js';
 import logger from './common/logger.js';
 

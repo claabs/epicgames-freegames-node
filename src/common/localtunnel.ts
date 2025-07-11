@@ -1,4 +1,5 @@
 import localtunnel from 'localtunnel';
+
 import { config } from './config/index.js';
 
 export async function getLocaltunnelUrl(originalUrl: string): Promise<string> {

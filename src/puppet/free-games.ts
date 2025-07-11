@@ -1,31 +1,32 @@
+import PuppetBase from './base.js';
+import { config, SearchStrategy } from '../common/config/index.js';
 import {
   FREE_GAMES_PROMOTIONS_ENDPOINT,
   GRAPHQL_ENDPOINT,
   STORE_CONTENT,
 } from '../common/constants.js';
-import { config, SearchStrategy } from '../common/config/index.js';
-import PuppetBase from './base.js';
-import type { OfferInfo } from '../interfaces/types.js';
+
 import type {
   CatalogOffer,
   GetCatalogOfferResponse,
 } from '../interfaces/get-catalog-offer-response.js';
-import type {
-  GraphQLErrorResponse,
-  Offer,
-  ProductInfo,
-  Page as ProductInfoPage,
-} from '../interfaces/product-info.js';
-import type { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
-import type {
-  SearchStoreQueryResponse,
-  Element as SearchStoreElement,
-} from '../interfaces/search-store-query-response.js';
 import type { OffersValidationResponse } from '../interfaces/offers-validation.js';
 import type {
   PageSlugMappingResponse,
   PageSlugMappingResult,
 } from '../interfaces/page-slug-mapping.js';
+import type {
+  GraphQLErrorResponse,
+  Offer,
+  Page as ProductInfoPage,
+  ProductInfo,
+} from '../interfaces/product-info.js';
+import type { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
+import type {
+  Element as SearchStoreElement,
+  SearchStoreQueryResponse,
+} from '../interfaces/search-store-query-response.js';
+import type { OfferInfo } from '../interfaces/types.js';
 
 export default class PuppetFreeGames extends PuppetBase {
   async getCatalogFreeGames(onSale = true): Promise<OfferInfo[]> {

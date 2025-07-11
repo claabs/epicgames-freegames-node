@@ -1,36 +1,37 @@
-import {
-  AppriseNotifier,
-  DiscordNotifier,
-  EmailNotifier,
-  LocalNotifier,
-  TelegramNotifier,
-  GotifyNotifier,
-  SlackNotifier,
-  BarkNotifier,
-  NtfyNotifier,
-  PushoverNotifier,
-  HomeassistantNotifier,
-  WebhookNotifier,
-} from './notifiers/index.js';
-import type {
-  DiscordConfig,
-  EmailConfig,
-  TelegramConfig,
-  AppriseConfig,
-  PushoverConfig,
-  GotifyConfig,
-  SlackConfig,
-  NtfyConfig,
-  HomeassistantConfig,
-  BarkConfig,
-  WebhookConfig,
-} from './common/config/index.js';
 import { config, NotificationType } from './common/config/index.js';
 // eslint-disable-next-line import-x/no-rename-default
 import L from './common/logger.js';
-import type { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { DeviceLogin } from './device-login.js';
+import {
+  AppriseNotifier,
+  BarkNotifier,
+  DiscordNotifier,
+  EmailNotifier,
+  GotifyNotifier,
+  HomeassistantNotifier,
+  LocalNotifier,
+  NtfyNotifier,
+  PushoverNotifier,
+  SlackNotifier,
+  TelegramNotifier,
+  WebhookNotifier,
+} from './notifiers/index.js';
+
+import type {
+  AppriseConfig,
+  BarkConfig,
+  DiscordConfig,
+  EmailConfig,
+  GotifyConfig,
+  HomeassistantConfig,
+  NtfyConfig,
+  PushoverConfig,
+  SlackConfig,
+  TelegramConfig,
+  WebhookConfig,
+} from './common/config/index.js';
+import type { NotificationReason } from './interfaces/notification-reason.js';
 
 export async function sendNotification(
   accountEmail: string,

@@ -1,13 +1,14 @@
-import type { Page } from 'puppeteer';
-import { STORE_CART_EN } from '../common/constants.js';
 import PuppetBase from './base.js';
+import { STORE_CART_EN } from '../common/constants.js';
 import { getCookiesRaw, userHasValidCookie } from '../common/cookie.js';
 import {
-  toughCookieFileStoreToPuppeteerCookie,
-  safeNewPage,
   getDevtoolsUrl,
+  safeNewPage,
+  toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer.js';
 import { generateLoginRedirect } from '../purchase.js';
+
+import type { Page } from 'puppeteer';
 
 export default class PuppetLogin extends PuppetBase {
   /**

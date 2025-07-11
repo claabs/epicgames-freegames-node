@@ -1,13 +1,16 @@
 import axios from 'axios';
-import type { Logger } from 'pino';
-import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.js';
-import logger from './common/logger.js';
-import type { AuthTokenResponse } from './common/device-auths.js';
-import { getAccountAuth } from './common/device-auths.js';
+
 import { config } from './common/config/setup.js';
-import { generateLoginRedirect } from './purchase.js';
-import { sendNotification } from './notify.js';
+import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.js';
+import { getAccountAuth } from './common/device-auths.js';
+import logger from './common/logger.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
+import { sendNotification } from './notify.js';
+import { generateLoginRedirect } from './purchase.js';
+
+import type { Logger } from 'pino';
+
+import type { AuthTokenResponse } from './common/device-auths.js';
 
 export interface EulaVersion {
   key: string;

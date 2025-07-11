@@ -1,8 +1,10 @@
 import axios from 'axios';
-import logger from '../common/logger.js';
+
 import { NotifierService } from './notifier-service.js';
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import logger from '../common/logger.js';
+
 import type { HomeassistantConfig } from '../common/config/index.js';
+import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class HomeassistantNotifier extends NotifierService {
   private config: HomeassistantConfig;

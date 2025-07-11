@@ -1,4 +1,5 @@
 import { EPIC_CLIENT_ID, EPIC_PURCHASE_ENDPOINT, ID_LOGIN_ENDPOINT } from './common/constants.js';
+
 import type { OfferInfo } from './interfaces/types.js';
 
 export const generateLoginRedirect = (redirectUrl: string): string => {

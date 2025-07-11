@@ -1,8 +1,9 @@
 import js from '@eslint/js';
+import { globalIgnores } from 'eslint/config';
 import { configs, plugins, rules } from 'eslint-config-airbnb-extended';
 import prettierPlugin from 'eslint-plugin-prettier/recommended';
-import { globalIgnores } from 'eslint/config';
 import pluginPromise from 'eslint-plugin-promise';
+import tseslint from 'typescript-eslint';
 
 const jsConfig = [
   // ESLint Recommended Rules
@@ -16,6 +17,7 @@ const jsConfig = [
   plugins.importX,
   // Airbnb Base Recommended Config
   ...configs.base.recommended,
+  rules.base.importsStrict,
   pluginPromise.configs['flat/recommended'],
   {
     name: 'promise/flat/all',
@@ -40,14 +42,15 @@ const typescriptConfig = [
   // Airbnb Base TypeScript Config
   ...configs.base.typescript,
   rules.typescript.typescriptEslintStrict,
+  ...tseslint.configs.stylisticTypeChecked,
   {
-    rules: {
-      'import-x/prefer-default-export': 0,
-    },
+    name: 'typescript/disable',
+    files: ['**/*.*js'],
+    extends: [tseslint.configs.disableTypeChecked],
   },
 ];
 
-export default [
+export default tseslint.config(
   globalIgnores(['**/dist', '**/node_modules', '!**/.*.*js', 'docs/**/*']),
   // Javascript Config
   ...jsConfig,
@@ -57,4 +60,9 @@ export default [
   ...typescriptConfig,
   // Prettier Config
   prettierPlugin,
-];
+  {
+    rules: {
+      'import-x/prefer-default-export': 0,
+    },
+  },
+);

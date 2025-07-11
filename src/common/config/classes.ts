@@ -1,29 +1,33 @@
 /* eslint-disable @typescript-eslint/no-empty-function, @typescript-eslint/no-useless-constructor, max-classes-per-file, @typescript-eslint/prefer-nullish-coalescing */
-import 'reflect-metadata';
-import type { ClassConstructor } from 'class-transformer';
+
+import path from 'node:path';
+
 import { Expose, Type } from 'class-transformer';
 import {
-  IsEmail,
-  IsUrl,
-  IsString,
-  IsBoolean,
-  IsOptional,
-  ValidateNested,
-  IsEnum,
-  IsInt,
-  Min,
-  Matches,
-  IsObject,
   ArrayNotEmpty,
   IsArray,
-  Max,
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+  Max,
+  Min,
+  ValidateNested,
 } from 'class-validator';
+import cronParser from 'cron-parser';
+import 'reflect-metadata';
+
 import type { ServerOptions } from 'node:https';
 import type { ListenOptions } from 'node:net';
-import cronParser from 'cron-parser';
-import path from 'node:path';
+
+import type { ClassConstructor } from 'class-transformer';
 
 export const CONFIG_DIR = process.env.CONFIG_DIR || 'config';
 
@@ -1147,7 +1151,7 @@ export class AppConfig {
       homeassistant.token = HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN;
       homeassistant.notifyservice = HOMEASSISTANT_NOTIFYSERVICE;
       homeassistant.customData = HOMEASSISTANT_CUSTOM_DATA
-        ? JSON.parse(HOMEASSISTANT_CUSTOM_DATA)
+        ? (JSON.parse(HOMEASSISTANT_CUSTOM_DATA) as Record<string, string | number | boolean>)
         : undefined;
       this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof HomeassistantConfig)) {
@@ -1174,7 +1178,9 @@ export class AppConfig {
     if (WEBHOOK_URL) {
       const webhook = new WebhookConfig();
       webhook.url = WEBHOOK_URL;
-      webhook.headers = WEBHOOK_HEADERS ? JSON.parse(WEBHOOK_HEADERS) : undefined;
+      webhook.headers = WEBHOOK_HEADERS
+        ? (JSON.parse(WEBHOOK_HEADERS) as Record<string, string>)
+        : undefined;
       this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof WebhookConfig)) {
         this.notifiers.push(webhook);

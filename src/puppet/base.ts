@@ -1,17 +1,20 @@
-import type { Logger } from 'pino';
-import type { Page, Browser, Cookie } from 'puppeteer';
 import path from 'node:path';
+
 import { ensureDir } from 'fs-extra/esm';
+
+import { config } from '../common/config/index.js';
+import { STORE_CART_EN } from '../common/constants.js';
+import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
+import { getAccountAuth } from '../common/device-auths.js';
 import logger from '../common/logger.js';
 import {
   getDevtoolsUrl,
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer.js';
-import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
-import { config } from '../common/config/index.js';
-import { getAccountAuth } from '../common/device-auths.js';
-import { STORE_CART_EN } from '../common/constants.js';
+
+import type { Logger } from 'pino';
+import type { Browser, Cookie, Page } from 'puppeteer';
 
 export interface PuppetBaseProps {
   browser: Browser;

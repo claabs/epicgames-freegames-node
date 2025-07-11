@@ -1,19 +1,22 @@
-import type { PuppeteerExtra } from 'puppeteer-extra';
-import _puppeteer from 'puppeteer-extra';
-import type { Page, Browser, Cookie } from 'puppeteer';
-import { executablePath } from 'puppeteer';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import type { Logger } from 'pino';
-import pTimeout, { TimeoutError } from 'p-timeout';
-import psList from 'ps-list';
-import os from 'node:os';
 import fs from 'node:fs/promises';
-import fsx from 'fs-extra/esm';
+import os from 'node:os';
 import path from 'node:path';
 
-import type { ETCCookie, ToughCookieFileStore } from './cookie.js';
-import { config } from './config/index.js';
+import fsx from 'fs-extra/esm';
+import pTimeout, { TimeoutError } from 'p-timeout';
+import psList from 'ps-list';
+import { executablePath } from 'puppeteer';
+import _puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
 import { getCommitSha } from '../version.js';
+import { config } from './config/index.js';
+
+import type { Logger } from 'pino';
+import type { Browser, Cookie, Page } from 'puppeteer';
+import type { PuppeteerExtra } from 'puppeteer-extra';
+
+import type { ETCCookie, ToughCookieFileStore } from './cookie.js';
 
 const puppeteer = _puppeteer as unknown as PuppeteerExtra;
 const stealth = StealthPlugin();
