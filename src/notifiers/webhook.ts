@@ -1,8 +1,10 @@
 import axios from 'axios';
-import logger from '../common/logger.js';
+
 import { NotifierService } from './notifier-service.js';
-import { NotificationReason } from '../interfaces/notification-reason.js';
-import { WebhookConfig } from '../common/config/index.js';
+import logger from '../common/logger.js';
+
+import type { WebhookConfig } from '../common/config/index.js';
+import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class WebhookNotifier extends NotifierService {
   private config: WebhookConfig;

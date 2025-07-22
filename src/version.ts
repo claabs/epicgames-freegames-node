@@ -1,19 +1,22 @@
+import { promises as fsPromises } from 'node:fs';
+
 import axios from 'axios';
-import { readFileSync } from 'node:fs';
+
 import { config } from './common/config/index.js';
+// eslint-disable-next-line import-x/no-rename-default
 import L from './common/logger.js';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
 const { DISTRO } = process.env;
 let { COMMIT_SHA, BRANCH } = process.env;
 try {
-  COMMIT_SHA = readFileSync('./commit-sha.txt', { encoding: 'utf-8' }).trim();
-} catch (error) {
+  COMMIT_SHA = (await fsPromises.readFile('./commit-sha.txt', { encoding: 'utf-8' })).trim();
+} catch {
   L.debug('Fallback to environment variable commit SHA');
 }
 try {
-  BRANCH = readFileSync('./branch.txt', { encoding: 'utf-8' }).trim();
-} catch (error) {
+  BRANCH = (await fsPromises.readFile('./branch.txt', { encoding: 'utf-8' })).trim();
+} catch {
   L.debug('Fallback to environment variable branch');
 }
 
@@ -28,8 +31,7 @@ export async function checkForUpdate(): Promise<void> {
   }
   L.debug({ PROJECT_NAME, BRANCH, COMMIT_SHA }, 'Performing version check');
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resp = await axios.get<any>(
+    const resp = await axios.get(
       `https://api.github.com/repos/claabs/${PROJECT_NAME}/commits/${BRANCH}`,
       {
         responseType: 'json',
@@ -48,7 +50,7 @@ export async function checkForUpdate(): Promise<void> {
   }
 }
 
-export const getCommitSha = () => {
+export const getCommitSha = (): string | undefined => {
   return COMMIT_SHA;
 };
 

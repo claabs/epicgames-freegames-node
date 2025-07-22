@@ -1,8 +1,10 @@
 import axios from 'axios';
-import logger from '../common/logger.js';
+
 import { NotifierService } from './notifier-service.js';
-import { TelegramConfig } from '../common/config/index.js';
-import { NotificationReason } from '../interfaces/notification-reason.js';
+import logger from '../common/logger.js';
+
+import type { TelegramConfig } from '../common/config/index.js';
+import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class TelegramNotifier extends NotifierService {
   private config: TelegramConfig;
@@ -24,7 +26,7 @@ export class TelegramNotifier extends NotifierService {
     // https://stackoverflow.com/a/60145565/5037239
     const escapedMessage = message.replace(
       /(\[[^\][]*]\(http[^()]*\))|[_*[\]()~>#+=|{}.!-]/gi,
-      (x, y) => y || `\\${x}`,
+      (x: string, y: string): string => y || `\\${x}`,
     );
     const jsonPayload = {
       chat_id: this.config.chatId,

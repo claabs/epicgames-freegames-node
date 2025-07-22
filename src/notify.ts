@@ -1,36 +1,37 @@
+import { config, NotificationType } from './common/config/index.js';
+// eslint-disable-next-line import-x/no-rename-default
+import L from './common/logger.js';
+// eslint-disable-next-line import-x/no-cycle
+import { DeviceLogin } from './device-login.js';
 import {
   AppriseNotifier,
+  BarkNotifier,
   DiscordNotifier,
   EmailNotifier,
-  LocalNotifier,
-  TelegramNotifier,
   GotifyNotifier,
-  SlackNotifier,
-  BarkNotifier,
+  HomeassistantNotifier,
+  LocalNotifier,
   NtfyNotifier,
   PushoverNotifier,
-  HomeassistantNotifier,
+  SlackNotifier,
+  TelegramNotifier,
   WebhookNotifier,
 } from './notifiers/index.js';
-import {
-  config,
+
+import type {
+  AppriseConfig,
+  BarkConfig,
   DiscordConfig,
   EmailConfig,
-  NotificationType,
-  TelegramConfig,
-  AppriseConfig,
-  PushoverConfig,
   GotifyConfig,
-  SlackConfig,
-  NtfyConfig,
   HomeassistantConfig,
-  BarkConfig,
+  NtfyConfig,
+  PushoverConfig,
+  SlackConfig,
+  TelegramConfig,
   WebhookConfig,
 } from './common/config/index.js';
-import L from './common/logger.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
-// eslint-disable-next-line import/no-cycle
-import { DeviceLogin } from './device-login.js';
+import type { NotificationReason } from './interfaces/notification-reason.js';
 
 export async function sendNotification(
   accountEmail: string,
@@ -38,15 +39,15 @@ export async function sendNotification(
   url: string,
 ): Promise<void> {
   const account = config.accounts.find((acct) => acct.email === accountEmail);
-  const notifierConfigs = account?.notifiers || config.notifiers;
-  if (!notifierConfigs || !notifierConfigs.length) {
+  const notifierConfigs = account?.notifiers ?? config.notifiers;
+  if (!notifierConfigs?.length) {
     L.warn(
       {
         url,
         accountEmail,
         reason,
       },
-      `No notifiers configured globally, or for the account. This log is all you'll get`,
+      "No notifiers configured globally, or for the account. This log is all you'll get",
     );
     return;
   }
@@ -82,7 +83,7 @@ export async function sendNotification(
   });
 
   await Promise.all(
-    notifiers.map((notifier) => notifier.sendNotification(accountEmail, reason, url)),
+    notifiers.map(async (notifier) => notifier.sendNotification(accountEmail, reason, url)),
   );
 }
 
@@ -91,13 +92,13 @@ export async function testNotifiers(): Promise<void> {
 
   try {
     await Promise.any(
-      config.accounts.map((acct) => {
+      config.accounts.map(async (acct) => {
         const deviceAuth = new DeviceLogin({ user: acct.email });
         return deviceAuth.testServerNotify();
       }),
     );
     L.info('Notification test complete');
-  } catch (err) {
+  } catch {
     L.warn('Test notification timed out. Continuing...');
   }
 }

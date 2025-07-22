@@ -1,8 +1,10 @@
 import axios from 'axios';
-import logger from '../common/logger.js';
+
 import { NotifierService } from './notifier-service.js';
-import { NotificationReason } from '../interfaces/notification-reason.js';
-import { SlackConfig } from '../common/config/index.js';
+import logger from '../common/logger.js';
+
+import type { SlackConfig } from '../common/config/index.js';
+import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class SlackNotifier extends NotifierService {
   private config: SlackConfig;

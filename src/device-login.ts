@@ -1,18 +1,24 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import asyncHandler from 'express-async-handler';
 import Hashids from 'hashids';
+import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
-import { RequestHandler } from 'express';
-import { Logger } from 'pino';
-import { NotificationReason } from './interfaces/notification-reason.js';
+
 import { config } from './common/config/index.js';
-import { AuthTokenResponse, getAccountAuth, setAccountAuth } from './common/device-auths.js';
-import { serverRoute } from './common/server.js';
-import logger from './common/logger.js';
-import { getLocaltunnelUrl } from './common/localtunnel.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
-// eslint-disable-next-line import/no-cycle
+import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
+import { getLocaltunnelUrl } from './common/localtunnel.js';
+import logger from './common/logger.js';
+import { serverRoute } from './common/server.js';
+import { NotificationReason } from './interfaces/notification-reason.js';
+// eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
+
+import type { AxiosRequestConfig } from 'axios';
+import type { RequestHandler } from 'express';
+import type { Logger } from 'pino';
+
+import type { AuthTokenResponse } from './common/device-auths.js';
 
 export interface ClientCredentialsTokenResponse {
   access_token: string;
@@ -67,31 +73,8 @@ const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
-export const promiseTimeout = <T>(
-  timeoutMs: number,
-  promise: Promise<T>,
-  error?: Error,
-): Promise<T> => {
-  let timeout: NodeJS.Timeout;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeout = setTimeout(
-      () => reject(error || new Error(`Timed out after ${timeoutMs} ms`)),
-      timeoutMs,
-    );
-  });
-
-  return Promise.race([
-    promise.then((res) => {
-      // Cancel timeout to prevent open handles
-      clearTimeout(timeout);
-      return res;
-    }),
-    timeoutPromise,
-  ]) as Promise<T>;
-};
-
 const getUniqueUrl = (): { reqId: string; url: string } => {
-  const baseUrl = config.webPortalConfig?.baseUrl || 'http://localhost:3000';
+  const baseUrl = config.webPortalConfig?.baseUrl ?? 'http://localhost:3000';
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
   const reqId = hashids.encode(randInt);
   const url = urlJoin(baseUrl, `/${reqId}`);
@@ -139,13 +122,16 @@ export class DeviceLogin {
 
     // Wait on a promise to be resolved by the web redirect completing
     await Promise.all([
-      promiseTimeout(
-        notificationTimeout,
+      pTimeout(
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onTestVisit(resolve, reject).bind(this));
         }),
+        {
+          milliseconds: notificationTimeout,
+          message: 'Test notification timed out',
+        },
       ),
-      await this.notify(NotificationReason.TEST, url),
+      this.notify(NotificationReason.TEST, url),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -161,13 +147,16 @@ export class DeviceLogin {
 
     // Wait on a promise to be resolved by the web redirect and login completing
     await Promise.all([
-      promiseTimeout(
-        notificationTimeout,
+      pTimeout(
         new Promise((resolve, reject) => {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
         }),
+        {
+          milliseconds: notificationTimeout,
+          message: 'Device login timed out',
+        },
       ),
-      await this.notify(NotificationReason.LOGIN, url),
+      this.notify(NotificationReason.LOGIN, url),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -205,7 +194,7 @@ export class DeviceLogin {
         );
         // TODO: check that the user matches, only possible with accountId hash
         this.L.info('Successful login, saving auth token');
-        setAccountAuth(this.user, deviceCodeResponse);
+        await setAccountAuth(this.user, deviceCodeResponse);
         resolve(undefined);
       } catch (err) {
         reject(err);
@@ -226,7 +215,7 @@ export class DeviceLogin {
 
   public async refreshDeviceAuth(): Promise<boolean> {
     try {
-      const existingAuth = getAccountAuth(this.user);
+      const existingAuth = await getAccountAuth(this.user);
       this.L.trace(
         {
           existingAuthRefreshExpiry: existingAuth?.refresh_expires_at,
@@ -250,7 +239,7 @@ export class DeviceLogin {
 
       const resp = await axios.request<AuthTokenResponse>(reqConfig);
       this.L.debug({ authResp: resp.data }, 'Refresh auth token response');
-      setAccountAuth(this.user, resp.data);
+      await setAccountAuth(this.user, resp.data);
       return true;
     } catch (err) {
       this.L.warn({ err }, 'Failed to refresh auth, getting it fresh');

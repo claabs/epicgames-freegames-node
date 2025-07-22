@@ -4,12 +4,6 @@
     "@tsconfig/node22/tsconfig",
   ],
   "compilerOptions": {
-    // Temp fix for ESLint, remove when typescript-eslint is updated
-    "lib": [
-      "es2023",
-      "ESNext.Array",
-      "ESNext.Collection",
-    ],
     // ESM
     "module": "node16",
     "moduleResolution": "node16",
@@ -32,7 +26,7 @@
   },
   "include": [
     "**/*.ts",
-    ".*.cjs",
+    ".*.*js",
   ],
   "exclude": [
     "node_modules",

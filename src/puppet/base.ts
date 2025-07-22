@@ -1,21 +1,30 @@
-import { Logger } from 'pino';
-import { Page, Browser, Cookie } from 'puppeteer';
-import path from 'path';
+import path from 'node:path';
+
 import { ensureDir } from 'fs-extra/esm';
+
+import { config } from '../common/config/index.js';
+import { STORE_CART_EN } from '../common/constants.js';
+import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
+import { getAccountAuth } from '../common/device-auths.js';
 import logger from '../common/logger.js';
 import {
   getDevtoolsUrl,
   safeNewPage,
   toughCookieFileStoreToPuppeteerCookie,
 } from '../common/puppeteer.js';
-import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
-import { config } from '../common/config/index.js';
-import { getAccountAuth } from '../common/device-auths.js';
-import { STORE_CART_EN } from '../common/constants.js';
+
+import type { Logger } from 'pino';
+import type { Browser, Cookie, Page } from 'puppeteer';
 
 export interface PuppetBaseProps {
   browser: Browser;
   email: string;
+}
+
+interface RawRequestResponse {
+  headers: Record<string, string>;
+  body: string;
+  status: number;
 }
 
 export default class PuppetBase {
@@ -68,7 +77,11 @@ export default class PuppetBase {
     return resp;
   }
 
-  protected async requestRaw(method: string, url: string, headers?: Record<string, string>) {
+  protected async requestRaw(
+    method: string,
+    url: string,
+    headers?: Record<string, string>,
+  ): Promise<RawRequestResponse> {
     if (!this.page) {
       this.page = await this.setupPage();
       await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
@@ -95,12 +108,12 @@ export default class PuppetBase {
   protected async setupPage(): Promise<Page> {
     // Get cookies or latest access_token cookies
     let puppeteerCookies: Cookie[] = [];
-    if (userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
+    if (await userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
       this.L.debug('Setting auth from bearer token cookies');
       const userCookies = await getCookiesRaw(this.email);
       puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
     }
-    const deviceAuth = getAccountAuth(this.email);
+    const deviceAuth = await getAccountAuth(this.email);
     if (deviceAuth) {
       this.L.debug({ deviceAuth }, 'Setting auth from device auth');
       const bearerCookies: Cookie[] = [
@@ -147,7 +160,7 @@ export default class PuppetBase {
     try {
       this.L.trace('Saving new cookies');
       const currentCookies = await this.browser.cookies();
-      setPuppeteerCookies(this.email, currentCookies);
+      await setPuppeteerCookies(this.email, currentCookies);
       this.L.trace('Saved cookies, closing browser');
       // await this.page.close(); // Getting `Protocol error (Target.createTarget): Target closed` with this for some reason
       this.page = undefined;
@@ -156,7 +169,7 @@ export default class PuppetBase {
     }
   }
 
-  protected async handlePageError(err: unknown) {
+  protected async handlePageError(err: unknown): Promise<void> {
     if (this.page && !this.page.isClosed()) {
       const errorFile = `error-${new Date().toISOString()}.png`;
       await ensureDir(config.errorsDir);

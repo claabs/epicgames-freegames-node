@@ -16,5 +16,16 @@
             "outputCapture": "std",
             "console": "integratedTerminal"
         },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug ESLint",
+            "program": "${workspaceFolder}/node_modules/eslint/bin/eslint.js",
+            "args": [
+                "."
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        }
     ]
 }
