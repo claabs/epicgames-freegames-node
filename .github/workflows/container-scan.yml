@@ -17,13 +17,19 @@ jobs:
           image-ref: ghcr.io/claabs/epicgames-freegames-node:latest
           format: sarif
           output: sarif-results/alpine.sarif
+      - name: Upload Alpine results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sarif-results/alpine.sarif
+          category: container-scan-alpine
       - name: Scan Debian image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ghcr.io/claabs/epicgames-freegames-node:debian
           format: sarif
           output: sarif-results/debian.sarif
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Debian results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: sarif-results
+          sarif_file: sarif-results/debian.sarif
+          category: container-scan-debian
