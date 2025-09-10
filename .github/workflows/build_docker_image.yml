@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set environment variables
         run: echo "GIT_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
