@@ -41,7 +41,7 @@
     "pino": "^8.19.0",
     "pino-pretty": "^10.3.1",
     "ps-list": "^8.1.1",
-    "puppeteer": "24.17",
+    "puppeteer": "24.22",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "reflect-metadata": "^0.2.1",
