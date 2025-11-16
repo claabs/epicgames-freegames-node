@@ -17,7 +17,7 @@ FROM base AS deps
 # and note the Chromium version available. Then go to https://pptr.dev/chromium-support
 # and find the latest version that supports that Chromium version, and update it in the package.json.
 RUN apk add --no-cache \
-    'chromium=~141' \
+    'chromium=~142' \
     ca-certificates \
     ttf-freefont \
     # App dependencies
