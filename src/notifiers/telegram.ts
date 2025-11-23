@@ -33,7 +33,9 @@ export class TelegramNotifier extends NotifierService {
       text: escapedMessage,
       disable_web_page_preview: true,
       parse_mode: 'MarkdownV2',
+      ...(this.config.topic ? { message_thread_id: this.config.topic } : {})
     };
+    
 
     L.trace({ jsonPayload }, 'Sending json payload');
 

@@ -208,6 +208,15 @@ export class TelegramConfig extends NotifierConfig {
   chatId: string;
 
   /**
+   * Identifier for the topic/thread to send the messages
+   * @example 5
+   * @env TELEGRAM_TOPIC
+   */
+  @IsInt()
+  @IsOptional()
+  topic: number;
+
+  /**
    * Custom TELEGRAM server URL
    * @default https://api.telegram.org
    * @env TELEGRAM_API_URL
