@@ -36,7 +36,6 @@ export class TelegramNotifier extends NotifierService {
       ...(this.config.topic ? { message_thread_id: this.config.topic } : {}),
     };
     
-
     L.trace({ jsonPayload }, 'Sending json payload');
 
     try {
