@@ -214,7 +214,7 @@ export class TelegramConfig extends NotifierConfig {
    */
   @IsInt()
   @IsOptional()
-  topic: number;
+  topic?: number;
 
   /**
    * Custom TELEGRAM server URL
@@ -1083,11 +1083,12 @@ export class AppConfig {
     }
 
     // Use environment variables to fill telegram notification config if present
-    const { TELEGRAM_TOKEN, TELEGRAM_CHAT_ID } = process.env;
+    const { TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_TOPIC } = process.env;
     if (TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
       const telegram = new TelegramConfig();
       telegram.token = TELEGRAM_TOKEN;
       telegram.chatId = TELEGRAM_CHAT_ID;
+      telegram.topic = TELEGRAM_TOPIC ? parseInt(TELEGRAM_TOPIC, 10) : undefined;
       this.notifiers ??= [];
       if (!this.notifiers.some((notifConfig) => notifConfig instanceof TelegramConfig)) {
         this.notifiers.push(telegram);
