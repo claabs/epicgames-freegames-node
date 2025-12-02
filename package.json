@@ -25,7 +25,7 @@
     "class-validator": "^0.14.1",
     "cron-parser": "^4.9.0",
     "dotenv": "^16.4.5",
-    "express": "^4.21.1",
+    "express": "^4.22.0",
     "express-async-handler": "^1.2.0",
     "filenamify": "^6.0.0",
     "fs-extra": "^11.2.0",
