@@ -32,7 +32,7 @@
     "hashids": "^2.3.0",
     "json5": "^2.2.3",
     "localtunnel": "npm:@security-patched/localtunnel@^2.0.2-secpatched.5",
-    "nodemailer": "^7.0.9",
+    "nodemailer": "^7.0.11",
     "object-assign-deep": "^0.4.0",
     "open": "^10.0.4",
     "otpauth": "^9.2.2",
