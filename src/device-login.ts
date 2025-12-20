@@ -13,7 +13,7 @@ import { serverRoute } from './common/server.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
-import { getGCPExternalIP } from './common/vm'
+import { getGCPExternalIP } from './common/vm.js'
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
@@ -119,7 +119,7 @@ export class DeviceLogin {
   }
 
   public async testServerNotify(): Promise<void> {
-    const { reqId, url } = getUniqueUrl();
+    const { reqId, url } = await getUniqueUrl();
     const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
@@ -144,7 +144,7 @@ export class DeviceLogin {
   }
 
   public async newDeviceAuthLogin(): Promise<void> {
-    const { reqId, url } = getUniqueUrl();
+    const { reqId, url } = await getUniqueUrl();
     const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
