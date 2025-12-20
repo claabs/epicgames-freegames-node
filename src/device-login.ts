@@ -13,7 +13,7 @@ import { serverRoute } from './common/server.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
-import { getGCPExternalIP } from './common/vm.ts'
+import { getGCPExternalIP } from './common/vm'
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
@@ -74,7 +74,7 @@ const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
-const getUniqueUrl = (): { reqId: string; url: string } => {
+const getUniqueUrl = async (): Promise<{ reqId: string; url: string }> => {
   const baseUrl =
     config.webPortalConfig?.baseUrl
       ? config.webPortalConfig.baseUrl
