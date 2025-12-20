@@ -582,6 +582,10 @@ const notifierSubtypes: {
   { value: WebhookConfig, name: NotificationType.WEBHOOK },
 ];
 
+export enum VmType {
+  GCP = 'gcp',
+}
+
 export class WebPortalConfig {
   /**
    * The URL base that will be returned when a device token login is required
@@ -621,9 +625,7 @@ export class WebPortalConfig {
   @IsBoolean()
   localtunnel? = process.env.LOCAL_TUNNEL?.toLowerCase() === 'true' || false;
 
-  export enum VmType {
-    GCP = 'gcp',
-  }
+
 
   @IsOptional()
   @IsEnum(VmType)
