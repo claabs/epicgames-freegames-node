@@ -13,6 +13,7 @@ import { serverRoute } from './common/server.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
+import { getGCPExternalIP } from './common/vm.ts'
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
@@ -74,7 +75,13 @@ const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
 const getUniqueUrl = (): { reqId: string; url: string } => {
-  const baseUrl = config.webPortalConfig?.baseUrl ?? 'http://localhost:3000';
+  const baseUrl =
+    config.webPortalConfig?.baseUrl
+      ? config.webPortalConfig.baseUrl
+      : config.webPortalConfig?.vm === 'gcp'
+        ? `http://${await getGCPExternalIP()}:3000`
+        : 'http://localhost:3000';
+
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
   const reqId = hashids.encode(randInt);
   const url = urlJoin(baseUrl, `/${reqId}`);
