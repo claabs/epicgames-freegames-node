@@ -4,14 +4,13 @@ import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
-import { config } from './common/config/index.js';
+import { config, VmType } from './common/config/index.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
 import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
 import { getLocaltunnelUrl } from './common/localtunnel.js';
 import logger from './common/logger.js';
 import { serverRoute } from './common/server.js';
-import { getGCPExternalIP } from './common/vm.js'
-import { VmType } from './common/config/classes.js'
+import { getGCPExternalIP } from './common/vm.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
