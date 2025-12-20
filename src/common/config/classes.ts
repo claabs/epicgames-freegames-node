@@ -625,12 +625,9 @@ export class WebPortalConfig {
   @IsBoolean()
   localtunnel? = process.env.LOCAL_TUNNEL?.toLowerCase() === 'true' || false;
 
-
-
   @IsOptional()
   @IsEnum(VmType)
   vm?: VmType;
-
 
   /**
    * @ignore

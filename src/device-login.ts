@@ -10,10 +10,11 @@ import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
 import { getLocaltunnelUrl } from './common/localtunnel.js';
 import logger from './common/logger.js';
 import { serverRoute } from './common/server.js';
+import { getGCPExternalIP } from './common/vm.js'
+import { VmType } from './common/config/classes.js'
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
-import { getGCPExternalIP } from './common/vm.js'
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
@@ -76,11 +77,10 @@ const timeoutBufferMs = 30 * 1000;
 
 const getUniqueUrl = async (): Promise<{ reqId: string; url: string }> => {
   const baseUrl =
-    config.webPortalConfig?.baseUrl
-      ? config.webPortalConfig.baseUrl
-      : config.webPortalConfig?.vm === 'gcp'
-        ? `http://${await getGCPExternalIP()}:3000`
-        : 'http://localhost:3000';
+    config.webPortalConfig?.baseUrl ??
+    (config.webPortalConfig?.vm === VmType.GCP
+      ? `http://${await getGCPExternalIP()}:3000`
+      : 'http://localhost:3000');
 
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
   const reqId = hashids.encode(randInt);
