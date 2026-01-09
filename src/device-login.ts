@@ -4,12 +4,13 @@ import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
-import { config } from './common/config/index.js';
+import { config, VmType } from './common/config/index.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
 import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
 import { getLocaltunnelUrl } from './common/localtunnel.js';
 import logger from './common/logger.js';
 import { serverRoute } from './common/server.js';
+import { getGCPExternalIP } from './common/vm.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 // eslint-disable-next-line import-x/no-cycle
 import { sendNotification } from './notify.js';
@@ -73,8 +74,13 @@ const hashLength = 4;
 const hashids = new Hashids(Math.random().toString(), hashLength, hashAlphabet);
 const timeoutBufferMs = 30 * 1000;
 
-const getUniqueUrl = (): { reqId: string; url: string } => {
-  const baseUrl = config.webPortalConfig?.baseUrl ?? 'http://localhost:3000';
+const getUniqueUrl = async (): Promise<{ reqId: string; url: string }> => {
+  const baseUrl =
+    config.webPortalConfig?.baseUrl ??
+    (config.webPortalConfig?.vm === VmType.GCP
+      ? `http://${await getGCPExternalIP()}:3000`
+      : 'http://localhost:3000');
+
   const randInt = Math.floor(Math.random() * hashAlphabet.length ** hashLength);
   const reqId = hashids.encode(randInt);
   const url = urlJoin(baseUrl, `/${reqId}`);
@@ -112,7 +118,7 @@ export class DeviceLogin {
   }
 
   public async testServerNotify(): Promise<void> {
-    const { reqId, url } = getUniqueUrl();
+    const { reqId, url } = await getUniqueUrl();
     const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
@@ -137,7 +143,7 @@ export class DeviceLogin {
   }
 
   public async newDeviceAuthLogin(): Promise<void> {
-    const { reqId, url } = getUniqueUrl();
+    const { reqId, url } = await getUniqueUrl();
     const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(

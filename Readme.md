@@ -23,6 +23,7 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
   "logLevel": "info",
   "webPortalConfig": {
     "baseUrl": "https://epic.example.com",
+    "vm" : "gcp",
   },
   "accounts": [
     {
