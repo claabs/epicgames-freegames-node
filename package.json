@@ -60,7 +60,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/localtunnel": "^2.0.4",
     "@types/node": "^22.15.33",
-    "@types/nodemailer": "^7.0.2",
+    "@types/nodemailer": "^7.0.11",
     "@types/object-assign-deep": "^0.4.3",
     "@types/set-cookie-parser": "^2.4.7",
     "@types/url-join": "^4.0.3",
