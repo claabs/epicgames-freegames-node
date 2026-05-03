@@ -1,7 +1,7 @@
 ########
 # BASE
 ########
-FROM node:22-alpine3.22 AS base
+FROM node:22-alpine3.23 AS base
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
 
@@ -13,11 +13,11 @@ WORKDIR /usr/app
 FROM base AS deps
 
 # Go to https://hub.docker.com/_/node/ and note the latest stable Alpine version available (e.g. alpine3.19).
-# Go to https://pkgs.alpinelinux.org/package/v3.22/community/x86_64/chromium (replace with the latest Alpine version)
+# Go to https://pkgs.alpinelinux.org/package/v3.23/community/x86_64/chromium (replace with the latest Alpine version)
 # and note the Chromium version available. Then go to https://pptr.dev/chromium-support
 # and find the latest version that supports that Chromium version, and update it in the package.json.
 RUN apk add --no-cache \
-    'chromium=~142' \
+    'chromium=~147' \
     ca-certificates \
     ttf-freefont \
     # App dependencies
