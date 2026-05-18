@@ -81,7 +81,6 @@ export function getDevtoolsUrl(page: Page): string {
 export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
   executablePath: executablePath(),
   headless: true,
-  protocolTimeout: 0, // https://github.com/puppeteer/puppeteer/issues/9927
   args: [
     '--disable-web-security', // For accessing iframes
     '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes
