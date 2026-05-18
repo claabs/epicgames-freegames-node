@@ -52,7 +52,7 @@ export default class PuppetBase {
   ): Promise<T> {
     if (!this.page) {
       this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'domcontentloaded' });
     }
 
     let fetchUrl: URL;
@@ -84,7 +84,7 @@ export default class PuppetBase {
   ): Promise<RawRequestResponse> {
     if (!this.page) {
       this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'domcontentloaded' });
     }
 
     const fetchUrl = new URL(url);
@@ -147,7 +147,7 @@ export default class PuppetBase {
     try {
       this.L.trace(getDevtoolsUrl(this.page));
       await this.browser.setCookie(...puppeteerCookies);
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' }); // Get EG1 cookie
+      await this.page.goto(STORE_CART_EN, { waitUntil: 'domcontentloaded' }); // Get EG1 cookie
       return this.page;
     } catch (err) {
       await this.handlePageError(err);
