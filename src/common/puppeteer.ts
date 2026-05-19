@@ -78,8 +78,8 @@ export function getDevtoolsUrl(page: Page): string {
   return `devtools://devtools/bundled/inspector.html?ws=${wsEndpoint.host}/devtools/page/${targetId}`;
 }
 
-export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
-  executablePath: executablePath(),
+export const getLaunchArgs = async (): Promise<Parameters<typeof puppeteer.launch>[0]> => ({
+  executablePath: await executablePath(),
   headless: true,
   protocolTimeout: 0, // https://github.com/puppeteer/puppeteer/issues/9927
   args: [
@@ -93,7 +93,7 @@ export const launchArgs: Parameters<typeof puppeteer.launch>[0] = {
     // '--remote-debugging-port=3001',
     // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
   ],
-};
+});
 
 /**
  * This is a hacky solution to retry a function if it doesn't return within a timeout.
@@ -187,5 +187,6 @@ export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> =>
  */
 export const safeLaunchBrowser = async (L: Logger): Promise<Browser> => {
   L.debug('Launching a new browser');
+  const launchArgs = await getLaunchArgs();
   return retryFunction(async () => puppeteer.launch(launchArgs), L, 'browser launch');
 };
