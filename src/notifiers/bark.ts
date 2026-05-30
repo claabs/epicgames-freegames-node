@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
+import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { BarkConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -26,7 +27,7 @@ export class BarkNotifier extends NotifierService {
 
     L.trace({ requestUrl }, 'Sending request');
     try {
-      await axios.get(requestUrl);
+      await axios.get(requestUrl, getNotifierAxiosConfig());
     } catch (err) {
       L.error(err);
       L.error(this.config, `Failed to send message`);

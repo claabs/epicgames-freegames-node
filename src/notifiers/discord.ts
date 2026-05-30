@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
+import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { DiscordConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -48,9 +49,9 @@ export class DiscordNotifier extends NotifierService {
             },
           ],
         },
-        {
+        getNotifierAxiosConfig({
           responseType: 'json',
-        },
+        }),
       );
     } catch (err) {
       L.error(err);

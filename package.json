@@ -10,6 +10,7 @@
     "start:debug": "DEBUG=puppeteer-extra-plugin:portal* vite-node src/index.ts",
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
     "lint": "tsc --noEmit && eslint .",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
     "docker:build-debian": "docker build . -t charlocharlie/epicgames-freegames-node:debian --target deploy --file Dockerfile.debian",

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
+import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { PushoverConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -27,9 +28,9 @@ export class PushoverNotifier extends NotifierService {
           message: `epicgames-freegames-node needs an action performed. Reason: ${reason}`,
           url,
         },
-        {
+        getNotifierAxiosConfig({
           responseType: 'json',
-        },
+        }),
       );
     } catch (err) {
       L.error(err);

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
+import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { AppriseConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -36,9 +37,13 @@ url: ${url}`,
     L.trace({ apiUrl: this.config.apiUrl, jsonPayload }, 'Sending json payload');
 
     try {
-      await axios.post(`${this.config.apiUrl}/notify`, jsonPayload, {
-        responseType: 'text',
-      });
+      await axios.post(
+        `${this.config.apiUrl}/notify`,
+        jsonPayload,
+        getNotifierAxiosConfig({
+          responseType: 'text',
+        }),
+      );
     } catch (err) {
       L.error(err);
       L.error({ urls: this.config.urls }, `Failed to send message`);

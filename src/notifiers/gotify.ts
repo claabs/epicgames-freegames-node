@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
+import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { GotifyConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -39,9 +40,13 @@ export class GotifyNotifier extends NotifierService {
     };
 
     try {
-      await axios.post(`${this.config.apiUrl}/message?token=${this.config.token}`, jsonPayload, {
-        responseType: 'json',
-      });
+      await axios.post(
+        `${this.config.apiUrl}/message?token=${this.config.token}`,
+        jsonPayload,
+        getNotifierAxiosConfig({
+          responseType: 'json',
+        }),
+      );
     } catch (err) {
       L.error(err);
       L.error(this.config, `Failed to send message`);
