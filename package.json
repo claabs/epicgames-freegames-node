@@ -30,6 +30,7 @@
     "filenamify": "^6.0.0",
     "fs-extra": "^11.2.0",
     "hashids": "^2.3.0",
+    "https-proxy-agent": "^9.0.0",
     "json5": "^2.2.3",
     "localtunnel": "npm:@security-patched/localtunnel@^2.0.2-secpatched.5",
     "nodemailer": "^8.0.5",
