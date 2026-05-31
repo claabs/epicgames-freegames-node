@@ -235,15 +235,9 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * `git pull`
     * `npm i`
 
-## HTTP proxy
+## Proxy configuration
 
-To use HTTP proxy, use commonly used environment variables. Set up:
-- `HTTP_PROXY`
-- `HTTPS_PROXY`
-- or `SOCKS_PROXY`
-- or `ALL_PROXY`
-
-If you use Docker, you must provide proxy environment variables to `docker run`.
+Network proxies are configured via the `*_PROXY` and `NO_PROXY` environment variables. Details on the environment variables available from [proxy-from-env](https://github.com/Rob--W/proxy-from-env#environment-variables), and the kinds of proxies avaiable from [proxy-agent](https://github.com/TooTallNate/proxy-agents/tree/main/packages/proxy-agent#maps-proxy-protocols-to-httpagent-implementations).
 
 ## Miscellaneous
 

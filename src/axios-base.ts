@@ -12,6 +12,4 @@ const axios = baseAxios.create({
   proxy: false,
 });
 
-export const { isAxiosError } = baseAxios;
-
 export default axios;
