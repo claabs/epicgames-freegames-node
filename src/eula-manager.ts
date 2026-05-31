@@ -1,5 +1,4 @@
-import axios from 'axios';
-
+import axios from './axios-base.js';
 import { config } from './common/config/setup.js';
 import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.js';
 import { getAccountAuth } from './common/device-auths.js';

@@ -235,6 +235,10 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * `git pull`
     * `npm i`
 
+## Proxy configuration
+
+Network proxies are configured via the `*_PROXY` and `NO_PROXY` environment variables. Details on the environment variables available from [proxy-from-env](https://github.com/Rob--W/proxy-from-env#environment-variables), and the kinds of proxies avaiable from [proxy-agent](https://github.com/TooTallNate/proxy-agents/tree/main/packages/proxy-agent#maps-proxy-protocols-to-httpagent-implementations).
+
 ## Miscellaneous
 
 ### v4 to v5 Migration
