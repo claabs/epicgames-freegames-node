@@ -235,6 +235,16 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * `git pull`
     * `npm i`
 
+## HTTP proxy
+
+To use HTTP proxy, use commonly used environment variables. Set up:
+- `HTTP_PROXY`
+- `HTTPS_PROXY`
+- or `SOCKS_PROXY`
+- or `ALL_PROXY`
+
+If you use Docker, you must provide proxy environment variables to `docker run`.
+
 ## Miscellaneous
 
 ### v4 to v5 Migration
