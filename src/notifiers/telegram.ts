@@ -1,8 +1,6 @@
-import axios from 'axios';
-
+import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
-import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { TelegramConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -40,13 +38,9 @@ export class TelegramNotifier extends NotifierService {
     L.trace({ jsonPayload }, 'Sending json payload');
 
     try {
-      await axios.post(
-        `${this.config.apiUrl}/bot${this.config.token}/sendMessage`,
-        jsonPayload,
-        getNotifierAxiosConfig({
-          responseType: 'json',
-        }),
-      );
+      await axios.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, jsonPayload, {
+        responseType: 'json',
+      });
     } catch (err) {
       L.error(err);
       L.error({ chatId: this.config.chatId }, `Failed to send message`);

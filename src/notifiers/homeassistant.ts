@@ -1,8 +1,6 @@
-import axios from 'axios';
-
+import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
-import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { HomeassistantConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -31,12 +29,12 @@ export class HomeassistantNotifier extends NotifierService {
             ...(this.config.customData ?? {}),
           },
         },
-        getNotifierAxiosConfig({
+        {
           headers: {
             Authorization: `Bearer ${this.config.token}`,
           },
           responseType: 'json',
-        }),
+        },
       );
     } catch (err) {
       L.error(err);

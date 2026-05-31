@@ -1,7 +1,6 @@
 import { promises as fsPromises } from 'node:fs';
 
-import axios from 'axios';
-
+import axios from './axios-base.js';
 import { config } from './common/config/index.js';
 // eslint-disable-next-line import-x/no-rename-default
 import L from './common/logger.js';

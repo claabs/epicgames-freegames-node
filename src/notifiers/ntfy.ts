@@ -1,8 +1,6 @@
-import axios from 'axios';
-
+import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
-import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { NtfyConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -23,7 +21,7 @@ export class NtfyNotifier extends NotifierService {
       await axios.post(
         this.config.webhookUrl,
         `epicgames-freegames-node needs an action performed. Reason: ${reason} Account: ${account}`,
-        getNotifierAxiosConfig({
+        {
           headers: {
             Title: 'epicgames-freegames-node needs an action performed',
             Priority: this.config.priority,
@@ -32,7 +30,7 @@ export class NtfyNotifier extends NotifierService {
             Authorization: `Bearer ${this.config.token}`,
           },
           responseType: 'text',
-        }),
+        },
       );
     } catch (err) {
       L.error(err);

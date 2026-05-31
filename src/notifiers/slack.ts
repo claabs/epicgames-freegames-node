@@ -1,8 +1,6 @@
-import axios from 'axios';
-
+import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
-import { getNotifierAxiosConfig } from '../notify-axios-config.js';
 
 import type { SlackConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
@@ -25,9 +23,9 @@ export class SlackNotifier extends NotifierService {
         {
           text: `epicgames-freegames-node needs an action performed. \nReason: ${reason} \nAccount: ${account} \nURL: ${url}`,
         },
-        getNotifierAxiosConfig({
+        {
           responseType: 'text',
-        }),
+        },
       );
     } catch (err) {
       L.error(err);

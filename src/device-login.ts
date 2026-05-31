@@ -1,9 +1,9 @@
-import axios from 'axios';
 import asyncHandler from 'express-async-handler';
 import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
+import axios, { isAxiosError } from './axios-base.js';
 import { config } from './common/config/index.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
 import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
@@ -308,7 +308,7 @@ export class DeviceLogin {
       this.L.debug({ authResp: resp.data }, 'Auth token response');
       return resp.data;
     } catch (err) {
-      if (!axios.isAxiosError<ClientCredentialsError>(err)) {
+      if (!isAxiosError<ClientCredentialsError>(err)) {
         throw new Error('Unable to get device authorization token');
       }
       if (
