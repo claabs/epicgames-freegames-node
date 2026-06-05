@@ -11,6 +11,12 @@ updates:
       interval: "weekly"
     # Disable version updates for npm dependencies
     open-pull-requests-limit: 0
+    # add cooldown to reduce supply chain attack exposure
+    cooldown:
+      default-days: 5
+      semver-major-days: 5
+      semver-minor-days: 5
+      semver-patch-days: 5
   - package-ecosystem: "github-actions" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
