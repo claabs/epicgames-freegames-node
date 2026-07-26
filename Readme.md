@@ -239,6 +239,10 @@ If for some reason you don't want to use Docker to run this tool you can run it 
 
 Network proxies are configured via the `*_PROXY` and `NO_PROXY` environment variables. Details on the environment variables available from [proxy-from-env](https://github.com/Rob--W/proxy-from-env#environment-variables), and the kinds of proxies avaiable from [proxy-agent](https://github.com/TooTallNate/proxy-agents/tree/main/packages/proxy-agent#maps-proxy-protocols-to-httpagent-implementations).
 
+Set `EPICGAMES_FREEGAMES_NODE_USE_PROXY_CHROME=true` to make Chrome use the proxy server specified by `HTTPS_PROXY`. If `HTTPS_PROXY` is unset, Chrome uses `ALL_PROXY` instead. This setting affects Chrome only; Node.js requests keep their existing proxy behavior.
+
+The application forwards the selected proxy value unchanged to Chrome with `--proxy-server`. It does not parse or normalize the value, apply `NO_PROXY`, or configure proxy authentication. Use a proxy server format Chrome accepts, and do not include credentials because Chrome exposes the argument in its process command line.
+
 ## Miscellaneous
 
 ### v4 to v5 Migration
