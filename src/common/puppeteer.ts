@@ -78,22 +78,38 @@ export function getDevtoolsUrl(page: Page): string {
   return `devtools://devtools/bundled/inspector.html?ws=${wsEndpoint.host}/devtools/page/${targetId}`;
 }
 
-export const getLaunchArgs = async (): Promise<Parameters<typeof puppeteer.launch>[0]> => ({
-  executablePath: await executablePath(),
-  headless: true,
-  protocolTimeout: 0, // https://github.com/puppeteer/puppeteer/issues/9927
-  args: [
-    '--disable-web-security', // For accessing iframes
-    '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes
-    '--no-sandbox', // For Docker root user
-    '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
-    '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
-    '--disable-gpu', // https://github.com/puppeteer/puppeteer/issues/12189#issuecomment-2264825572
-    // For debugging in Docker
-    // '--remote-debugging-port=3001',
-    // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
-  ],
-});
+const getProxyEnvironmentVariable = (name: string): string | undefined =>
+  [process.env[name.toLowerCase()], process.env[name.toUpperCase()]].find(Boolean);
+
+const CHROME_PROXY_ENABLED_ENVIRONMENT_VARIABLE = 'EPICGAMES_FREEGAMES_NODE_USE_PROXY_CHROME';
+
+const getChromeProxyServer = (): string | undefined => {
+  if (process.env[CHROME_PROXY_ENABLED_ENVIRONMENT_VARIABLE]?.toLowerCase() !== 'true') {
+    return undefined;
+  }
+  return getProxyEnvironmentVariable('https_proxy') ?? getProxyEnvironmentVariable('all_proxy');
+};
+
+export const getLaunchArgs = async (): Promise<Parameters<typeof puppeteer.launch>[0]> => {
+  const chromeProxyServer = getChromeProxyServer();
+  return {
+    executablePath: await executablePath(),
+    headless: true,
+    protocolTimeout: 0, // https://github.com/puppeteer/puppeteer/issues/9927
+    args: [
+      '--disable-web-security', // For accessing iframes
+      '--disable-features=IsolateOrigins,site-per-process', // For accessing iframes
+      '--no-sandbox', // For Docker root user
+      '--disable-dev-shm-usage', // https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#tips
+      '--no-zygote', // https://github.com/puppeteer/puppeteer/issues/1825#issuecomment-636478077
+      '--disable-gpu', // https://github.com/puppeteer/puppeteer/issues/12189#issuecomment-2264825572
+      ...(chromeProxyServer ? [`--proxy-server=${chromeProxyServer}`] : []),
+      // For debugging in Docker
+      // '--remote-debugging-port=3001',
+      // '--remote-debugging-address=0.0.0.0', // Change devtools url to localhost
+    ],
+  };
+};
 
 /**
  * This is a hacky solution to retry a function if it doesn't return within a timeout.
@@ -183,7 +199,7 @@ export const safeNewPage = async (browser: Browser, L: Logger): Promise<Page> =>
 };
 
 /**
- * Launcha new browser within a wrapper that will retry if it hangs for 30 seconds
+ * Launch a new browser within a wrapper that will retry if it hangs for 30 seconds
  */
 export const safeLaunchBrowser = async (L: Logger): Promise<Browser> => {
   L.debug('Launching a new browser');
