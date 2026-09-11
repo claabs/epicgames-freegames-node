@@ -1,5 +1,4 @@
 import { isAxiosError } from 'axios';
-import asyncHandler from 'express-async-handler';
 import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
@@ -84,21 +83,18 @@ const getUniqueUrl = (): { reqId: string; url: string } => {
 
 const pendingRedirects = new Map<string, RequestHandler>();
 
-serverRoute.get(
-  '/:reqId',
-  asyncHandler((req, res, next) => {
-    const { reqId } = req.params;
-    if (reqId) {
-      const reqHandler = pendingRedirects.get(reqId);
-      if (reqHandler) {
-        reqHandler(req, res, next);
-        return;
-      }
+serverRoute.get('/:reqId', async (req, res, next) => {
+  const { reqId } = req.params;
+  if (reqId) {
+    const reqHandler = pendingRedirects.get(reqId);
+    if (reqHandler) {
+      reqHandler(req, res, next);
+      return;
     }
-    logger.error({ reqId }, 'No pending redirect found');
-    res.status(404);
-  }),
-);
+  }
+  logger.error({ reqId }, 'No pending redirect found');
+  res.status(404).send('Not Found');
+});
 
 export class DeviceLogin {
   private user: string;
