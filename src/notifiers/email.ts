@@ -3,11 +3,13 @@ import nodemailer from 'nodemailer';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
+import type { Transporter } from 'nodemailer';
+
 import type { EmailConfig } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class EmailNotifier extends NotifierService {
-  private readonly emailTransporter: nodemailer.Transporter;
+  private readonly emailTransporter: Transporter;
 
   private config: EmailConfig;
 
