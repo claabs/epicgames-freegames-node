@@ -1,9 +1,7 @@
 ########
 # BASE
 ########
-FROM node:22-alpine3.24 AS base
-
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1
+FROM node:26-bookworm-slim AS base
 
 WORKDIR /usr/app
 
@@ -12,18 +10,19 @@ WORKDIR /usr/app
 ########
 FROM base AS deps
 
-# Go to https://hub.docker.com/_/node/ and note the latest stable Alpine version available (e.g. alpine3.19).
-# Go to https://pkgs.alpinelinux.org/package/v3.24/community/x86_64/chromium (replace with the latest Alpine version)
-# and note the Chromium version available. Then go to https://pptr.dev/chromium-support
-# and find the latest version that supports that Chromium version, and update it in the package.json.
-RUN apk add --no-cache \
-    'chromium=~152' \
-    ca-certificates \
-    ttf-freefont \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
     # App dependencies
+    xvfb \
+    xauth \
     jq \
     tzdata \
-    tini
+    cron \
+    tini \
+    && npx playwright install chrome --with-deps \
+    && rm -rf /var/lib/apt/lists/* \
+    && mv /root/.cache/ms-playwright /home/node/.cache/ \
+    && chown -R node:node /home/node/.cache
 
 ########
 # BUILD
@@ -46,6 +45,16 @@ RUN npm run build
 ########
 FROM deps AS deploy
 
+
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# backwards compat (from https://success.docker.com/article/use-a-script-to-initialize-stateful-container-data)
+RUN ln -s /usr/local/bin/docker-entrypoint.sh / 
+
+RUN chown -R node:node /usr/app
+
+# Declare user early so chrome is installed to user dir
+USER node
+
 # Copy package.json for version number
 COPY package*.json ./
 
@@ -54,32 +63,16 @@ RUN npm ci --omit=dev
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist
 
-COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-# backwards compat (from https://success.docker.com/article/use-a-script-to-initialize-stateful-container-data)
-RUN ln -s /usr/local/bin/docker-entrypoint.sh / 
-
 ARG COMMIT_SHA="" \
     BRANCH=""
 
 # Put COMMIT_SHA in a file, since Docker managers like Portainer will not use updated ENVs
 RUN echo $COMMIT_SHA > commit-sha.txt && echo $BRANCH > branch.txt
 
-LABEL org.opencontainers.image.title="epicgames-freegames-node" \ 
-    org.opencontainers.image.url="https://github.com/claabs/epicgames-freegames-node" \
-    org.opencontainers.image.description="Automatically redeem free games promotions on the Epic Games store" \
-    org.opencontainers.image.name="epicgames-freegames-node" \
-    org.opencontainers.image.revision=${COMMIT_SHA} \
-    org.opencontainers.image.ref.name=${BRANCH} \
-    org.opencontainers.image.base.name="node:22-alpine3.22" \
-    org.opencontainers.image.version="latest"
-
-ENV NODE_ENV=production \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    COMMIT_SHA=${COMMIT_SHA} \
-    BRANCH=${BRANCH}
+ENV NODE_ENV=production
 
 EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 
-ENTRYPOINT ["tini", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "-s", "--", "docker-entrypoint.sh"]

@@ -996,6 +996,16 @@ export class AppConfig {
   errorsDir = process.env.ERRORS_DIR || path.join(CONFIG_DIR, 'errors');
 
   /**
+   * The full path where the browser automation error screenshots will be output
+   * @example /users
+   * @default ${CONFIG_DIR}/users
+   * @env USERS_DIR
+   */
+  @IsOptional()
+  @IsString()
+  usersDir = process.env.USERS_DIR || path.join(CONFIG_DIR, 'users');
+
+  /**
    * If false, EULA updates will be automatically accepted. If true, the user will receive a notification to accept the EULA.
    * @example true
    * @default false

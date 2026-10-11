@@ -4,7 +4,7 @@ import PQueue from 'p-queue';
 import { config } from './common/config/index.js';
 import { convertImportCookies } from './common/cookie.js';
 import logger from './common/logger.js';
-import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
+import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/playwright.js';
 import { createServer } from './common/server.js';
 import { DeviceLogin } from './device-login.js';
 import { EulaManager } from './eula-manager.js';
@@ -22,7 +22,7 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
   L.info(`Checking free games for ${account.email} `);
   try {
     await convertImportCookies(account.email);
-    const browser = await safeLaunchBrowser(L);
+    const browser = await safeLaunchBrowser(L, account.email);
     const cookieLogin = new PuppetLogin({
       email: account.email,
       browser,

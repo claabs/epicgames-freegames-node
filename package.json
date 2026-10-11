@@ -12,11 +12,9 @@
     "build": "rimraf dist && tsc",
     "lint": "tsc --noEmit && eslint .",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
-    "docker:build-debian": "docker build . -t charlocharlie/epicgames-freegames-node:debian --target deploy --file Dockerfile.debian",
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy",
-    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 -e DEBUG=puppeteer-extra-plugin:portal* charlocharlie/epicgames-freegames-node:latest",
-    "docker:run-debian": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 charlocharlie/epicgames-freegames-node:debian",
-    "docker:buildx": "docker buildx build --platform=linux/arm64,linux/arm/v7 . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
+    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host --security-opt seccomp=seccomp_profile.json -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
+    "docker:buildx": "docker buildx build --platform=linux/arm64 . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
     "docs": "typedoc --out docs src/common/config/classes.ts"
   },
   "dependencies": {
@@ -37,19 +35,18 @@
     "otpauth": "^9.2.2",
     "p-queue": "^8.0.1",
     "p-timeout": "^6.1.4",
+    "patchright": "^1.63.0",
     "pino": "^10.0.0",
     "pino-pretty": "^13.1.1",
     "proxy-agent": "^8.0.1",
     "ps-list": "^8.1.1",
-    "puppeteer": "25.10",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "reflect-metadata": "^0.2.1",
     "rimraf": "^5.0.5",
     "set-cookie-parser": "^2.6.0",
     "tough-cookie": "^5.1.2",
     "tough-cookie-file-store": "^3.2.1",
-    "url-join": "^5.0.0"
+    "url-join": "^5.0.0",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",

@@ -11,8 +11,6 @@ import { CONFIG_DIR } from './config/index.js';
 // eslint-disable-next-line import-x/no-rename-default
 import L from './logger.js';
 
-import type { Cookie } from 'puppeteer';
-
 export interface TCFSCookieAttributes {
   key: string;
   value: string;
@@ -137,31 +135,6 @@ export function setCookie(username: string, key: string, value: string): void {
       value,
     }),
     '.epicgames.com',
-  );
-}
-
-export async function setPuppeteerCookies(username: string, newCookies: Cookie[]): Promise<void> {
-  const cookieJar = getCookieJar(username);
-  await Promise.all(
-    newCookies.map(async (cookie) => {
-      const domain = cookie.domain.replace(/^\./, '');
-      const tcfsCookie = new tough.Cookie({
-        key: cookie.name,
-        value: cookie.value,
-        expires: new Date(cookie.expires * 1000),
-        domain,
-        path: cookie.path,
-        secure: cookie.secure,
-        httpOnly: cookie.httpOnly,
-        hostOnly: !cookie.domain.startsWith('.'),
-      });
-      try {
-        await cookieJar.setCookie(tcfsCookie, `https://${domain}`);
-      } catch (err) {
-        L.error({ tcfsCookie }, 'Error setting cookie');
-        throw err;
-      }
-    }),
   );
 }
 
