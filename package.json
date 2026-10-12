@@ -7,7 +7,6 @@
   "scripts": {
     "start": "vite-node src/index.ts",
     "start:ts": "vite-node src/index.ts",
-    "start:debug": "DEBUG=puppeteer-extra-plugin:portal* vite-node src/index.ts",
     "entrypoint-config": "node dist/src/entrypoint-config.js",
     "build": "rimraf dist && tsc",
     "lint": "tsc --noEmit && eslint .",
@@ -76,7 +75,7 @@
     "vite-node": "^6.0.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=26"
   },
   "repository": {
     "type": "git",

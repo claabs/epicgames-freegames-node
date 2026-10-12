@@ -924,7 +924,7 @@ export class AppConfig {
   /**
    * How long in milliseconds the browser navigation will wait before timing out.
    * 0 disables timeout (not recommended).
-   * See: https://github.com/puppeteer/puppeteer/blob/main/docs/api.md#pagesetdefaulttimeouttimeout
+   * See: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout
    * @example 120000
    * @default 30000
    * @env BROWSER_NAVIGATION_TIMEOUT

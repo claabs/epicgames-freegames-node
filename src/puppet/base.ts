@@ -101,7 +101,7 @@ export default class PuppetBase {
   }
 
   protected async setupPage(): Promise<Page> {
-    this.L.debug('Logging in with puppeteer');
+    this.L.debug('Logging in with Playwright');
     try {
       const deviceAuth = await getAccountAuth(this.email);
       if (deviceAuth) {

@@ -10,6 +10,8 @@ WORKDIR /usr/app
 ########
 FROM base AS deps
 
+ARG TARGETARCH
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     # App dependencies
@@ -17,9 +19,16 @@ RUN apt-get update \
     xauth \
     jq \
     tzdata \
-    cron \
     tini \
+    curl \
+    ca-certificates \
     && npx playwright install chrome --with-deps \
+    && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
+    && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
+    && curl -fsSLO "$SUPERCRONIC_URL" \
+    && chmod +x "$SUPERCRONIC" \
+    && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
+    && apt-get purge -y --auto-remove curl \
     && rm -rf /var/lib/apt/lists/* \
     && mv /root/.cache/ms-playwright /home/node/.cache/ \
     && chown -R node:node /home/node/.cache
