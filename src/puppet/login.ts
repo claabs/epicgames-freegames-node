@@ -35,7 +35,7 @@ export default class PuppetLogin extends PuppetBase {
   protected override async setupPage(): Promise<Page> {
     this.L.debug('Setting auth from cookies');
 
-    this.L.debug('Logging in with puppeteer');
+    this.L.debug('Logging in with Playwright');
     this.page = await safeNewPage(this.browser, this.L);
     return this.page;
   }

@@ -4,7 +4,7 @@ import PQueue from 'p-queue';
 import { config } from './common/config/index.js';
 import { convertImportCookies } from './common/cookie.js';
 import logger from './common/logger.js';
-import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/playwright.js';
+import { killBrowserProcesses, safeLaunchBrowser } from './common/playwright.js';
 import { createServer } from './common/server.js';
 import { DeviceLogin } from './device-login.js';
 import { EulaManager } from './eula-manager.js';
@@ -99,7 +99,6 @@ export async function main(): Promise<void> {
     await Promise.all(accountPromises);
     server.close();
     await killBrowserProcesses(logger);
-    await cleanupTempFiles(logger);
     logger.info('Exiting successfully');
     process.exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
@@ -111,6 +110,5 @@ try {
   logger.error(err);
   logVersionOnError();
   await killBrowserProcesses(logger);
-  await cleanupTempFiles(logger);
   process.exit(1);
 }
