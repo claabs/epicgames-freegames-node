@@ -1,15 +1,17 @@
 import path from 'node:path';
 
 import { ensureDir } from 'fs-extra/esm';
+import { decodeJwt } from 'jose';
 
 import { config } from '../common/config/index.js';
-import { STORE_CART_EN } from '../common/constants.js';
-import { getAccountAuth } from '../common/device-auths.js';
+import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.js';
 import logger from '../common/logger.js';
 import { safeNewPage } from '../common/playwright.js';
 
 import type { BrowserContext, Cookie, Page } from 'patchright';
 import type { Logger } from 'pino';
+
+import type { AuthTokenResponse } from '../common/device-auths.js';
 
 export interface PuppetBaseProps {
   browser: BrowserContext;
@@ -46,8 +48,8 @@ export default class PuppetBase {
     throwForError = false,
   ): Promise<T> {
     if (!this.page) {
-      this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle' });
+      this.page = await safeNewPage(this.browser, this.L);
+      await this.page.goto(STORE_CART_EN);
     }
 
     let fetchUrl: URL;
@@ -77,8 +79,8 @@ export default class PuppetBase {
     headers?: Record<string, string>,
   ): Promise<RawRequestResponse> {
     if (!this.page) {
-      this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle' });
+      this.page = await safeNewPage(this.browser, this.L);
+      await this.page.goto(STORE_CART_EN);
     }
 
     const fetchUrl = new URL(url);
@@ -100,10 +102,30 @@ export default class PuppetBase {
     return resp;
   }
 
-  protected async setupPage(): Promise<Page> {
+  public async checkCookie(): Promise<boolean> {
+    const cookies = await this.browser.cookies(STORE_HOMEPAGE);
+    const eg1Cookie = cookies.find((c) => c.name === 'EPIC_EG1');
+    if (!eg1Cookie) return false;
+    this.L.trace({ eg1Cookie }, 'EG1 cookie found');
+    const jwtValue = eg1Cookie.value.split('~')[1];
+    if (!jwtValue) return false;
+    try {
+      const { exp } = decodeJwt(jwtValue);
+      if (!exp) return false;
+      if (new Date(exp * 1000) <= new Date()) {
+        this.L.debug('EG1 cookie is expired');
+        return false;
+      }
+      return true;
+    } catch {
+      this.L.warn('invalid EG1 JWT');
+    }
+    return false;
+  }
+
+  public async setupCookies(deviceAuth?: AuthTokenResponse): Promise<void> {
     this.L.debug('Logging in with Playwright');
     try {
-      const deviceAuth = await getAccountAuth(this.email);
       if (deviceAuth) {
         this.L.debug({ deviceAuth }, 'Setting auth from device auth');
         const bearerCookies: Cookie[] = [
@@ -113,11 +135,13 @@ export default class PuppetBase {
           '.unrealengine.com',
         ].map((domain) => {
           const name = 'EPIC_BEARER_TOKEN';
+
           const value = deviceAuth.access_token;
           const size = name.length + value.length;
           return {
             name,
             value,
+
             expires: new Date(deviceAuth.expires_at).getTime() / 1000,
             domain,
             path: '/',
@@ -130,12 +154,11 @@ export default class PuppetBase {
         });
         this.browser.addCookies(bearerCookies);
       } else {
-        this.L.warn('No device auth found, auth issues may occur');
+        this.L.debug('Using browser cookies as auth instead of device auth');
       }
       this.page = await safeNewPage(this.browser, this.L);
       this.L.debug('Going to page: STORE_CART_EN');
-      await this.page.goto(STORE_CART_EN); // Get EG1 cookie
-      return this.page;
+      await this.page.goto(STORE_CART_EN); // Get EG1 cookie;
     } catch (err) {
       await this.handlePageError(err);
       throw err;

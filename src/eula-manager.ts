@@ -1,7 +1,6 @@
 import axios from './axios-base.js';
 import { config } from './common/config/setup.js';
 import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.js';
-import { getAccountAuth } from './common/device-auths.js';
 import logger from './common/logger.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 import { sendNotification } from './notify.js';
@@ -37,38 +36,24 @@ export interface EulaAgreementResponse {
 }
 
 export class EulaManager {
-  private deviceAuth: AuthTokenResponse | undefined;
+  private deviceAuth: AuthTokenResponse;
 
   private email: string;
 
   private L: Logger;
 
-  constructor(email: string) {
+  constructor(email: string, deviceAuth: AuthTokenResponse) {
     this.L = logger.child({ user: email });
     this.email = email;
-  }
-
-  private async getDeviceAuth(): Promise<AuthTokenResponse> {
-    const deviceAuth = await getAccountAuth(this.email);
-    if (!deviceAuth) throw new Error('Device auth not found');
     this.deviceAuth = deviceAuth;
-    return this.deviceAuth;
   }
 
   private async getAccountId(): Promise<string> {
-    if (this.deviceAuth) {
-      return this.deviceAuth.account_id;
-    }
-    const deviceAuth = await this.getDeviceAuth();
-    return deviceAuth.account_id;
+    return this.deviceAuth.account_id;
   }
 
   private async getAccessToken(): Promise<string> {
-    if (this.deviceAuth) {
-      return this.deviceAuth.access_token;
-    }
-    const deviceAuth = await this.getDeviceAuth();
-    return deviceAuth.access_token;
+    return this.deviceAuth.access_token;
   }
 
   public async checkEulaStatus(): Promise<void> {
