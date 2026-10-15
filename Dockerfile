@@ -5,33 +5,6 @@ FROM node:26-bookworm-slim AS base
 
 WORKDIR /usr/app
 
-########
-# DEPS
-########
-FROM base AS deps
-
-ARG TARGETARCH
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    # App dependencies
-    xvfb \
-    xauth \
-    jq \
-    tzdata \
-    tini \
-    curl \
-    ca-certificates \
-    && npx playwright install chrome --with-deps \
-    && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
-    && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
-    && curl -fsSLO "$SUPERCRONIC_URL" \
-    && chmod +x "$SUPERCRONIC" \
-    && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
-    && apt-get purge -y --auto-remove curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && mv /root/.cache/ms-playwright /home/node/.cache/ \
-    && chown -R node:node /home/node/.cache
 
 ########
 # BUILD
@@ -52,25 +25,41 @@ RUN npm run build
 ########
 # DEPLOY
 ########
-FROM deps AS deploy
+FROM base AS deploy
 
+ARG TARGETARCH
 
-COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-# backwards compat (from https://success.docker.com/article/use-a-script-to-initialize-stateful-container-data)
-RUN ln -s /usr/local/bin/docker-entrypoint.sh / 
+COPY package*.json ./
 
-RUN chown -R node:node /usr/app
+RUN npm ci --omit=dev\ 
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    # App dependencies
+    xvfb \
+    xauth \
+    jq \
+    tini \
+    curl \
+    ca-certificates \
+    && npx playwright install chrome --with-deps \
+    && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
+    && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
+    && curl -fsSLO "$SUPERCRONIC_URL" \
+    && chmod +x "$SUPERCRONIC" \
+    && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
+    && apt-get purge -y --auto-remove curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && mv /root/.cache/ms-playwright /home/node/.cache/ \
+    && chown -R node:node /home/node/.cache /usr/app
+
 
 # Declare user early so chrome is installed to user dir
 USER node
 
-# Copy package.json for version number
-COPY package*.json ./
-
-RUN npm ci --omit=dev
-
 # Steal compiled code from build image
 COPY --from=build /usr/app/dist ./dist
+
+COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ARG COMMIT_SHA="" \
     BRANCH=""
@@ -84,4 +73,4 @@ EXPOSE 3000
 
 VOLUME [ "/usr/app/config" ]
 
-ENTRYPOINT ["tini", "-s", "--", "docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "-s", "--", "/usr/local/bin/docker-entrypoint.sh"]
