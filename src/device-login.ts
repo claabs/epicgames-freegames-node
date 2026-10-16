@@ -4,7 +4,7 @@ import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
 import axios from './axios-base.js';
-import { config } from './common/config/index.js';
+import { config, getMsUntilNextRun } from './common/config/index.js';
 import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
 import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
 import { getLocaltunnelUrl } from './common/localtunnel.js';
@@ -110,7 +110,7 @@ export class DeviceLogin {
 
   public async testServerNotify(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
+    const notificationTimeout = getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
@@ -135,7 +135,7 @@ export class DeviceLogin {
 
   public async newDeviceAuthLogin(): Promise<AuthTokenResponse> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
+    const notificationTimeout = getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },

@@ -2,13 +2,15 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { NtfyConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { ntfyConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class NtfyNotifier extends NotifierService {
-  private config: NtfyConfig;
+  private config: z.infer<typeof ntfyConfigSchema>;
 
-  constructor(config: NtfyConfig) {
+  constructor(config: z.infer<typeof ntfyConfigSchema>) {
     super();
     this.config = config;
   }

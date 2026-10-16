@@ -1,5 +1,5 @@
 import PuppetBase from './base.js';
-import { config, SearchStrategy } from '../common/config/index.js';
+import { config } from '../common/config/index.js';
 import {
   FREE_GAMES_PROMOTIONS_ENDPOINT,
   GRAPHQL_ENDPOINT,
@@ -363,9 +363,9 @@ export default class PuppetFreeGames extends PuppetBase {
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
     let validFreeGames: OfferInfo[];
-    if (config.searchStrategy === SearchStrategy.WEEKLY) {
+    if (config.searchStrategy === 'weekly') {
       validFreeGames = await this.getWeeklyFreeGames();
-    } else if (config.searchStrategy === SearchStrategy.PROMOTION) {
+    } else if (config.searchStrategy === 'promotion') {
       validFreeGames = await this.getCatalogFreeGames();
     } else {
       this.L.info('searchStrategy is `all`: searching for weekly and promotional games');

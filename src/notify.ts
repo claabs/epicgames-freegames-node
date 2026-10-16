@@ -1,4 +1,4 @@
-import { config, NotificationType } from './common/config/index.js';
+import { config } from './common/config/index.js';
 // eslint-disable-next-line import-x/no-rename-default
 import L from './common/logger.js';
 // eslint-disable-next-line import-x/no-cycle
@@ -9,7 +9,7 @@ import {
   DiscordNotifier,
   EmailNotifier,
   GotifyNotifier,
-  HomeassistantNotifier,
+  HomeAssistantNotifier,
   LocalNotifier,
   NtfyNotifier,
   PushoverNotifier,
@@ -18,19 +18,6 @@ import {
   WebhookNotifier,
 } from './notifiers/index.js';
 
-import type {
-  AppriseConfig,
-  BarkConfig,
-  DiscordConfig,
-  EmailConfig,
-  GotifyConfig,
-  HomeassistantConfig,
-  NtfyConfig,
-  PushoverConfig,
-  SlackConfig,
-  TelegramConfig,
-  WebhookConfig,
-} from './common/config/index.js';
 import type { NotificationReason } from './interfaces/notification-reason.js';
 
 export async function sendNotification(
@@ -53,32 +40,34 @@ export async function sendNotification(
   }
   const notifiers = notifierConfigs.map((notifierConfig) => {
     switch (notifierConfig.type) {
-      case NotificationType.DISCORD:
-        return new DiscordNotifier(notifierConfig as DiscordConfig);
-      case NotificationType.PUSHOVER:
-        return new PushoverNotifier(notifierConfig as PushoverConfig);
-      case NotificationType.EMAIL:
-        return new EmailNotifier(notifierConfig as EmailConfig);
-      case NotificationType.LOCAL:
+      case 'discord':
+        return new DiscordNotifier(notifierConfig);
+      case 'pushover':
+        return new PushoverNotifier(notifierConfig);
+      case 'email':
+        return new EmailNotifier(notifierConfig);
+      case 'local':
         return new LocalNotifier();
-      case NotificationType.TELEGRAM:
-        return new TelegramNotifier(notifierConfig as TelegramConfig);
-      case NotificationType.APPRISE:
-        return new AppriseNotifier(notifierConfig as AppriseConfig);
-      case NotificationType.GOTIFY:
-        return new GotifyNotifier(notifierConfig as GotifyConfig);
-      case NotificationType.SLACK:
-        return new SlackNotifier(notifierConfig as SlackConfig);
-      case NotificationType.HOMEASSISTANT:
-        return new HomeassistantNotifier(notifierConfig as HomeassistantConfig);
-      case NotificationType.BARK:
-        return new BarkNotifier(notifierConfig as BarkConfig);
-      case NotificationType.NTFY:
-        return new NtfyNotifier(notifierConfig as NtfyConfig);
-      case NotificationType.WEBHOOK:
-        return new WebhookNotifier(notifierConfig as WebhookConfig);
+      case 'telegram':
+        return new TelegramNotifier(notifierConfig);
+      case 'apprise':
+        return new AppriseNotifier(notifierConfig);
+      case 'gotify':
+        return new GotifyNotifier(notifierConfig);
+      case 'slack':
+        return new SlackNotifier(notifierConfig);
+      case 'homeassistant':
+        return new HomeAssistantNotifier(notifierConfig);
+      case 'bark':
+        return new BarkNotifier(notifierConfig);
+      case 'ntfy':
+        return new NtfyNotifier(notifierConfig);
+      case 'webhook':
+        return new WebhookNotifier(notifierConfig);
       default:
-        throw new Error(`Unexpected notifier config: ${notifierConfig.type}`);
+        throw new Error(
+          `Unexpected notifier config: ${(notifierConfig as Record<string, string>).type}`,
+        );
     }
   });
 
