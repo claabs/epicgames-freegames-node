@@ -2,13 +2,15 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { HomeassistantConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { homeAssistantConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
-export class HomeassistantNotifier extends NotifierService {
-  private config: HomeassistantConfig;
+export class HomeAssistantNotifier extends NotifierService {
+  private config: z.infer<typeof homeAssistantConfigSchema>;
 
-  constructor(config: HomeassistantConfig) {
+  constructor(config: z.infer<typeof homeAssistantConfigSchema>) {
     super();
     this.config = config;
   }

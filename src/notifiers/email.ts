@@ -4,16 +4,17 @@ import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
 import type { Transporter } from 'nodemailer';
+import type z from 'zod';
 
-import type { EmailConfig } from '../common/config/index.js';
+import type { emailConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class EmailNotifier extends NotifierService {
   private readonly emailTransporter: Transporter;
 
-  private config: EmailConfig;
+  private config: z.infer<typeof emailConfigSchema>;
 
-  constructor(config: EmailConfig) {
+  constructor(config: z.infer<typeof emailConfigSchema>) {
     super();
 
     this.config = config;

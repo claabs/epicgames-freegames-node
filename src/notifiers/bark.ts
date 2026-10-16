@@ -2,13 +2,15 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { BarkConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { barkConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class BarkNotifier extends NotifierService {
-  private config: BarkConfig;
+  private config: z.infer<typeof barkConfigSchema>;
 
-  constructor(config: BarkConfig) {
+  constructor(config: z.infer<typeof barkConfigSchema>) {
     super();
     this.config = config;
   }
