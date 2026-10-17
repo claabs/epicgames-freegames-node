@@ -41,7 +41,11 @@ RUN npm ci --omit=dev\
     tini \
     curl \
     ca-certificates \
-    && npx playwright install chrome --with-deps \
+    && if [ "$TARGETARCH" = "amd64" ]; then \
+    npx playwright install chrome --with-deps; \
+    else \
+    npx playwright install chromium --with-deps; \
+    fi \
     && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
     && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
     && curl -fsSLO "$SUPERCRONIC_URL" \
