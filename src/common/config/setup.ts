@@ -52,6 +52,12 @@ const configPath = (
 
 const defaultConfig: AppConfigInput = {
   accounts: [{ email: 'youremailhere' }],
+  notifiers: [
+    {
+      type: 'discord',
+      webhookUrl: 'configure a notifier',
+    },
+  ],
 };
 
 let configParseResult: z.ZodSafeParseResult<AppConfig>;

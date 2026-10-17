@@ -1,0 +1,1232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "cronSchedule": {
+      "description": "Cron string of when to run the process. *It is recommended to run every 6 hours, otherwise the refresh tokens will expire after 8 hours and a new login will be prompted every run.** If you want the check to occur immediately after the new free game is released, you can offset the cron schedule. For example in a timezone where the free games release at 11:00am: `0 5,11,17,23 * * *`",
+      "example": "0 5,11,17,23 * * *",
+      "default": "0 0,6,12,18 * * * (every six hours)",
+      "env": "CRON_SCHEDULE",
+      "type": "string"
+    },
+    "blacklistedGames": {
+      "description": "A list of excluded game titles to skip during processing.",
+      "example": [
+        "Gigabash Demo",
+        "Another Blacklisted Game"
+      ],
+      "env": "BLACKLISTED_GAMES (comma separated)",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "searchStrategy": {
+      "description": "The search criteria for finding free games. \n\"weekly\": Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games. This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks. Generally is less stable than \"promotion\" due to a more complex lookup method.\n\"promotion\": Search the entire Epic Games site for any game with a 100% discount. This includes the \"weekly\" games, plus any uncommon non-weekly temporarily free games. Occasionally excludes the weekly promotion if it's a bundle.\n\"all\": Combines the results from \"weekly\" and \"promotion\". Continues if at least one of the APIs works.",
+      "example": "weekly",
+      "default": "all",
+      "env": "SEARCH_STRATEGY",
+      "type": "string",
+      "enum": [
+        "weekly",
+        "promotion",
+        "all"
+      ]
+    },
+    "runOnStartup": {
+      "description": "If true, the process will run on startup in addition to the scheduled time.",
+      "example": true,
+      "default": false,
+      "env": "RUN_ON_STARTUP",
+      "type": "boolean"
+    },
+    "runOnce": {
+      "description": "If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.",
+      "example": true,
+      "default": false,
+      "env": "RUN_ONCE",
+      "type": "boolean"
+    },
+    "timezone": {
+      "description": "TZ name from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List",
+      "example": "America/Chicago",
+      "default": "UTC",
+      "env": "TZ",
+      "type": "string"
+    },
+    "intervalTime": {
+      "description": "The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)",
+      "example": 30,
+      "default": 60,
+      "env": "INTERVAL_TIME",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "accountConcurrency": {
+      "description": "How many accounts can be processed at the same time",
+      "example": 1,
+      "default": 3,
+      "env": "ACCOUNT_CONCURRENCY",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "logLevel": {
+      "description": "Log level in lower case. Can be [silent, error, warn, info, debug, trace]",
+      "example": "debug",
+      "default": "info",
+      "env": "LOG_LEVEL",
+      "type": "string",
+      "enum": [
+        "silent",
+        "error",
+        "warn",
+        "info",
+        "debug",
+        "trace"
+      ]
+    },
+    "webPortalConfig": {
+      "description": "Web server configurations for the remote web portal",
+      "type": "object",
+      "properties": {
+        "baseUrl": {
+          "default": "http://localhost:3000",
+          "description": "The URL base that will be returned when a device token login is required",
+          "example": "https://epic.example.com",
+          "env": "BASE_URL",
+          "type": "string",
+          "format": "uri"
+        },
+        "listenOpts": {
+          "description": "Node Net.listen options: https://nodejs.org/api/net.html#net_server_listen_options_callback",
+          "default": "{ port: 3000 }",
+          "env": "SERVER_PORT (for `{port: SERVER_PORT}` only)",
+          "type": "object",
+          "properties": {
+            "port": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": {}
+        },
+        "serverOpts": {
+          "description": "Node HTTPS.createServer options: https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener",
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        },
+        "localtunnel": {
+          "description": "If true, provide a remotely accessible web address via [localtunnel](https://localtunnel.me) without the need to port forward or reverse proxy",
+          "example": true,
+          "default": false,
+          "env": "LOCAL_TUNNEL",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "baseUrl",
+        "localtunnel"
+      ],
+      "additionalProperties": false
+    },
+    "accounts": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "description": "Epic Games login email",
+            "example": "example@gmail.com",
+            "env": "EMAIL",
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "notifiers": {
+            "description": "Notification options for just this account. This overrides any global notification configs. You may configure multiple notifiers, and they will all be triggered simultaneously.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "email"
+                    },
+                    "smtpHost": {
+                      "type": "string",
+                      "description": "The outgoing SMTP host name",
+                      "example": "smtp.gmail.com",
+                      "env": "SMTP_HOST"
+                    },
+                    "smtpPort": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535,
+                      "description": "The outgoing SMTP port (SSL or TLS, see secure)",
+                      "example": 587,
+                      "env": "SMTP_PORT"
+                    },
+                    "emailSenderAddress": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                      "description": "The sender of the email you will receive",
+                      "example": "hello@gmail.com",
+                      "env": "EMAIL_SENDER_ADDRESS"
+                    },
+                    "emailSenderName": {
+                      "type": "string",
+                      "description": "The name of the email sender",
+                      "example": "Epic Games Free Games",
+                      "env": "EMAIL_SENDER_NAME"
+                    },
+                    "emailRecipientAddress": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                      "description": "The recipient of the email",
+                      "example": "hello@gmail.com",
+                      "env": "EMAIL_RECIPIENT_ADDRESS"
+                    },
+                    "secure": {
+                      "default": false,
+                      "description": "true for SSL (port 465), false for TLS or unsecure",
+                      "example": true,
+                      "env": "SMTP_SECURE",
+                      "type": "boolean"
+                    },
+                    "auth": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "type": "string",
+                          "description": "The SMTP username (if necessary)",
+                          "example": "hello@gmail.com",
+                          "env": "SMTP_USERNAME"
+                        },
+                        "pass": {
+                          "type": "string",
+                          "description": "The SMTP password (if necessary)",
+                          "example": "abc123",
+                          "env": "SMTP_PASSWORD"
+                        }
+                      },
+                      "required": [
+                        "user",
+                        "pass"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Auth settings for SMTP"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "smtpHost",
+                    "smtpPort",
+                    "emailSenderAddress",
+                    "emailSenderName",
+                    "emailRecipientAddress",
+                    "secure"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Configuration for sending notifications via email. [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server). If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "discord"
+                    },
+                    "webhookUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+                      "example": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+                      "env": "DISCORD_WEBHOOK"
+                    },
+                    "mentionedUsers": {
+                      "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-",
+                      "example": "[\"914360712086843432\", \"914360712086843433\"]",
+                      "env": "DISCORD_MENTIONED_USERS (comma separated)",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "mentionedRoles": {
+                      "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\"",
+                      "example": "[\"734548250895319070\", \"734548250895319071\"]",
+                      "env": "DISCORD_MENTIONED_ROLES (comma separated)",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "showUrl": {
+                      "default": false,
+                      "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL.",
+                      "example": true,
+                      "env": "DISCORD_SHOW_URL",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "webhookUrl",
+                    "showUrl"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a message to a server text channel using a webhook"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "local"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false,
+                  "description": "For local development only. This just opens the notified URL in your default browser."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "telegram"
+                    },
+                    "token": {
+                      "type": "string",
+                      "pattern": "\\d+:[a-zA-Z0-9_-]{35}",
+                      "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot",
+                      "example": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
+                      "env": "TELEGRAM_TOKEN"
+                    },
+                    "chatId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Unique identifier for the target chat or username of the target channel",
+                      "example": "-987654321",
+                      "env": "TELEGRAM_CHAT_ID"
+                    },
+                    "topic": {
+                      "description": "Identifier for the topic/thread to send the messages",
+                      "example": 5,
+                      "env": "TELEGRAM_TOPIC",
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "apiUrl": {
+                      "default": "https://api.telegram.org",
+                      "description": "Custom Telegram server URL",
+                      "env": "TELEGRAM_API_URL",
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "token",
+                    "chatId",
+                    "apiUrl"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a message to a group chat using a bot you must set up yourself"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "apprise"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "The base URL of your Apprise instance",
+                      "example": "http://localhost:8000",
+                      "env": "APPRISE_API"
+                    },
+                    "urls": {
+                      "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution",
+                      "example": "mailto://user:pass@gmail.com",
+                      "env": "APPRISE_URLS",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "apiUrl"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api). Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "pushover"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Guide: https://pushover.net/apps/build",
+                      "example": "a172fyyl9gw99p2xi16tq8hnib48p2",
+                      "env": "PUSHOVER_TOKEN"
+                    },
+                    "userKey": {
+                      "type": "string",
+                      "example": "uvgidym7l5ggpwu2r8i1oy6diaapll",
+                      "env": "PUSHOVER_USER_ID"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "token",
+                    "userKey"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a pushover message"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "gotify"
+                    },
+                    "apiUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "The Gotify server host URL",
+                      "example": "http://gotify.net",
+                      "env": "GOTIFY_API_URL"
+                    },
+                    "token": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "On the Gotify web UI, Apps > Create Application > reveal the token",
+                      "example": "SnL-wAvmfo_QT",
+                      "env": "GOTIFY_TOKEN"
+                    },
+                    "priority": {
+                      "default": 5,
+                      "description": "The priority level sent with the message.",
+                      "example": 7,
+                      "env": "GOTIFY_PRIORITY",
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "apiUrl",
+                    "token",
+                    "priority"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a message to a self-hosted [Gotify](https://gotify.net/) server"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "slack"
+                    },
+                    "webhookUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks",
+                      "example": "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg",
+                      "env": "SLACK_WEBHOOK"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "webhookUrl"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a [slack](https://slack.com/) message using webhook"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "homeassistant"
+                    },
+                    "instance": {
+                      "type": "string",
+                      "example": "https://homeassistant.example.com",
+                      "env": "HOMEASSISTANT_INSTANCE"
+                    },
+                    "token": {
+                      "type": "string",
+                      "env": "HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
+                    },
+                    "notifyservice": {
+                      "type": "string",
+                      "example": "mobile_app_smartphone_name",
+                      "env": "HOMEASSISTANT_NOTIFYSERVICE"
+                    },
+                    "customData": {
+                      "description": "A key-value pair object to additionally pass into the service's data object",
+                      "example": "{ \"parse_mode\": \"html\" }",
+                      "env": "HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": [
+                          "string",
+                          "number",
+                          "boolean"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "instance",
+                    "token",
+                    "notifyservice"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a homeassistant notification"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "bark"
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "Bark key",
+                      "env": "BARK_KEY"
+                    },
+                    "title": {
+                      "default": "epicgames-freegames-node",
+                      "description": "Bark title",
+                      "env": "BARK_TITLE",
+                      "type": "string"
+                    },
+                    "group": {
+                      "default": "epicgames-freegames-node",
+                      "description": "Bark group",
+                      "env": "BARK_GROUP",
+                      "type": "string"
+                    },
+                    "apiUrl": {
+                      "default": "https://api.day.app",
+                      "description": "Custom Bark server URL",
+                      "env": "BARK_API_URL",
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "key",
+                    "title",
+                    "group",
+                    "apiUrl"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Send a notification to the Bark iOS app. https://github.com/Finb/Bark"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "ntfy"
+                    },
+                    "webhookUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/",
+                      "example": "https://ntfy.sh/mytopic",
+                      "env": "NTFY_WEBHOOK"
+                    },
+                    "priority": {
+                      "type": "string",
+                      "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/",
+                      "example": "urgent",
+                      "env": "NTFY_PRIORITY"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens",
+                      "example": "tk_yourtoken",
+                      "env": "NTFY_TOKEN"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "webhookUrl",
+                    "priority",
+                    "token"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sends a ntfy message using webhook"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Webhook URL",
+                      "env": "WEBHOOK_URL"
+                    },
+                    "headers": {
+                      "description": "A key-value pair object to pass into the POST request headers",
+                      "example": "{ Authorization: \"Bearer ABCD\" }",
+                      "env": "WEBHOOK_HEADERS (stringified JSON)",
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "url"
+                  ],
+                  "additionalProperties": false,
+                  "description": "ends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "description": "A list of accounts to work with"
+    },
+    "notifiers": {
+      "description": "Global default notification configuration. You may configure multiple notifiers, and they will all be triggered simultaneously.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "email"
+              },
+              "smtpHost": {
+                "type": "string",
+                "description": "The outgoing SMTP host name",
+                "example": "smtp.gmail.com",
+                "env": "SMTP_HOST"
+              },
+              "smtpPort": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535,
+                "description": "The outgoing SMTP port (SSL or TLS, see secure)",
+                "example": 587,
+                "env": "SMTP_PORT"
+              },
+              "emailSenderAddress": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                "description": "The sender of the email you will receive",
+                "example": "hello@gmail.com",
+                "env": "EMAIL_SENDER_ADDRESS"
+              },
+              "emailSenderName": {
+                "type": "string",
+                "description": "The name of the email sender",
+                "example": "Epic Games Free Games",
+                "env": "EMAIL_SENDER_NAME"
+              },
+              "emailRecipientAddress": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                "description": "The recipient of the email",
+                "example": "hello@gmail.com",
+                "env": "EMAIL_RECIPIENT_ADDRESS"
+              },
+              "secure": {
+                "default": false,
+                "description": "true for SSL (port 465), false for TLS or unsecure",
+                "example": true,
+                "env": "SMTP_SECURE",
+                "type": "boolean"
+              },
+              "auth": {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "type": "string",
+                    "description": "The SMTP username (if necessary)",
+                    "example": "hello@gmail.com",
+                    "env": "SMTP_USERNAME"
+                  },
+                  "pass": {
+                    "type": "string",
+                    "description": "The SMTP password (if necessary)",
+                    "example": "abc123",
+                    "env": "SMTP_PASSWORD"
+                  }
+                },
+                "required": [
+                  "user",
+                  "pass"
+                ],
+                "additionalProperties": false,
+                "description": "Auth settings for SMTP"
+              }
+            },
+            "required": [
+              "type",
+              "smtpHost",
+              "smtpPort",
+              "emailSenderAddress",
+              "emailSenderName",
+              "emailRecipientAddress",
+              "secure"
+            ],
+            "additionalProperties": false,
+            "description": "Configuration for sending notifications via email. [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server). If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "discord"
+              },
+              "webhookUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
+                "example": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
+                "env": "DISCORD_WEBHOOK"
+              },
+              "mentionedUsers": {
+                "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-",
+                "example": "[\"914360712086843432\", \"914360712086843433\"]",
+                "env": "DISCORD_MENTIONED_USERS (comma separated)",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "mentionedRoles": {
+                "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\"",
+                "example": "[\"734548250895319070\", \"734548250895319071\"]",
+                "env": "DISCORD_MENTIONED_ROLES (comma separated)",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "showUrl": {
+                "default": false,
+                "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL.",
+                "example": true,
+                "env": "DISCORD_SHOW_URL",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "type",
+              "webhookUrl",
+              "showUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a message to a server text channel using a webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "local"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false,
+            "description": "For local development only. This just opens the notified URL in your default browser."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "telegram"
+              },
+              "token": {
+                "type": "string",
+                "pattern": "\\d+:[a-zA-Z0-9_-]{35}",
+                "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot",
+                "example": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
+                "env": "TELEGRAM_TOKEN"
+              },
+              "chatId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Unique identifier for the target chat or username of the target channel",
+                "example": "-987654321",
+                "env": "TELEGRAM_CHAT_ID"
+              },
+              "topic": {
+                "description": "Identifier for the topic/thread to send the messages",
+                "example": 5,
+                "env": "TELEGRAM_TOPIC",
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "apiUrl": {
+                "default": "https://api.telegram.org",
+                "description": "Custom Telegram server URL",
+                "env": "TELEGRAM_API_URL",
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "type",
+              "token",
+              "chatId",
+              "apiUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a message to a group chat using a bot you must set up yourself"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "apprise"
+              },
+              "apiUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "The base URL of your Apprise instance",
+                "example": "http://localhost:8000",
+                "env": "APPRISE_API"
+              },
+              "urls": {
+                "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution",
+                "example": "mailto://user:pass@gmail.com",
+                "env": "APPRISE_URLS",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "apiUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api). Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "pushover"
+              },
+              "token": {
+                "type": "string",
+                "description": "Guide: https://pushover.net/apps/build",
+                "example": "a172fyyl9gw99p2xi16tq8hnib48p2",
+                "env": "PUSHOVER_TOKEN"
+              },
+              "userKey": {
+                "type": "string",
+                "example": "uvgidym7l5ggpwu2r8i1oy6diaapll",
+                "env": "PUSHOVER_USER_ID"
+              }
+            },
+            "required": [
+              "type",
+              "token",
+              "userKey"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a pushover message"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "gotify"
+              },
+              "apiUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "The Gotify server host URL",
+                "example": "http://gotify.net",
+                "env": "GOTIFY_API_URL"
+              },
+              "token": {
+                "type": "string",
+                "minLength": 1,
+                "description": "On the Gotify web UI, Apps > Create Application > reveal the token",
+                "example": "SnL-wAvmfo_QT",
+                "env": "GOTIFY_TOKEN"
+              },
+              "priority": {
+                "default": 5,
+                "description": "The priority level sent with the message.",
+                "example": 7,
+                "env": "GOTIFY_PRIORITY",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              }
+            },
+            "required": [
+              "type",
+              "apiUrl",
+              "token",
+              "priority"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a message to a self-hosted [Gotify](https://gotify.net/) server"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "slack"
+              },
+              "webhookUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks",
+                "example": "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg",
+                "env": "SLACK_WEBHOOK"
+              }
+            },
+            "required": [
+              "type",
+              "webhookUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a [slack](https://slack.com/) message using webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "homeassistant"
+              },
+              "instance": {
+                "type": "string",
+                "example": "https://homeassistant.example.com",
+                "env": "HOMEASSISTANT_INSTANCE"
+              },
+              "token": {
+                "type": "string",
+                "env": "HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
+              },
+              "notifyservice": {
+                "type": "string",
+                "example": "mobile_app_smartphone_name",
+                "env": "HOMEASSISTANT_NOTIFYSERVICE"
+              },
+              "customData": {
+                "description": "A key-value pair object to additionally pass into the service's data object",
+                "example": "{ \"parse_mode\": \"html\" }",
+                "env": "HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "type",
+              "instance",
+              "token",
+              "notifyservice"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a homeassistant notification"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "bark"
+              },
+              "key": {
+                "type": "string",
+                "description": "Bark key",
+                "env": "BARK_KEY"
+              },
+              "title": {
+                "default": "epicgames-freegames-node",
+                "description": "Bark title",
+                "env": "BARK_TITLE",
+                "type": "string"
+              },
+              "group": {
+                "default": "epicgames-freegames-node",
+                "description": "Bark group",
+                "env": "BARK_GROUP",
+                "type": "string"
+              },
+              "apiUrl": {
+                "default": "https://api.day.app",
+                "description": "Custom Bark server URL",
+                "env": "BARK_API_URL",
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "type",
+              "key",
+              "title",
+              "group",
+              "apiUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Send a notification to the Bark iOS app. https://github.com/Finb/Bark"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "ntfy"
+              },
+              "webhookUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/",
+                "example": "https://ntfy.sh/mytopic",
+                "env": "NTFY_WEBHOOK"
+              },
+              "priority": {
+                "type": "string",
+                "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/",
+                "example": "urgent",
+                "env": "NTFY_PRIORITY"
+              },
+              "token": {
+                "type": "string",
+                "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens",
+                "example": "tk_yourtoken",
+                "env": "NTFY_TOKEN"
+              }
+            },
+            "required": [
+              "type",
+              "webhookUrl",
+              "priority",
+              "token"
+            ],
+            "additionalProperties": false,
+            "description": "Sends a ntfy message using webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "webhook"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Webhook URL",
+                "env": "WEBHOOK_URL"
+              },
+              "headers": {
+                "description": "A key-value pair object to pass into the POST request headers",
+                "example": "{ Authorization: \"Bearer ABCD\" }",
+                "env": "WEBHOOK_HEADERS (stringified JSON)",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "url"
+            ],
+            "additionalProperties": false,
+            "description": "ends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
+          }
+        ]
+      }
+    },
+    "testNotifiers": {
+      "description": "When true, the process will send test notifications with a test redirect to example.com for all configured accounts. Be sure to disable this after a successful test. This test will block normal operation until the test link is accessed by one account. The test page can only be used once.",
+      "example": true,
+      "default": false,
+      "env": "TEST_NOTIFIERS",
+      "type": "boolean"
+    },
+    "skipVersionCheck": {
+      "description": "Skip the call to api.github.com that checks for the latest version on launch",
+      "example": true,
+      "default": false,
+      "env": "SKIP_VERSION_CHECK",
+      "type": "boolean"
+    },
+    "browserLaunchTimeout": {
+      "description": "In seconds, how long before a stuck Chromium process times out and gets restarted",
+      "example": 30,
+      "default": 15,
+      "env": "BROWSER_LAUNCH_TIMEOUT",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "browserLaunchRetryAttempts": {
+      "description": "How many times to attempt retry attempts to launch a browser after it times out",
+      "example": 2,
+      "default": 5,
+      "env": "BROWSER_LAUNCH_RETRY_ATTEMPTS",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "browserNavigationTimeout": {
+      "description": "How long in milliseconds the browser navigation will wait before timing out. 0 disables timeout (not recommended). See: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout",
+      "example": 120000,
+      "default": 30000,
+      "env": "BROWSER_NAVIGATION_TIMEOUT",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "countryCode": {
+      "description": "The 2 character country code associated with your account. Used when determining if a game is blacklisted for your account. Commonly blacklisted countries: \"MO\",\"HK\",\"RU\",\"BY\",\"CN\"",
+      "example": "RU",
+      "default": "blacklisting is not checked",
+      "env": "COUNTRY_CODE",
+      "type": "string"
+    },
+    "deviceAuthClientId": {
+      "description": "The Epic Games application client ID used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients).",
+      "example": "b070f20729f84693b5d621c904fc5bc2 (Diesel - Dauntless)",
+      "default": "98f7e42c2e3a4f86a74eb43fbb41ed39 (fortniteNewSwitchGameClient)",
+      "env": "DEVICE_AUTH_CLIENT_ID",
+      "type": "string"
+    },
+    "deviceAuthSecret": {
+      "description": "The Epic Games application secret used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients).",
+      "example": "HG@XE&TGCxEJsgT#&_p2]=aRo#~>=>+c6PhR)zXP (Diesel - Dauntless)",
+      "default": "0a2449a2-001a-451e-afec-3e812901c4d7 (fortniteNewSwitchGameClient client secret)",
+      "env": "DEVICE_AUTH_SECRET",
+      "type": "string"
+    },
+    "deviceAuthPollRateSeconds": {
+      "description": "After redirecting to a device authorization verification URL, how often the Epic Games API is polled for a successful login.",
+      "example": 20,
+      "default": 10,
+      "env": "DEVICE_AUTH_POLL_RATE_SECONDS",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 9007199254740991
+    },
+    "errorsDir": {
+      "description": "The full path where the browser automation error screenshots will be output",
+      "example": "/errors",
+      "default": "${CONFIG_DIR}/errors",
+      "env": "ERRORS_DIR",
+      "type": "string"
+    },
+    "usersDir": {
+      "description": "The full path where the browser automation error screenshots will be output",
+      "example": "/users",
+      "default": "${CONFIG_DIR}/users",
+      "env": "USERS_DIR",
+      "type": "string"
+    },
+    "notifyEula": {
+      "description": "If false, EULA updates will be automatically accepted. If true, the user will receive a notification to accept the EULA.",
+      "example": true,
+      "default": false,
+      "env": "NOTIFY_EULA",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "cronSchedule",
+    "blacklistedGames",
+    "searchStrategy",
+    "runOnStartup",
+    "runOnce",
+    "timezone",
+    "intervalTime",
+    "accountConcurrency",
+    "logLevel",
+    "accounts",
+    "testNotifiers",
+    "skipVersionCheck",
+    "browserLaunchTimeout",
+    "browserLaunchRetryAttempts",
+    "browserNavigationTimeout",
+    "countryCode",
+    "deviceAuthClientId",
+    "deviceAuthSecret",
+    "deviceAuthPollRateSeconds",
+    "errorsDir",
+    "usersDir",
+    "notifyEula"
+  ],
+  "additionalProperties": false
+}
