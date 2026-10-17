@@ -1,6 +1,6 @@
 {
   "name": "epicgames-freegames-node",
-  "version": "5.1.0",
+  "version": "6.0.0",
   "description": "Use Epic's web APIs to login and redeem free games.",
   "main": "src/index.ts",
   "type": "module",
@@ -13,9 +13,10 @@
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --target deploy --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
     "docker:build-dev": "docker build . -t charlocharlie/epicgames-freegames:dev --target deploy",
     "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host --security-opt seccomp=examples/seccomp_profile.json -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
+    "docker:run-legacy": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
     "docker:buildx": "docker buildx build --platform=linux/arm64 . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
     "docs": "vite-node scripts/generate-json-schema.ts",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "axios": "^1.20.0",

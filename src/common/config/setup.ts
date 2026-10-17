@@ -84,7 +84,17 @@ if (!configPath) {
   }
 } else {
   L.debug({ configPath }, 'Reading existing config file');
-  const parsedConfig = json5.parse(await fs.readFile(configPath, 'utf8'));
+  let configRaw: string;
+  try {
+    configRaw = await fs.readFile(configPath, 'utf8');
+  } catch (err) {
+    L.error(
+      err,
+      'This container no longer runs as root. Grant your config volume ownership to 1000:1000. Ex: sudo chown -R 1000:1000 /your/host/dir/config; sudo chmod -R 775 /your/host/dir/config',
+    );
+    throw err;
+  }
+  const parsedConfig = json5.parse(configRaw);
   configParseResult = appConfigSchema.safeParse(parsedConfig);
 }
 
