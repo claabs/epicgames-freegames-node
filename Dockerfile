@@ -30,13 +30,7 @@ RUN npm ci --omit=dev\
     && chmod +x "$SUPERCRONIC" \
     && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
     && apt-get purge -y --auto-remove curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && mv /root/.cache/ms-playwright /home/node/.cache/ \
-    && chown -R node:node /home/node/.cache /usr/app
-
-
-# Declare user early so chrome is installed to user dir
-USER node
+    && rm -rf /var/lib/apt/lists/*
 
 # Add source code
 COPY src ./src

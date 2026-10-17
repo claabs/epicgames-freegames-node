@@ -11,11 +11,10 @@
     "build": "tsc",
     "lint": "tsc && eslint . --cache",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
-    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host --security-opt seccomp=examples/seccomp_profile.json -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
+    "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
     "docker:run-legacy": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
     "docker:buildx": "docker buildx build --platform=linux/arm64 . -t charlocharlie/epicgames-freegames-node:latest",
     "docs": "node scripts/generate-json-schema.ts",
-    "seccomp": "node scripts/generate-seccomp-profile.ts",
     "prepare": "husky || true"
   },
   "dependencies": {

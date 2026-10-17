@@ -12,10 +12,4 @@ services:
     # https://playwright.dev/docs/docker#recommended-docker-configuration
     init: true
     ipc: host
-    # https://github.com/moby/profiles/blob/main/seccomp/default.json
-    # https://github.com/microsoft/playwright/issues/30738#issuecomment-2108946980
-    security_opt:
-      - seccomp=seccomp_profile.json
-      # or if you're lazy
-      # - seccomp=unconfined
     restart: unless-stopped

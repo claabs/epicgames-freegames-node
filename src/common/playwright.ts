@@ -112,7 +112,7 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
   } catch (err) {
     L.error(
       err,
-      'This container no longer runs as root. Grant your config volume ownership to 1000:1000 and ensure it has write permissions. Ex: sudo chown -R 1000:1000 /your/host/dir/config',
+      `Unable to write to ${userDir} to save browser profiles. Fix the permissions and restart.`,
     );
     throw err;
   }
@@ -125,13 +125,6 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
     headless: false,
     viewport: null,
     ...getPlaywrightProxyConfig(),
-    // args: [
-    //   '--disable-dev-shm-usage',
-    //   '--disable-background-networking',
-    //   '--disable-sync',
-    //   '--disable-default-apps',
-    //   '--no-first-run',
-    // ],
   };
   return retryFunction(
     async () => chromium.launchPersistentContext(userDir, launchArgs),

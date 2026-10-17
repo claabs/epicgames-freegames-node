@@ -6,11 +6,60 @@ Supports multiple accounts, login sessions, and scheduled runs.
 
 ## Setup
 
+This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
+
+* `ghcr.io/claabs/epicgames-freegames-node:latest`
+* `charlocharlie/epicgames-freegames:latest`
+
+
+### Docker Compose
+
+```yaml
+services:
+  epicgames-freegames-node:
+    image: ghcr.io/claabs/epicgames-freegames-node
+    ports:
+      - 3000:3000
+    volumes:
+      - /your/host/dir/config:/usr/app/config
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    init: true
+    ipc: host
+    restart: unless-stopped
+
+```
+
+### Docker Run
+
+```sh
+docker run -d -v /my/host/dir/:/usr/app/config -p 3000:3000 -m 2g -init --ipc=host ghcr.io/claabs/epicgames-freegames-node:latest
+```
+
+#### Ports
+
+| Host port | Container port | Description                                                                   |
+|-----------|----------------|-------------------------------------------------------------------------------|
+| `3000`    | `3000`         | Port mapping on which the web server hosting the captcha solving page resides |
+
+#### Volumes
+
+| Host location   | Container location | Mode | Description                               |
+|-----------------|--------------------|------|-------------------------------------------|
+| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file(s) |
+
+#### Memory Limit
+
+It's recommended to add `-m 2g` as a `docker run` parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system can eventually lock up.
+
+
 ### JSON Configuration
 
 The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.
 
-For details on each option, its defaults, and environment variable key, see the [config documentation site](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
+For details on each option, its defaults see the [config documentation site](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
 
 The config file is stored in the mounted `/usr/app/config` volume and can be named `config.json` or `config.json5`.
 
@@ -91,21 +140,25 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 }
 ```
 
+#### Environment Variables
+
+Most configuration options can be set via environment variable. Look for the `Env:` tag in the [config docs](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json) for each option's key.
+
+If for whatever reason you want to change the default config directory or config file name, `CONFIG_DIR` and `CONFIG_FILE_NAME` are available as environment variables.
+
 ### Web server
 
 This project can occasionally ask you to login via [device code authentication](https://github.com/MixV2/EpicResearch/blob/master/docs/auth/grant_types/device_code.md). Epic Games's device code session expires after 10 minutes, so this project uses a web server and redirect to prevent from sending you a new link every 10 minutes. There are two options for running the web server:
 
 #### Web server config
 
-If you're familiar with hosting web servers and/or reverse proxies, follow this:
-
 1. Expose port 3000 in your Docker run config (e.g. `-p 81:3000` maps the host machine's port 81 to the container's port 3000)
-1. If you want to access the Captcha solving page from outside your network, setup any port forwarding/reverse proxy/DNS
+1. If you want to access the redirect from outside your network, setup any port forwarding/reverse proxy/DNS
 1. Set the `webPortalConfig.baseUrl` in the config
 
 #### Localtunnel setup
 
-If you don't have the ability to port forward/reverse proxy on your network, you can still access the web server remotely by setting:
+If you don't have the ability to port forward/reverse proxy on your network, you can still access the web server remotely using [localtunnel](https://theboroer.github.io/localtunnel-www/) by setting:
 
 ```jsonc
 {
@@ -114,8 +167,6 @@ If you don't have the ability to port forward/reverse proxy on your network, you
   },
 }
 ```
-
-in your `config.json`.
 
 ### Notifications
 
@@ -132,53 +183,6 @@ Since user actions may not always be required, the notification methods and web 
 to the root of your `config.json`. For more details check out the [config docs](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
 Note: to optimize for standby memory usage, the web server does not run when the process is not running. The web server will only be available during a scheduled run.
 
-### Docker Configuration
-
-This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
-
-* `ghcr.io/claabs/epicgames-freegames-node:latest`
-* `charlocharlie/epicgames-freegames:latest`
-
-If you're [experiencing issues with Chromium starting](https://github.com/claabs/epicgames-freegames-node/issues/164) (hangs on login/notification), you can try the Debian image:
-
-* `ghcr.io/claabs/epicgames-freegames-node:debian`
-* `charlocharlie/epicgames-freegames:debian`
-
-If you are using full JSON configuration, the only remaining Docker configurables are the [port](#ports) and [volume](#volumes).
-
-#### Environment Variables
-
-Most configuration options can be set via environment variable. Look for the `env` tag in the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) for each option's key.
-
-If for whatever reason you want to change the default config directory or config file name, `CONFIG_DIR` and `CONFIG_FILE_NAME` are available as environment variables.
-
-#### Ports
-
-| Host port | Container port | Description                                                                   |
-|-----------|----------------|-------------------------------------------------------------------------------|
-| `3000`    | `3000`         | Port mapping on which the web server hosting the captcha solving page resides |
-
-#### Volumes
-
-| Host location   | Container location | Mode | Description                               |
-|-----------------|--------------------|------|-------------------------------------------|
-| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file(s) |
-
-#### Memory Limit
-
-It's recommended to add `-m 2g` as a `docker run` parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system can eventually lock up.
-
-### Docker Run
-
-#### With JSON Config
-
-`$ docker run -d -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g ghcr.io/claabs/epicgames-freegames-node:latest`
-
-#### Without JSON Config
-
-Without JSON config, you can only configure one account.
-
-`$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g ghcr.io/claabs/epicgames-freegames-node:latest`
 
 ## Running without Docker
 

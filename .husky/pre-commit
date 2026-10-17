@@ -1,3 +1,2 @@
 npm run docs
-npm run seccomp
 npm run lint
