@@ -5,7 +5,7 @@ set -e
 TEMP_CONFIG="/tmp/config.json"
 
 # Resolve and output the below variables to /tmp/config.json
-node --enable-source-maps /usr/app/src/entrypoint-config.ts
+node /usr/app/src/entrypoint-config.ts
 TZ=$(cat $TEMP_CONFIG | jq -r ".timezone")
 RUN_ON_STARTUP=$(cat $TEMP_CONFIG | jq -r ".runOnStartup")
 RUN_ONCE=$(cat $TEMP_CONFIG | jq -r ".runOnce")
@@ -23,7 +23,7 @@ fi
 # If runOnStartup is set, run it once before setting up the schedule
 echo "Run on startup: ${RUN_ON_STARTUP}"
 if [ "$RUN_ON_STARTUP" = "true" ]; then
-    xvfb-run node --enable-source-maps /usr/app/src/index.ts
+    xvfb-run node /usr/app/src/index.ts
 fi
 
 # If runOnce is not set, schedule the process
@@ -33,9 +33,9 @@ if [ "$RUN_ONCE" = "false" ]; then
 
     # Write the schedule to a local crontab file
     CRON_FILE="/home/node/crontab"
-    echo "${CRON_SCHEDULE} cd /usr/app && xvfb-run node --enable-source-maps /usr/app/src/index.ts" > "$CRON_FILE"
+    echo "${CRON_SCHEDULE} cd /usr/app && xvfb-run node /usr/app/src/index.ts" > "$CRON_FILE"
 
     # Run Supercronic in the foreground, keeping the container alive
-    exec supercronic -no-reap "$CRON_FILE"
+    supercronic -passthrough-logs -no-reap "$CRON_FILE"
 fi
 echo "Exiting..."

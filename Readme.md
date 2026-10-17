@@ -6,7 +6,7 @@ Supports multiple accounts, login sessions, and scheduled runs.
 
 ## Setup
 
-This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/repository/docker/charlocharlie/epicgames-freegames):
+This image is available from both [GitHub Container Registry](https://github.com/claabs/epicgames-freegames-node/pkgs/container/epicgames-freegames-node) and [Docker Hub](https://hub.docker.com/r/charlocharlie/epicgames-freegames):
 
 * `ghcr.io/claabs/epicgames-freegames-node:latest`
 * `charlocharlie/epicgames-freegames:latest`
@@ -40,26 +40,24 @@ docker run -d -v /my/host/dir/:/usr/app/config -p 3000:3000 -m 2g -init --ipc=ho
 
 #### Ports
 
-| Host port | Container port | Description                                                                   |
-|-----------|----------------|-------------------------------------------------------------------------------|
-| `3000`    | `3000`         | Port mapping on which the web server hosting the captcha solving page resides |
+| Host port | Container port | Description                                                         |
+|-----------|----------------|---------------------------------------------------------------------|
+| `3000`    | `3000`         | Port mapping on which the web server hosting login redirect resides |
 
 #### Volumes
 
-| Host location   | Container location | Mode | Description                               |
-|-----------------|--------------------|------|-------------------------------------------|
-| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and cookie file(s) |
+| Host location   | Container location | Mode | Description                                 |
+|-----------------|--------------------|------|---------------------------------------------|
+| `/my/host/dir/` | `/usr/app/config`  | `rw` | Location of the config and browser profiles |
 
 #### Memory Limit
 
-It's recommended to add `-m 2g` as a `docker run` parameter to set a max memory usage of 2GB. The Chromium processes can sometimes run away, and without a limit your system can eventually lock up.
+The Chromium processes can sometimes run away, so a 2 GB memory limit prevents your system from locking up.
 
 
 ### JSON Configuration
 
-The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.
-
-For details on each option, its defaults see the [config documentation site](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
+The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value. For details on each option, its defaults see the [config documentation site](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
 
 The config file is stored in the mounted `/usr/app/config` volume and can be named `config.json` or `config.json5`.
 
@@ -174,7 +172,7 @@ Each notification method has unique setup instructions. See the documented [noti
 
 ### Testing notification and web server
 
-Since user actions may not always be required, the notification methods and web server can be manually tested. Essentially, you just need to add:
+Since user actions may not always be required, the notification methods and web server can be manually tested. Just temporarily add:
 
 ```jsonc
   "testNotifiers": true,
@@ -216,7 +214,12 @@ The application forwards the selected proxy value unchanged to Chrome with `--pr
 
 ### v5 to v6 Migration
 
-TODO
+- `deviceAuthPollRateSeconds` minimum increased from 1 to 10 (it got overridden to that anyway)
+- `:bullseye-slim` tag no longer published. Just use `:latest`.
+- `:debian` tag is deprectated. Just use `:latest` .
+- These are recommended by [Playwright](https://playwright.dev/docs/docker#recommended-docker-configuration):
+  - Add `--ipc=host` / `ipc: host` to your container
+  - Add `--init / init: true` to your container
 
 ### Thanks
 
