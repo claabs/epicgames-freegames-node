@@ -3,15 +3,15 @@ import path from 'node:path';
 import { ensureDir } from 'fs-extra/esm';
 import { decodeJwt } from 'jose';
 
-import { config } from '../common/config/index.js';
-import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.js';
-import logger from '../common/logger.js';
-import { safeNewPage } from '../common/playwright.js';
+import { config } from '../common/config/index.ts';
+import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.ts';
+import logger from '../common/logger.ts';
+import { safeNewPage } from '../common/playwright.ts';
 
 import type { BrowserContext, Cookie, Page } from 'patchright';
 import type { Logger } from 'pino';
 
-import type { AuthTokenResponse } from '../common/device-auths.js';
+import type { AuthTokenResponse } from '../common/device-auths.ts';
 
 export interface PuppetBaseProps {
   browser: BrowserContext;

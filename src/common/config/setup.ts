@@ -6,11 +6,11 @@ import fs from 'fs-extra';
 import json5 from 'json5';
 import { pino } from 'pino';
 
-import { appConfigSchema, CONFIG_DIR } from './zod.js';
+import { appConfigSchema, CONFIG_DIR } from './zod.ts';
 
 import type z from 'zod';
 
-import type { AppConfig, AppConfigInput } from './zod.js';
+import type { AppConfig, AppConfigInput } from './zod.ts';
 
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({

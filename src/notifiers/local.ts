@@ -1,8 +1,8 @@
 import open from 'open';
 
-import { NotifierService } from './notifier-service.js';
+import { NotifierService } from './notifier-service.ts';
 
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type { NotificationReason } from '../notify.ts';
 
 export class LocalNotifier extends NotifierService {
   // eslint-disable-next-line class-methods-use-this

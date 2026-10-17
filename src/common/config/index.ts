@@ -1,2 +1,2 @@
-export * from './zod.js';
-export * from './setup.js';
+export * from './zod.ts';
+export * from './setup.ts';

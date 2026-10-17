@@ -3,22 +3,22 @@ import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
-import axios from './axios-base.js';
-import { config, getMsUntilNextRun } from './common/config/index.js';
-import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
-import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
-import { getLocaltunnelUrl } from './common/localtunnel.js';
-import logger from './common/logger.js';
-import { serverRoute } from './common/server.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
+import axios from './axios-base.ts';
+import { config, getMsUntilNextRun } from './common/config/index.ts';
+import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.ts';
+import { getAccountAuth, setAccountAuth } from './common/device-auths.ts';
+import { getLocaltunnelUrl } from './common/localtunnel.ts';
+import logger from './common/logger.ts';
+import { serverRoute } from './common/server.ts';
 // eslint-disable-next-line import-x/no-cycle
-import { sendNotification } from './notify.js';
+import { sendNotification } from './notify.ts';
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
 import type { Logger } from 'pino';
 
-import type { AuthTokenResponse } from './common/device-auths.js';
+import type { AuthTokenResponse } from './common/device-auths.ts';
+import type { NotificationReason } from './notify.ts';
 
 export interface ClientCredentialsTokenResponse {
   access_token: string;
@@ -128,7 +128,7 @@ export class DeviceLogin {
           message: 'Test notification timed out',
         },
       ),
-      this.notify(NotificationReason.TEST, url),
+      this.notify('TEST', url),
     ]);
     pendingRedirects.delete(reqId);
   }
@@ -153,7 +153,7 @@ export class DeviceLogin {
           message: 'Device login timed out',
         },
       ),
-      this.notify(NotificationReason.LOGIN, url),
+      this.notify('LOGIN', url),
     ]);
     pendingRedirects.delete(reqId);
     return authTokenResponse;

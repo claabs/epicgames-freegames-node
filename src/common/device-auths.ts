@@ -2,8 +2,8 @@ import path from 'node:path';
 
 import fsx from 'fs-extra/esm';
 
-import { CONFIG_DIR } from './config/index.js';
-import logger from './logger.js';
+import { CONFIG_DIR } from './config/index.ts';
+import logger from './logger.ts';
 
 export interface AuthTokenResponse {
   access_token: string;

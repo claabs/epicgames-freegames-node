@@ -1,31 +1,9 @@
 ########
 # BASE
 ########
-FROM node:26-bookworm-slim AS base
+FROM node:26-bookworm-slim
 
 WORKDIR /usr/app
-
-
-########
-# BUILD
-########
-FROM base AS build
-
-# Copy all source files
-COPY package*.json tsconfig.json ./
-
-# Add dev deps
-RUN npm ci
-
-# Copy source code
-COPY src src
-
-RUN npm run build
-
-########
-# DEPLOY
-########
-FROM base AS deploy
 
 ARG TARGETARCH
 
@@ -60,8 +38,8 @@ RUN npm ci --omit=dev\
 # Declare user early so chrome is installed to user dir
 USER node
 
-# Steal compiled code from build image
-COPY --from=build /usr/app/dist ./dist
+# Add source code
+COPY src ./src
 
 COPY entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 

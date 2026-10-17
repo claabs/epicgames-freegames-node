@@ -1,13 +1,13 @@
 import nodemailer from 'nodemailer';
 
-import { NotifierService } from './notifier-service.js';
-import logger from '../common/logger.js';
+import { NotifierService } from './notifier-service.ts';
+import logger from '../common/logger.ts';
 
 import type { Transporter } from 'nodemailer';
 import type z from 'zod';
 
-import type { emailConfigSchema } from '../common/config/index.js';
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type { emailConfigSchema } from '../common/config/index.ts';
+import type { NotificationReason } from '../notify.ts';
 
 export class EmailNotifier extends NotifierService {
   private readonly emailTransporter: Transporter;

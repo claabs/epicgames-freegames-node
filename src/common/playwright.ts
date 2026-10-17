@@ -9,8 +9,8 @@ import pTimeout, { TimeoutError } from 'p-timeout';
 import { chromium } from 'patchright';
 import psList from 'ps-list';
 
-import { getCommitSha } from '../version.js';
-import { config } from './config/index.js';
+import { getCommitSha } from '../version.ts';
+import { config } from './config/index.ts';
 
 import type { BrowserContext, BrowserType, Page } from 'patchright';
 import type { Logger } from 'pino';

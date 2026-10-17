@@ -1,7 +1,7 @@
 import { outputJSON } from 'fs-extra/esm';
 
-import { config } from './common/config/index.js';
-import logger from './common/logger.js';
+import { config } from './common/config/index.ts';
+import logger from './common/logger.ts';
 
 try {
   const { runOnStartup, runOnce, cronSchedule, timezone } = config;

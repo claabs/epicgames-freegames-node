@@ -1,19 +1,18 @@
 /* eslint-disable n/no-process-exit */
 import PQueue from 'p-queue';
 
-import { config } from './common/config/index.js';
-import logger from './common/logger.js';
-import { killBrowserProcesses, safeLaunchBrowser } from './common/playwright.js';
-import { createServer } from './common/server.js';
-import { DeviceLogin } from './device-login.js';
-import { EulaManager } from './eula-manager.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
-import { sendNotification, testNotifiers } from './notify.js';
-import PuppetFreeGames from './puppet/free-games.js';
-import { generateCheckoutUrl } from './purchase.js';
-import { checkForUpdate, logVersionOnError } from './version.js';
+import { config } from './common/config/index.ts';
+import logger from './common/logger.ts';
+import { killBrowserProcesses, safeLaunchBrowser } from './common/playwright.ts';
+import { createServer } from './common/server.ts';
+import { DeviceLogin } from './device-login.ts';
+import { EulaManager } from './eula-manager.ts';
+import { sendNotification, testNotifiers } from './notify.ts';
+import PuppetFreeGames from './puppet/free-games.ts';
+import { generateCheckoutUrl } from './purchase.ts';
+import { checkForUpdate, logVersionOnError } from './version.ts';
 
-import type { AccountConfig } from './common/config/index.js';
+import type { AccountConfig } from './common/config/index.ts';
 
 export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
@@ -67,7 +66,7 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
       L.debug(`Sending checkout link for ${offers.length} offer(s)`);
       const checkoutUrl = generateCheckoutUrl(offers);
       L.info({ url: checkoutUrl }, 'Dispatching checkout notification');
-      await sendNotification(account.email, NotificationReason.PURCHASE, checkoutUrl);
+      await sendNotification(account.email, 'PURCHASE', checkoutUrl);
     } else {
       L.info('No free games available');
     }

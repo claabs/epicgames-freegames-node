@@ -1,9 +1,9 @@
 import { promises as fsPromises } from 'node:fs';
 
-import axios from './axios-base.js';
-import { config } from './common/config/index.js';
+import axios from './axios-base.ts';
+import { config } from './common/config/index.ts';
 // eslint-disable-next-line import-x/no-rename-default
-import L from './common/logger.js';
+import L from './common/logger.ts';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
 let { COMMIT_SHA, BRANCH } = process.env;

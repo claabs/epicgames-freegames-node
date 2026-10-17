@@ -16,8 +16,8 @@
     "[json]": {
         "files.insertFinalNewline": true
     },
-    "typescript.tsdk": "node_modules/typescript/lib",
     "eslint.workingDirectories": [
         "."
-    ]
+    ],
+    "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

@@ -51,7 +51,7 @@ const typescriptConfig = [
 ];
 
 export default tseslint.config(
-  globalIgnores(['**/dist', '**/node_modules', '!**/.*.*js', 'docs/**/*']),
+  globalIgnores(['**/dist', '**/node_modules', '!**/.*.*js', 'docs/**/*', 'config/**/*']),
   // Javascript Config
   ...jsConfig,
   // Node Config
@@ -63,6 +63,8 @@ export default tseslint.config(
   {
     rules: {
       'import-x/prefer-default-export': 0,
+      'import-x/extensions': ['error', 'ignorePackages', { ts: 'always' }], // Node native TS support
+      'import-x/no-useless-path-segments': ['error', { noUselessIndex: false }],
     },
   },
 );

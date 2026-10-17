@@ -1,14 +1,13 @@
-import axios from './axios-base.js';
-import { config } from './common/config/setup.js';
-import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.js';
-import logger from './common/logger.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
-import { sendNotification } from './notify.js';
-import { generateLoginRedirect } from './purchase.js';
+import axios from './axios-base.ts';
+import { config } from './common/config/setup.ts';
+import { EULA_AGREEMENTS_ENDPOINT, REQUIRED_EULAS, STORE_HOMEPAGE } from './common/constants.ts';
+import logger from './common/logger.ts';
+import { sendNotification } from './notify.ts';
+import { generateLoginRedirect } from './purchase.ts';
 
 import type { Logger } from 'pino';
 
-import type { AuthTokenResponse } from './common/device-auths.js';
+import type { AuthTokenResponse } from './common/device-auths.ts';
 
 export interface EulaVersion {
   key: string;
@@ -64,7 +63,7 @@ export class EulaManager {
       if (config.notifyEula) {
         this.L.error('User needs to log in an accept an updated EULA');
         const actionUrl = generateLoginRedirect(STORE_HOMEPAGE);
-        await sendNotification(this.email, NotificationReason.PRIVACY_POLICY_ACCEPTANCE, actionUrl);
+        await sendNotification(this.email, 'PRIVACY_POLICY_ACCEPTANCE', actionUrl);
         throw new Error(`${this.email} needs to accept an updated EULA`);
       } else {
         this.L.info({ pendingEulas }, 'Accepting EULAs');

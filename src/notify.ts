@@ -1,8 +1,8 @@
-import { config } from './common/config/index.js';
+import { config } from './common/config/index.ts';
 // eslint-disable-next-line import-x/no-rename-default
-import L from './common/logger.js';
+import L from './common/logger.ts';
 // eslint-disable-next-line import-x/no-cycle
-import { DeviceLogin } from './device-login.js';
+import { DeviceLogin } from './device-login.ts';
 import {
   AppriseNotifier,
   BarkNotifier,
@@ -16,9 +16,9 @@ import {
   SlackNotifier,
   TelegramNotifier,
   WebhookNotifier,
-} from './notifiers/index.js';
+} from './notifiers/index.ts';
 
-import type { NotificationReason } from './interfaces/notification-reason.js';
+export type NotificationReason = 'LOGIN' | 'PURCHASE' | 'TEST' | 'PRIVACY_POLICY_ACCEPTANCE';
 
 export async function sendNotification(
   accountEmail: string,
