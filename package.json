@@ -16,6 +16,7 @@
     "docker:run-legacy": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
     "docker:buildx": "docker buildx build --platform=linux/arm64 . -t charlocharlie/epicgames-freegames-node:latest --target deploy",
     "docs": "vite-node scripts/generate-json-schema.ts",
+    "seccomp": "vite-node scripts/generate-seccomp-profile.ts",
     "prepare": "husky || true"
   },
   "dependencies": {

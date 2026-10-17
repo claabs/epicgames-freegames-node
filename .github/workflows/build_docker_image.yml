@@ -10,16 +10,13 @@ on:
   workflow_dispatch:
   pull_request:
     branches:
-      - "master"
+      - master
 
 jobs:
   build_multi_arch_image:
     name: Build multi-arch Docker image.
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v6
@@ -27,7 +24,6 @@ jobs:
           images: |
             charlocharlie/epicgames-freegames,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
             ghcr.io/claabs/epicgames-freegames-node,enable=true
-
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=debian,enable={{is_default_branch}}

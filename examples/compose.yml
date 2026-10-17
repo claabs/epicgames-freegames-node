@@ -5,9 +5,10 @@ services:
       - 3000:3000
     volumes:
       - /your/host/dir/config:/usr/app/config
-    resources:
-      limits:
-        memory: 2G
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     # https://playwright.dev/docs/docker#recommended-docker-configuration
     init: true
     ipc: host
