@@ -2,13 +2,15 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { GotifyConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { gotifyConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class GotifyNotifier extends NotifierService {
-  private config: GotifyConfig;
+  private config: z.infer<typeof gotifyConfigSchema>;
 
-  constructor(config: GotifyConfig) {
+  constructor(config: z.infer<typeof gotifyConfigSchema>) {
     super();
     this.config = config;
   }

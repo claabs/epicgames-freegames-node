@@ -10,7 +10,7 @@ Supports multiple accounts, login sessions, and scheduled runs.
 
 The tool can be configured with a combination of JSON and environment variables. The config file supports [JSON5](https://json5.org/) syntax (comments, trailing commas, etc). For each property, the JSON config value takes priority over the respective environment variable value.
 
-For details on each option, its defaults, and environment variable key, see the [config documentation site](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html).
+For details on each option, its defaults, and environment variable key, see the [config documentation site](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
 
 The config file is stored in the mounted `/usr/app/config` volume and can be named `config.json` or `config.json5`.
 
@@ -18,9 +18,7 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
 
 ```jsonc
 {
-  "runOnStartup": true,
   "cronSchedule": "0 0,6,12,18 * * *",
-  "logLevel": "info",
   "webPortalConfig": {
     "baseUrl": "https://epic.example.com",
   },
@@ -48,17 +46,11 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
     {
       "type": "discord",
       "webhookUrl": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
-      // Optional list of users or roles to mention
-      "mentionedUsers": ["914360712086843432"],
-      "mentionedRoles": ["734548250895319070"],
     },
     {
       "type": "telegram",
-      // Optional Custom TELEGRAM server URL
-      "apiUrl": "https://api.telegram.org",
       "token": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
       "chatId": "-987654321",
-      "topic": 5,
     },
     {
       "type": "apprise",
@@ -83,14 +75,7 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
     },
     {
       "type": "bark",
-      // your bark key
       "key": "xxxxxxxxxxxxxxxxxxxxxx",
-      // bark title, optional, default: 'epicgames-freegames'
-      "title": "epicgames-freegames",
-      // bark group, optional, default: 'epicgames-freegames'
-      "group": "epicgames-freegames",
-      // bark private service address, optional, default: 'https://api.day.app'
-      "apiUrl": "https://api.day.app"
     },
     {
         "type": "ntfy",
@@ -100,12 +85,7 @@ The config file is stored in the mounted `/usr/app/config` volume and can be nam
     },
     {
       "type":"webhook",
-      //url of your webhook server
       "url":"https://webhook.site/my_uuid",
-      //Optional headers
-      "headers": {
-         "Authentication": "Bearer 123456"
-      }
     },
   ],
 }
@@ -139,7 +119,7 @@ in your `config.json`.
 
 ### Notifications
 
-Each notification method has unique setup instructions. Read its documentation ([notification methods](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#notifiers)) on the config site for exact details and instructions. The [example config](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html) may also help as an example.
+Each notification method has unique setup instructions. See the documented [notifier configs](https://json-schema.app/view/%2523%252Fdefinitions%252FgenericNotifier?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json) for details,instructions, and examples.
 
 ### Testing notification and web server
 
@@ -149,7 +129,7 @@ Since user actions may not always be required, the notification methods and web 
   "testNotifiers": true,
 ```
 
-to the root of your `config.json`. For more details check out the [config docs](https://claabs.github.io/epicgames-freegames-node/classes/AppConfig.html#testNotifiers).
+to the root of your `config.json`. For more details check out the [config docs](https://json-schema.app/view/%2523?url=https%3A%2F%2Fraw.githubusercontent.com%2Fclaabs%2Fepicgames-freegames-node%2Frefs%2Fheads%2Fmaster%2Fdocs%2Fapp-config.schema.json).
 Note: to optimize for standby memory usage, the web server does not run when the process is not running. The web server will only be available during a scheduled run.
 
 ### Docker Configuration
@@ -200,23 +180,6 @@ Without JSON config, you can only configure one account.
 
 `$ docker run -d -e TZ=America/Chicago -e EMAIL=example@gmail.com -e RUN_ON_STARTUP=true -e BASE_URL=https://example.com -e SMTP_HOST=smtp.gmail.com -e SMTP_PORT=587 -e EMAIL_SENDER_ADDRESS=hello@gmail.com -e EMAIL_SENDER_NAME="Epic Games Captchas" -e EMAIL_RECIPIENT_ADDRESS=hello@gmail.com -e SMTP_SECURE=true -e SMTP_USERNAME=hello@gmail.com -e SMTP_PASSWORD=abc123 -v /my/host/dir/:/usr/app/config:rw -p 3000:3000 -m 2g ghcr.io/claabs/epicgames-freegames-node:latest`
 
-### Cookie Import
-
-If you're experiencing issues logging in with device code auth, you can import cookies for a temporary session.
-
-1. Setup the container per the below instructions
-1. In your web browser, log in to the Epic Games Store with "Remember me" checked.
-1. Install the [EditThisCookie](http://www.editthiscookie.com/) browser extension.
-1. While viewing the Epic Games Store page, open the EditThisCookie extension window, change the URL to `https://www.epicgames.com/id`, and click the export button:
-![EditThisCookie export button](https://github.com/claabs/epicgames-freegames-node/blob/master/img/edit-this-cookie.png?raw=true)
-1. In your mounted `./config` folder, create `<email_address>-cookies.json` (e.g. `me@example.com-cookies.json`), and paste in your cookies.
-1. Start the container and the cookies will automatically be converted to a new format.
-
-#### Cookie Import Notes
-
-* If you click "Log Out" on the browser session you copied the cookies from, the container may break.
-* If you have the container scheduled regularly, it should automatically refresh the cookies and keep you logged in for some time.
-
 ## Running without Docker
 
 If for some reason you don't want to use Docker to run this tool you can run it from source by cloning this repo and installing Node.js.
@@ -226,14 +189,16 @@ If for some reason you don't want to use Docker to run this tool you can run it 
     * Or download and unpack ZIP archive: [epicgames-freegames-node](https://github.com/claabs/epicgames-freegames-node/archive/master.zip)
 1. Create `config` folder in the cloned/unpacked directory
 1. Create [JSON configuration](#json-configuration)
-1. [Install Node.js 22](https://nodejs.org/) or higher
+1. [Install Node.js 26](https://nodejs.org/) or higher
 1. Install Node.js dependencies
     * Start terminal and navigate to cloned/unpacked directory
     * Run `npm i`
+    * Run `npx playwright install chrome --with-deps`
 1. Start application: `npm run start`
 1. To update when using Git:
     * `git pull`
     * `npm i`
+    * `npx playwright install chrome --with-deps`
 
 ## Proxy configuration
 
@@ -245,23 +210,9 @@ The application forwards the selected proxy value unchanged to Chrome with `--pr
 
 ## Miscellaneous
 
-### v4 to v5 Migration
+### v5 to v6 Migration
 
-In v5, several options have been added or removed. The added/removed options should not affect existing v4 configs, but may need to change your `config.json` for a stable solution.
-
-#### Changed
-
-* `cronSchedule`: The default was changed to every six hours. You should change your cron schedule to run more often than every 8 hours, as the device code auth refresh token expires after 8 hours.
-
-#### Removed
-
-* `account.password`: login credentials are no longer used
-* `account.totp`: login credentials are no longer used
-* `noHumanErrorHelp`: purchase is no longer automated
-* `hcaptchaAccessibilityUrl`: was deprecated in v4
-* `email`: was deprecated in v4, use `notifiers` with `"type": "email"`
-* `baseUrl`: was deprecated in v4, use `webPortalConfig.baseUrl`
-* `onlyWeekly`: was deprecated in v4, use `searchStrategy`
+TODO
 
 ### Thanks
 

@@ -2,16 +2,14 @@
 import PQueue from 'p-queue';
 
 import { config } from './common/config/index.js';
-import { convertImportCookies } from './common/cookie.js';
 import logger from './common/logger.js';
-import { cleanupTempFiles, killBrowserProcesses, safeLaunchBrowser } from './common/puppeteer.js';
+import { killBrowserProcesses, safeLaunchBrowser } from './common/playwright.js';
 import { createServer } from './common/server.js';
 import { DeviceLogin } from './device-login.js';
 import { EulaManager } from './eula-manager.js';
 import { NotificationReason } from './interfaces/notification-reason.js';
 import { sendNotification, testNotifiers } from './notify.js';
 import PuppetFreeGames from './puppet/free-games.js';
-import PuppetLogin from './puppet/login.js';
 import { generateCheckoutUrl } from './purchase.js';
 import { checkForUpdate, logVersionOnError } from './version.js';
 
@@ -21,40 +19,43 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
   const L = logger.child({ user: account.email });
   L.info(`Checking free games for ${account.email} `);
   try {
-    await convertImportCookies(account.email);
-    const browser = await safeLaunchBrowser(L);
-    const cookieLogin = new PuppetLogin({
-      email: account.email,
-      browser,
-    });
     const deviceLogin = new DeviceLogin({
       user: account.email,
     });
+
+    let deviceAuth = await deviceLogin.refreshDeviceAuth();
+    L.trace({ tokenExpiresAt: deviceAuth?.expires_at }, 'Device auth refresh result');
+
+    const browser = await safeLaunchBrowser(L, account.email);
+
     const freeGames = new PuppetFreeGames({
       email: account.email,
       browser,
     });
 
-    // Login
-    let usedDeviceAuth = false;
-    // attempt token refresh
-    let successfulLogin = await deviceLogin.refreshDeviceAuth();
-    L.trace({ successfulLogin }, 'Device auth refresh result');
-    usedDeviceAuth = successfulLogin;
-    if (!successfulLogin) {
-      successfulLogin = await cookieLogin.refreshCookieLogin();
-      L.trace({ successfulLogin }, 'Cookie auth refresh result');
-    }
-    if (!successfulLogin) {
-      // get new device auth
-      await deviceLogin.newDeviceAuthLogin();
-      usedDeviceAuth = true;
+    // validate browser EG1 cookie
+    let isCookieValid = await freeGames.checkCookie();
+
+    if (!isCookieValid && deviceAuth) {
+      // If invalid, set from refreshed device auth
+      await freeGames.setupCookies(deviceAuth);
+      isCookieValid = await freeGames.checkCookie();
     }
 
-    if (usedDeviceAuth) {
-      const eulaManager = new EulaManager(account.email);
-      await eulaManager.checkEulaStatus();
+    if (!isCookieValid) {
+      // fallback to new device login
+      deviceAuth = await deviceLogin.newDeviceAuthLogin();
+      await freeGames.setupCookies(deviceAuth);
+      isCookieValid = await freeGames.checkCookie();
     }
+
+    if (!isCookieValid) {
+      throw new Error('Could not generate authenticated browser session');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const eulaManager = new EulaManager(account.email, deviceAuth!);
+    await eulaManager.checkEulaStatus();
 
     // Get purchasable offers
     const offers = await freeGames.getAllFreeGames();
@@ -99,7 +100,6 @@ export async function main(): Promise<void> {
     await Promise.all(accountPromises);
     server.close();
     await killBrowserProcesses(logger);
-    await cleanupTempFiles(logger);
     logger.info('Exiting successfully');
     process.exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
@@ -111,6 +111,5 @@ try {
   logger.error(err);
   logVersionOnError();
   await killBrowserProcesses(logger);
-  await cleanupTempFiles(logger);
   process.exit(1);
 }

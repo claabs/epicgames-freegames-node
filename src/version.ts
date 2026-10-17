@@ -6,7 +6,6 @@ import { config } from './common/config/index.js';
 import L from './common/logger.js';
 
 const PROJECT_NAME = 'epicgames-freegames-node';
-const { DISTRO } = process.env;
 let { COMMIT_SHA, BRANCH } = process.env;
 try {
   COMMIT_SHA = (await fsPromises.readFile('./commit-sha.txt', { encoding: 'utf-8' })).trim();
@@ -20,7 +19,7 @@ try {
 }
 
 export async function checkForUpdate(): Promise<void> {
-  L.info({ COMMIT_SHA, BRANCH, DISTRO }, `Started ${PROJECT_NAME}`);
+  L.info({ COMMIT_SHA, BRANCH }, `Started ${PROJECT_NAME}`);
   if (!(COMMIT_SHA && BRANCH) || config.skipVersionCheck) {
     L.debug(
       { COMMIT_SHA, BRANCH, skipVersionCheck: config.skipVersionCheck },
@@ -54,7 +53,7 @@ export const getCommitSha = (): string | undefined => {
 };
 
 export function logVersionOnError(): void {
-  if (COMMIT_SHA || BRANCH || DISTRO) {
-    L.warn({ COMMIT_SHA, BRANCH, DISTRO }, 'Current version');
+  if (COMMIT_SHA || BRANCH) {
+    L.warn({ COMMIT_SHA, BRANCH }, 'Current version');
   }
 }

@@ -2,13 +2,15 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { AppriseConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { appriseConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 export class AppriseNotifier extends NotifierService {
-  private config: AppriseConfig;
+  private config: z.infer<typeof appriseConfigSchema>;
 
-  constructor(config: AppriseConfig) {
+  constructor(config: z.infer<typeof appriseConfigSchema>) {
     super();
 
     this.config = config;

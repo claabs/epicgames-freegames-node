@@ -2,14 +2,16 @@ import axios from '../axios-base.js';
 import { NotifierService } from './notifier-service.js';
 import logger from '../common/logger.js';
 
-import type { DiscordConfig } from '../common/config/index.js';
+import type z from 'zod';
+
+import type { discordConfigSchema } from '../common/config/index.js';
 import type { NotificationReason } from '../interfaces/notification-reason.js';
 
 // https://birdie0.github.io/discord-webhooks-guide/index.html
 export class DiscordNotifier extends NotifierService {
-  private config: DiscordConfig;
+  private config: z.infer<typeof discordConfigSchema>;
 
-  constructor(config: DiscordConfig) {
+  constructor(config: z.infer<typeof discordConfigSchema>) {
     super();
     this.config = config;
   }
