@@ -326,20 +326,25 @@ export const webhookConfigSchema = z
       'Sends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL',
   });
 
-export const notifierConfigSchema = z.discriminatedUnion('type', [
-  emailConfigSchema,
-  discordConfigSchema,
-  localConfigSchema,
-  telegramConfigSchema,
-  appriseConfigSchema,
-  pushoverConfigSchema,
-  gotifyConfigSchema,
-  slackConfigSchema,
-  homeAssistantConfigSchema,
-  barkConfigSchema,
-  ntfyConfigSchema,
-  webhookConfigSchema,
-]);
+export const notifierConfigSchema = z
+  .discriminatedUnion('type', [
+    emailConfigSchema,
+    discordConfigSchema,
+    localConfigSchema,
+    telegramConfigSchema,
+    appriseConfigSchema,
+    pushoverConfigSchema,
+    gotifyConfigSchema,
+    slackConfigSchema,
+    homeAssistantConfigSchema,
+    barkConfigSchema,
+    ntfyConfigSchema,
+    webhookConfigSchema,
+  ])
+  .meta({
+    title: 'Generic Notifier',
+    id: 'genericNotifier',
+  });
 
 export const webPortalConfigSchema = z
   .object({
