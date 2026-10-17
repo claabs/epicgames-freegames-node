@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     xauth \
     jq \
     tini \
+    wget \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
