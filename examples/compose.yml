@@ -4,7 +4,7 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - /mnt/pool/apps/epicgames-freegames:/usr/app/config
+      - /your/host/dir/config:/usr/app/config
     resources:
       limits:
         memory: 2G

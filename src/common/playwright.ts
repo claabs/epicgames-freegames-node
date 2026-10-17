@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import { access } from 'node:fs/promises';
 import path from 'node:path';
 
 import filenamify from 'filenamify';
@@ -102,7 +104,18 @@ export const safeNewPage = async (browser: BrowserContext, L: Logger): Promise<P
 export const safeLaunchBrowser = async (L: Logger, account: string): Promise<BrowserContext> => {
   L.debug('Launching a new browser');
   const userDir = path.join(config.usersDir, filenamify(account));
-  await ensureDir(userDir);
+
+  try {
+    await ensureDir(userDir);
+    await access(userDir, fs.constants.W_OK);
+  } catch (err) {
+    L.error(
+      err,
+      'This container no longer runs as root. Grant your config volume ownership to 1000:1000 and ensure it has write permissions. Ex: sudo chown -R 1000:1000 /your/host/dir/config',
+    );
+    throw err;
+  }
+
   await fsx.remove(path.join(userDir, 'SingletonCookie'));
   await fsx.remove(path.join(userDir, 'SingletonLock'));
   await fsx.remove(path.join(userDir, 'SingletonSocket'));
