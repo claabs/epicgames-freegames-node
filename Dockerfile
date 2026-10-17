@@ -9,27 +9,31 @@ ARG TARGETARCH
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev\ 
-    && apt-get update \
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
+
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update \
     && apt-get install -y --no-install-recommends \
     # App dependencies
     xvfb \
     xauth \
     jq \
     tini \
-    curl \
     ca-certificates \
+    # Install browser with deps
     && if [ "$TARGETARCH" = "amd64" ]; then \
     npx playwright install chrome --with-deps; \
     else \
     npx playwright install chromium --with-deps; \
     fi \
+    # Install supercronic
     && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
     && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
-    && curl -fsSLO "$SUPERCRONIC_URL" \
+    && wget -O "$SUPERCRONIC" "$SUPERCRONIC_URL" \
     && chmod +x "$SUPERCRONIC" \
     && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
-    && apt-get purge -y --auto-remove curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Add source code
