@@ -3,29 +3,32 @@
   "type": "object",
   "properties": {
     "cronSchedule": {
-      "description": "Cron string of when to run the process. *It is recommended to run every 6 hours, otherwise the refresh tokens will expire after 8 hours and a new login will be prompted every run.** If you want the check to occur immediately after the new free game is released, you can offset the cron schedule. For example in a timezone where the free games release at 11:00am: `0 5,11,17,23 * * *`",
-      "example": "0 5,11,17,23 * * *",
+      "description": "Cron string of when to run the process. *It is recommended to run every 6 hours, otherwise the refresh tokens will expire after 8 hours and a new login will be prompted every run.** If you want the check to occur immediately after the new free game is released, you can offset the cron schedule. For example in a timezone where the free games release at 11:00am: `0 5,11,17,23 * * *`. Env: CRON_SCHEDULE",
+      "examples": [
+        "0 5,11,17,23 * * *"
+      ],
       "default": "0 0,6,12,18 * * * (every six hours)",
-      "env": "CRON_SCHEDULE",
       "type": "string"
     },
     "blacklistedGames": {
-      "description": "A list of excluded game titles to skip during processing.",
-      "example": [
-        "Gigabash Demo",
-        "Another Blacklisted Game"
+      "description": "A list of excluded game titles to skip during processing. Env: BLACKLISTED_GAMES (comma separated)",
+      "examples": [
+        [
+          "Gigabash Demo",
+          "Another Blacklisted Game"
+        ]
       ],
-      "env": "BLACKLISTED_GAMES (comma separated)",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
     "searchStrategy": {
-      "description": "The search criteria for finding free games. \n\"weekly\": Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games. This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks. Generally is less stable than \"promotion\" due to a more complex lookup method.\n\"promotion\": Search the entire Epic Games site for any game with a 100% discount. This includes the \"weekly\" games, plus any uncommon non-weekly temporarily free games. Occasionally excludes the weekly promotion if it's a bundle.\n\"all\": Combines the results from \"weekly\" and \"promotion\". Continues if at least one of the APIs works.",
-      "example": "weekly",
+      "description": "The search criteria for finding free games. \n\"weekly\": Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games. This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks. Generally is less stable than \"promotion\" due to a more complex lookup method.\n\"promotion\": Search the entire Epic Games site for any game with a 100% discount. This includes the \"weekly\" games, plus any uncommon non-weekly temporarily free games. Occasionally excludes the weekly promotion if it's a bundle.\n\"all\": Combines the results from \"weekly\" and \"promotion\". Continues if at least one of the APIs works.\nEnv: SEARCH_STRATEGY",
+      "examples": [
+        "weekly"
+      ],
       "default": "all",
-      "env": "SEARCH_STRATEGY",
       "type": "string",
       "enum": [
         "weekly",
@@ -34,49 +37,55 @@
       ]
     },
     "runOnStartup": {
-      "description": "If true, the process will run on startup in addition to the scheduled time.",
-      "example": true,
+      "description": "If true, the process will run on startup in addition to the scheduled time. Env: RUN_ON_STARTUP",
+      "examples": [
+        true
+      ],
       "default": false,
-      "env": "RUN_ON_STARTUP",
       "type": "boolean"
     },
     "runOnce": {
-      "description": "If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown.",
-      "example": true,
+      "description": "If true, don't schedule runs. Use with RUN_ON_STARTUP to run once and shutdown. Env: RUN_ONCE",
+      "examples": [
+        true
+      ],
       "default": false,
-      "env": "RUN_ONCE",
       "type": "boolean"
     },
     "timezone": {
-      "description": "TZ name from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List",
-      "example": "America/Chicago",
+      "description": "TZ name from this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List Env: TZ",
+      "examples": [
+        "America/Chicago"
+      ],
       "default": "UTC",
-      "env": "TZ",
       "type": "string"
     },
     "intervalTime": {
-      "description": "The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured)",
-      "example": 30,
+      "description": "The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured). Env: INTERVAL_TIME",
+      "examples": [
+        30
+      ],
       "default": 60,
-      "env": "INTERVAL_TIME",
       "type": "integer",
       "minimum": 0,
       "maximum": 9007199254740991
     },
     "accountConcurrency": {
-      "description": "How many accounts can be processed at the same time",
-      "example": 1,
+      "description": "How many accounts can be processed at the same time. Env: ACCOUNT_CONCURRENCY",
+      "examples": [
+        1
+      ],
       "default": 3,
-      "env": "ACCOUNT_CONCURRENCY",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
     },
     "logLevel": {
-      "description": "Log level in lower case. Can be [silent, error, warn, info, debug, trace]",
-      "example": "debug",
+      "description": "Log level in lower case. Can be [silent, error, warn, info, debug, trace]. Env: LOG_LEVEL",
+      "examples": [
+        "debug"
+      ],
       "default": "info",
-      "env": "LOG_LEVEL",
       "type": "string",
       "enum": [
         "silent",
@@ -93,16 +102,17 @@
       "properties": {
         "baseUrl": {
           "default": "http://localhost:3000",
-          "description": "The URL base that will be returned when a device token login is required",
-          "example": "https://epic.example.com",
-          "env": "BASE_URL",
+          "description": "The URL base that will be returned when a device token login is required. Env: BASE_URL",
+          "examples": [
+            "https://epic.example.com"
+          ],
           "type": "string",
           "format": "uri"
         },
         "listenOpts": {
-          "description": "Node Net.listen options: https://nodejs.org/api/net.html#net_server_listen_options_callback",
+          "title": "Listen Options",
+          "description": "Node Net.listen options: https://nodejs.org/api/net.html#net_server_listen_options_callback. Env: SERVER_PORT (for `{port: SERVER_PORT}` only)",
           "default": "{ port: 3000 }",
-          "env": "SERVER_PORT (for `{port: SERVER_PORT}` only)",
           "type": "object",
           "properties": {
             "port": {
@@ -114,6 +124,7 @@
           "additionalProperties": {}
         },
         "serverOpts": {
+          "title": "Server Options",
           "description": "Node HTTPS.createServer options: https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener",
           "type": "object",
           "propertyNames": {
@@ -122,10 +133,11 @@
           "additionalProperties": {}
         },
         "localtunnel": {
-          "description": "If true, provide a remotely accessible web address via [localtunnel](https://localtunnel.me) without the need to port forward or reverse proxy",
-          "example": true,
+          "description": "If true, provide a remotely accessible web address via [localtunnel](https://localtunnel.me) without the need to port forward or reverse proxy. Env: LOCAL_TUNNEL",
+          "examples": [
+            true
+          ],
           "default": false,
-          "env": "LOCAL_TUNNEL",
           "type": "boolean"
         }
       },
@@ -133,7 +145,8 @@
         "baseUrl",
         "localtunnel"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "title": "Web Portal Config"
     },
     "accounts": {
       "minItems": 1,
@@ -142,9 +155,10 @@
         "type": "object",
         "properties": {
           "email": {
-            "description": "Epic Games login email",
-            "example": "example@gmail.com",
-            "env": "EMAIL",
+            "description": "Epic Games login email. Env: EMAIL",
+            "examples": [
+              "example@gmail.com"
+            ],
             "type": "string",
             "format": "email",
             "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
@@ -159,49 +173,58 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "email"
+                      "const": "email",
+                      "examples": [
+                        "email"
+                      ]
                     },
                     "smtpHost": {
                       "type": "string",
-                      "description": "The outgoing SMTP host name",
-                      "example": "smtp.gmail.com",
-                      "env": "SMTP_HOST"
+                      "description": "The outgoing SMTP host name. Env: SMTP_HOST",
+                      "examples": [
+                        "smtp.gmail.com"
+                      ]
                     },
                     "smtpPort": {
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 65535,
-                      "description": "The outgoing SMTP port (SSL or TLS, see secure)",
-                      "example": 587,
-                      "env": "SMTP_PORT"
+                      "description": "The outgoing SMTP port (SSL or TLS, see secure). Env: SMTP_PORT",
+                      "examples": [
+                        587
+                      ]
                     },
                     "emailSenderAddress": {
                       "type": "string",
                       "format": "email",
                       "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                      "description": "The sender of the email you will receive",
-                      "example": "hello@gmail.com",
-                      "env": "EMAIL_SENDER_ADDRESS"
+                      "description": "The sender of the email you will receive Env: EMAIL_SENDER_ADDRESS",
+                      "examples": [
+                        "hello@gmail.com"
+                      ]
                     },
                     "emailSenderName": {
                       "type": "string",
-                      "description": "The name of the email sender",
-                      "example": "Epic Games Free Games",
-                      "env": "EMAIL_SENDER_NAME"
+                      "description": "The name of the email sender. Env: EMAIL_SENDER_NAME",
+                      "examples": [
+                        "Epic Games Free Games"
+                      ]
                     },
                     "emailRecipientAddress": {
                       "type": "string",
                       "format": "email",
                       "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                      "description": "The recipient of the email",
-                      "example": "hello@gmail.com",
-                      "env": "EMAIL_RECIPIENT_ADDRESS"
+                      "description": "The recipient of the email. Env: EMAIL_RECIPIENT_ADDRESS",
+                      "examples": [
+                        "hello@gmail.com"
+                      ]
                     },
                     "secure": {
                       "default": false,
-                      "description": "true for SSL (port 465), false for TLS or unsecure",
-                      "example": true,
-                      "env": "SMTP_SECURE",
+                      "description": "true for SSL (port 465), false for TLS or unsecure. Env: SMTP_SECURE",
+                      "examples": [
+                        true
+                      ],
                       "type": "boolean"
                     },
                     "auth": {
@@ -209,15 +232,17 @@
                       "properties": {
                         "user": {
                           "type": "string",
-                          "description": "The SMTP username (if necessary)",
-                          "example": "hello@gmail.com",
-                          "env": "SMTP_USERNAME"
+                          "description": "The SMTP username (if necessary) Env: SMTP_USERNAME",
+                          "examples": [
+                            "hello@gmail.com"
+                          ]
                         },
                         "pass": {
                           "type": "string",
-                          "description": "The SMTP password (if necessary)",
-                          "example": "abc123",
-                          "env": "SMTP_PASSWORD"
+                          "description": "The SMTP password (if necessary) Env: SMTP_PASSWORD",
+                          "examples": [
+                            "abc123"
+                          ]
                         }
                       },
                       "required": [
@@ -225,6 +250,7 @@
                         "pass"
                       ],
                       "additionalProperties": false,
+                      "title": "Email Auth",
                       "description": "Auth settings for SMTP"
                     }
                   },
@@ -238,6 +264,7 @@
                     "secure"
                   ],
                   "additionalProperties": false,
+                  "title": "Email Notifier",
                   "description": "Configuration for sending notifications via email. [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server). If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)"
                 },
                 {
@@ -245,28 +272,34 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "discord"
+                      "const": "discord",
+                      "examples": [
+                        "discord"
+                      ]
                     },
                     "webhookUrl": {
                       "type": "string",
                       "format": "uri",
-                      "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
-                      "example": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
-                      "env": "DISCORD_WEBHOOK"
+                      "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks Env: DISCORD_WEBHOOK",
+                      "examples": [
+                        "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456"
+                      ]
                     },
                     "mentionedUsers": {
-                      "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-",
-                      "example": "[\"914360712086843432\", \"914360712086843433\"]",
-                      "env": "DISCORD_MENTIONED_USERS (comma separated)",
+                      "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID- Env: DISCORD_MENTIONED_USERS (comma separated)",
+                      "examples": [
+                        "[\"914360712086843432\", \"914360712086843433\"]"
+                      ],
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     },
                     "mentionedRoles": {
-                      "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\"",
-                      "example": "[\"734548250895319070\", \"734548250895319071\"]",
-                      "env": "DISCORD_MENTIONED_ROLES (comma separated)",
+                      "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\". Env: DISCORD_MENTIONED_ROLES (comma separated)",
+                      "examples": [
+                        "[\"734548250895319070\", \"734548250895319071\"]"
+                      ],
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -274,9 +307,10 @@
                     },
                     "showUrl": {
                       "default": false,
-                      "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL.",
-                      "example": true,
-                      "env": "DISCORD_SHOW_URL",
+                      "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL. Env: DISCORD_SHOW_URL",
+                      "examples": [
+                        true
+                      ],
                       "type": "boolean"
                     }
                   },
@@ -286,6 +320,7 @@
                     "showUrl"
                   ],
                   "additionalProperties": false,
+                  "title": "Discord Notifier",
                   "description": "Sends a message to a server text channel using a webhook"
                 },
                 {
@@ -293,13 +328,17 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "local"
+                      "const": "local",
+                      "examples": [
+                        "local"
+                      ]
                     }
                   },
                   "required": [
                     "type"
                   ],
                   "additionalProperties": false,
+                  "title": "Local Notifier",
                   "description": "For local development only. This just opens the notified URL in your default browser."
                 },
                 {
@@ -307,34 +346,39 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "telegram"
+                      "const": "telegram",
+                      "examples": [
+                        "telegram"
+                      ]
                     },
                     "token": {
                       "type": "string",
                       "pattern": "\\d+:[a-zA-Z0-9_-]{35}",
-                      "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot",
-                      "example": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
-                      "env": "TELEGRAM_TOKEN"
+                      "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot Env: TELEGRAM_TOKEN",
+                      "examples": [
+                        "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k"
+                      ]
                     },
                     "chatId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Unique identifier for the target chat or username of the target channel",
-                      "example": "-987654321",
-                      "env": "TELEGRAM_CHAT_ID"
+                      "description": "Unique identifier for the target chat or username of the target channel. Env: TELEGRAM_CHAT_ID",
+                      "examples": [
+                        "-987654321"
+                      ]
                     },
                     "topic": {
-                      "description": "Identifier for the topic/thread to send the messages",
-                      "example": 5,
-                      "env": "TELEGRAM_TOPIC",
+                      "description": "Identifier for the topic/thread to send the messages. Env: TELEGRAM_TOPIC",
+                      "examples": [
+                        5
+                      ],
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
                     "apiUrl": {
                       "default": "https://api.telegram.org",
-                      "description": "Custom Telegram server URL",
-                      "env": "TELEGRAM_API_URL",
+                      "description": "Custom Telegram server URL. Env: TELEGRAM_API_URL",
                       "type": "string",
                       "format": "uri"
                     }
@@ -346,6 +390,7 @@
                     "apiUrl"
                   ],
                   "additionalProperties": false,
+                  "title": "Telegram Notifier",
                   "description": "Sends a message to a group chat using a bot you must set up yourself"
                 },
                 {
@@ -353,19 +398,24 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "apprise"
+                      "const": "apprise",
+                      "examples": [
+                        "apprise"
+                      ]
                     },
                     "apiUrl": {
                       "type": "string",
                       "format": "uri",
-                      "description": "The base URL of your Apprise instance",
-                      "example": "http://localhost:8000",
-                      "env": "APPRISE_API"
+                      "description": "The base URL of your Apprise instance. Env: APPRISE_API",
+                      "examples": [
+                        "http://localhost:8000"
+                      ]
                     },
                     "urls": {
-                      "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution",
-                      "example": "mailto://user:pass@gmail.com",
-                      "env": "APPRISE_URLS",
+                      "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution Env: APPRISE_URLS",
+                      "examples": [
+                        "mailto://user:pass@gmail.com"
+                      ],
                       "type": "string"
                     }
                   },
@@ -374,6 +424,7 @@
                     "apiUrl"
                   ],
                   "additionalProperties": false,
+                  "title": "Apprise Notifier",
                   "description": "Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api). Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)."
                 },
                 {
@@ -381,18 +432,24 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "pushover"
+                      "const": "pushover",
+                      "examples": [
+                        "pushover"
+                      ]
                     },
                     "token": {
                       "type": "string",
-                      "description": "Guide: https://pushover.net/apps/build",
-                      "example": "a172fyyl9gw99p2xi16tq8hnib48p2",
-                      "env": "PUSHOVER_TOKEN"
+                      "description": "Guide: https://pushover.net/apps/build Env: PUSHOVER_TOKEN",
+                      "examples": [
+                        "a172fyyl9gw99p2xi16tq8hnib48p2"
+                      ]
                     },
                     "userKey": {
                       "type": "string",
-                      "example": "uvgidym7l5ggpwu2r8i1oy6diaapll",
-                      "env": "PUSHOVER_USER_ID"
+                      "description": "Env: PUSHOVER_USER_ID",
+                      "examples": [
+                        "uvgidym7l5ggpwu2r8i1oy6diaapll"
+                      ]
                     }
                   },
                   "required": [
@@ -401,6 +458,7 @@
                     "userKey"
                   ],
                   "additionalProperties": false,
+                  "title": "Pushover Notifier",
                   "description": "Sends a pushover message"
                 },
                 {
@@ -408,27 +466,33 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "gotify"
+                      "const": "gotify",
+                      "examples": [
+                        "gotify"
+                      ]
                     },
                     "apiUrl": {
                       "type": "string",
                       "format": "uri",
-                      "description": "The Gotify server host URL",
-                      "example": "http://gotify.net",
-                      "env": "GOTIFY_API_URL"
+                      "description": "The Gotify server host URL. Env: GOTIFY_API_URL",
+                      "examples": [
+                        "http://gotify.net"
+                      ]
                     },
                     "token": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "On the Gotify web UI, Apps > Create Application > reveal the token",
-                      "example": "SnL-wAvmfo_QT",
-                      "env": "GOTIFY_TOKEN"
+                      "description": "On the Gotify web UI, Apps > Create Application > reveal the token. Env: GOTIFY_TOKEN",
+                      "examples": [
+                        "SnL-wAvmfo_QT"
+                      ]
                     },
                     "priority": {
                       "default": 5,
-                      "description": "The priority level sent with the message.",
-                      "example": 7,
-                      "env": "GOTIFY_PRIORITY",
+                      "description": "The priority level sent with the message. Env: GOTIFY_PRIORITY",
+                      "examples": [
+                        7
+                      ],
                       "type": "integer",
                       "minimum": 0,
                       "maximum": 10
@@ -441,6 +505,7 @@
                     "priority"
                   ],
                   "additionalProperties": false,
+                  "title": "Gotify Notifier",
                   "description": "Sends a message to a self-hosted [Gotify](https://gotify.net/) server"
                 },
                 {
@@ -448,14 +513,18 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "slack"
+                      "const": "slack",
+                      "examples": [
+                        "slack"
+                      ]
                     },
                     "webhookUrl": {
                       "type": "string",
                       "format": "uri",
-                      "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks",
-                      "example": "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg",
-                      "env": "SLACK_WEBHOOK"
+                      "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks Env: SLACK_WEBHOOK",
+                      "examples": [
+                        "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg"
+                      ]
                     }
                   },
                   "required": [
@@ -463,6 +532,7 @@
                     "webhookUrl"
                   ],
                   "additionalProperties": false,
+                  "title": "Slack Notifier",
                   "description": "Sends a [slack](https://slack.com/) message using webhook"
                 },
                 {
@@ -470,26 +540,34 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "homeassistant"
+                      "const": "homeassistant",
+                      "examples": [
+                        "homeassistant"
+                      ]
                     },
                     "instance": {
                       "type": "string",
-                      "example": "https://homeassistant.example.com",
-                      "env": "HOMEASSISTANT_INSTANCE"
+                      "description": "Env: HOMEASSISTANT_INSTANCE",
+                      "examples": [
+                        "https://homeassistant.example.com"
+                      ]
                     },
                     "token": {
                       "type": "string",
-                      "env": "HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
+                      "description": "Env: HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
                     },
                     "notifyservice": {
                       "type": "string",
-                      "example": "mobile_app_smartphone_name",
-                      "env": "HOMEASSISTANT_NOTIFYSERVICE"
+                      "description": "Env: HOMEASSISTANT_NOTIFYSERVICE",
+                      "examples": [
+                        "mobile_app_smartphone_name"
+                      ]
                     },
                     "customData": {
-                      "description": "A key-value pair object to additionally pass into the service's data object",
-                      "example": "{ \"parse_mode\": \"html\" }",
-                      "env": "HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                      "description": "A key-value pair object to additionally pass into the service's data object. Env: HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                      "examples": [
+                        "{ \"parse_mode\": \"html\" }"
+                      ],
                       "type": "object",
                       "propertyNames": {
                         "type": "string"
@@ -510,6 +588,7 @@
                     "notifyservice"
                   ],
                   "additionalProperties": false,
+                  "title": "Home Assistant Notifier",
                   "description": "Sends a homeassistant notification"
                 },
                 {
@@ -517,29 +596,28 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "bark"
+                      "const": "bark",
+                      "examples": [
+                        "bark"
+                      ]
                     },
                     "key": {
                       "type": "string",
-                      "description": "Bark key",
-                      "env": "BARK_KEY"
+                      "description": "Bark key. Env: BARK_KEY"
                     },
                     "title": {
                       "default": "epicgames-freegames-node",
-                      "description": "Bark title",
-                      "env": "BARK_TITLE",
+                      "description": "Bark title. Env: BARK_TITLE",
                       "type": "string"
                     },
                     "group": {
                       "default": "epicgames-freegames-node",
-                      "description": "Bark group",
-                      "env": "BARK_GROUP",
+                      "description": "Bark group. Env: BARK_GROUP",
                       "type": "string"
                     },
                     "apiUrl": {
                       "default": "https://api.day.app",
-                      "description": "Custom Bark server URL",
-                      "env": "BARK_API_URL",
+                      "description": "Custom Bark server URL. Env: BARK_API_URL",
                       "type": "string",
                       "format": "uri"
                     }
@@ -552,6 +630,7 @@
                     "apiUrl"
                   ],
                   "additionalProperties": false,
+                  "title": "Bark Notifier",
                   "description": "Send a notification to the Bark iOS app. https://github.com/Finb/Bark"
                 },
                 {
@@ -559,26 +638,32 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "ntfy"
+                      "const": "ntfy",
+                      "examples": [
+                        "ntfy"
+                      ]
                     },
                     "webhookUrl": {
                       "type": "string",
                       "format": "uri",
-                      "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/",
-                      "example": "https://ntfy.sh/mytopic",
-                      "env": "NTFY_WEBHOOK"
+                      "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/ Env: NTFY_WEBHOOK",
+                      "examples": [
+                        "https://ntfy.sh/mytopic"
+                      ]
                     },
                     "priority": {
                       "type": "string",
-                      "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/",
-                      "example": "urgent",
-                      "env": "NTFY_PRIORITY"
+                      "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/ Env: NTFY_PRIORITY",
+                      "examples": [
+                        "urgent"
+                      ]
                     },
                     "token": {
                       "type": "string",
-                      "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens",
-                      "example": "tk_yourtoken",
-                      "env": "NTFY_TOKEN"
+                      "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens Env: NTFY_TOKEN",
+                      "examples": [
+                        "tk_yourtoken"
+                      ]
                     }
                   },
                   "required": [
@@ -588,6 +673,7 @@
                     "token"
                   ],
                   "additionalProperties": false,
+                  "title": "ntfy Notifier",
                   "description": "Sends a ntfy message using webhook"
                 },
                 {
@@ -595,18 +681,21 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "const": "webhook"
+                      "const": "webhook",
+                      "examples": [
+                        "webhook"
+                      ]
                     },
                     "url": {
                       "type": "string",
                       "format": "uri",
-                      "description": "Webhook URL",
-                      "env": "WEBHOOK_URL"
+                      "description": "Webhook URL. Env: WEBHOOK_URL"
                     },
                     "headers": {
-                      "description": "A key-value pair object to pass into the POST request headers",
-                      "example": "{ Authorization: \"Bearer ABCD\" }",
-                      "env": "WEBHOOK_HEADERS (stringified JSON)",
+                      "description": "A key-value pair object to pass into the POST request headers. Env: WEBHOOK_HEADERS (stringified JSON)",
+                      "examples": [
+                        "{ Authorization: \"Bearer ABCD\" }"
+                      ],
                       "type": "object",
                       "propertyNames": {
                         "type": "string"
@@ -621,7 +710,8 @@
                     "url"
                   ],
                   "additionalProperties": false,
-                  "description": "ends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
+                  "title": "Webhook Notifier",
+                  "description": "Sends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
                 }
               ]
             }
@@ -630,7 +720,8 @@
         "required": [
           "email"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "title": "Account Config"
       },
       "description": "A list of accounts to work with"
     },
@@ -644,49 +735,58 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "email"
+                "const": "email",
+                "examples": [
+                  "email"
+                ]
               },
               "smtpHost": {
                 "type": "string",
-                "description": "The outgoing SMTP host name",
-                "example": "smtp.gmail.com",
-                "env": "SMTP_HOST"
+                "description": "The outgoing SMTP host name. Env: SMTP_HOST",
+                "examples": [
+                  "smtp.gmail.com"
+                ]
               },
               "smtpPort": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 65535,
-                "description": "The outgoing SMTP port (SSL or TLS, see secure)",
-                "example": 587,
-                "env": "SMTP_PORT"
+                "description": "The outgoing SMTP port (SSL or TLS, see secure). Env: SMTP_PORT",
+                "examples": [
+                  587
+                ]
               },
               "emailSenderAddress": {
                 "type": "string",
                 "format": "email",
                 "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                "description": "The sender of the email you will receive",
-                "example": "hello@gmail.com",
-                "env": "EMAIL_SENDER_ADDRESS"
+                "description": "The sender of the email you will receive Env: EMAIL_SENDER_ADDRESS",
+                "examples": [
+                  "hello@gmail.com"
+                ]
               },
               "emailSenderName": {
                 "type": "string",
-                "description": "The name of the email sender",
-                "example": "Epic Games Free Games",
-                "env": "EMAIL_SENDER_NAME"
+                "description": "The name of the email sender. Env: EMAIL_SENDER_NAME",
+                "examples": [
+                  "Epic Games Free Games"
+                ]
               },
               "emailRecipientAddress": {
                 "type": "string",
                 "format": "email",
                 "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                "description": "The recipient of the email",
-                "example": "hello@gmail.com",
-                "env": "EMAIL_RECIPIENT_ADDRESS"
+                "description": "The recipient of the email. Env: EMAIL_RECIPIENT_ADDRESS",
+                "examples": [
+                  "hello@gmail.com"
+                ]
               },
               "secure": {
                 "default": false,
-                "description": "true for SSL (port 465), false for TLS or unsecure",
-                "example": true,
-                "env": "SMTP_SECURE",
+                "description": "true for SSL (port 465), false for TLS or unsecure. Env: SMTP_SECURE",
+                "examples": [
+                  true
+                ],
                 "type": "boolean"
               },
               "auth": {
@@ -694,15 +794,17 @@
                 "properties": {
                   "user": {
                     "type": "string",
-                    "description": "The SMTP username (if necessary)",
-                    "example": "hello@gmail.com",
-                    "env": "SMTP_USERNAME"
+                    "description": "The SMTP username (if necessary) Env: SMTP_USERNAME",
+                    "examples": [
+                      "hello@gmail.com"
+                    ]
                   },
                   "pass": {
                     "type": "string",
-                    "description": "The SMTP password (if necessary)",
-                    "example": "abc123",
-                    "env": "SMTP_PASSWORD"
+                    "description": "The SMTP password (if necessary) Env: SMTP_PASSWORD",
+                    "examples": [
+                      "abc123"
+                    ]
                   }
                 },
                 "required": [
@@ -710,6 +812,7 @@
                   "pass"
                 ],
                 "additionalProperties": false,
+                "title": "Email Auth",
                 "description": "Auth settings for SMTP"
               }
             },
@@ -723,6 +826,7 @@
               "secure"
             ],
             "additionalProperties": false,
+            "title": "Email Notifier",
             "description": "Configuration for sending notifications via email. [Example Gmail settings](https://www.siteground.com/kb/google_free_smtp_server). If you have 2FA setup for your Google account, you'll need to create an [app password](https://support.google.com/mail/answer/185833)"
           },
           {
@@ -730,28 +834,34 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "discord"
+                "const": "discord",
+                "examples": [
+                  "discord"
+                ]
               },
               "webhookUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks",
-                "example": "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456",
-                "env": "DISCORD_WEBHOOK"
+                "description": "Discord channel webhook URL. Guide: https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks Env: DISCORD_WEBHOOK",
+                "examples": [
+                  "https://discord.com/api/webhooks/123456789123456789/A-abcdefghijklmn-abcdefghijklmnopqrst12345678-abcdefghijklmnop123456"
+                ]
               },
               "mentionedUsers": {
-                "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-",
-                "example": "[\"914360712086843432\", \"914360712086843433\"]",
-                "env": "DISCORD_MENTIONED_USERS (comma separated)",
+                "description": "A list of Discord user IDs to ping when posting the message. How to get a user ID: https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID- Env: DISCORD_MENTIONED_USERS (comma separated)",
+                "examples": [
+                  "[\"914360712086843432\", \"914360712086843433\"]"
+                ],
                 "type": "array",
                 "items": {
                   "type": "string"
                 }
               },
               "mentionedRoles": {
-                "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\"",
-                "example": "[\"734548250895319070\", \"734548250895319071\"]",
-                "env": "DISCORD_MENTIONED_ROLES (comma separated)",
+                "description": "A list of Discord role IDs to ping when posting the message. To get a role ID: enable developer mode > right click a role > \"Copy ID\". Env: DISCORD_MENTIONED_ROLES (comma separated)",
+                "examples": [
+                  "[\"734548250895319070\", \"734548250895319071\"]"
+                ],
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -759,9 +869,10 @@
               },
               "showUrl": {
                 "default": false,
-                "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL.",
-                "example": true,
-                "env": "DISCORD_SHOW_URL",
+                "description": "If true, the Discord message will contain the full URL in the message text. Helpful if you need to copy-paste the URL. Env: DISCORD_SHOW_URL",
+                "examples": [
+                  true
+                ],
                 "type": "boolean"
               }
             },
@@ -771,6 +882,7 @@
               "showUrl"
             ],
             "additionalProperties": false,
+            "title": "Discord Notifier",
             "description": "Sends a message to a server text channel using a webhook"
           },
           {
@@ -778,13 +890,17 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "local"
+                "const": "local",
+                "examples": [
+                  "local"
+                ]
               }
             },
             "required": [
               "type"
             ],
             "additionalProperties": false,
+            "title": "Local Notifier",
             "description": "For local development only. This just opens the notified URL in your default browser."
           },
           {
@@ -792,34 +908,39 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "telegram"
+                "const": "telegram",
+                "examples": [
+                  "telegram"
+                ]
               },
               "token": {
                 "type": "string",
                 "pattern": "\\d+:[a-zA-Z0-9_-]{35}",
-                "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot",
-                "example": "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k",
-                "env": "TELEGRAM_TOKEN"
+                "description": "Telegram bot token obtained here: https://core.telegram.org/bots#3-how-do-i-create-a-bot Env: TELEGRAM_TOKEN",
+                "examples": [
+                  "644739147:AAGMPo-Jz3mKRnHRTnrPEDi7jUF1vqNOD5k"
+                ]
               },
               "chatId": {
                 "type": "string",
                 "minLength": 1,
-                "description": "Unique identifier for the target chat or username of the target channel",
-                "example": "-987654321",
-                "env": "TELEGRAM_CHAT_ID"
+                "description": "Unique identifier for the target chat or username of the target channel. Env: TELEGRAM_CHAT_ID",
+                "examples": [
+                  "-987654321"
+                ]
               },
               "topic": {
-                "description": "Identifier for the topic/thread to send the messages",
-                "example": 5,
-                "env": "TELEGRAM_TOPIC",
+                "description": "Identifier for the topic/thread to send the messages. Env: TELEGRAM_TOPIC",
+                "examples": [
+                  5
+                ],
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
               },
               "apiUrl": {
                 "default": "https://api.telegram.org",
-                "description": "Custom Telegram server URL",
-                "env": "TELEGRAM_API_URL",
+                "description": "Custom Telegram server URL. Env: TELEGRAM_API_URL",
                 "type": "string",
                 "format": "uri"
               }
@@ -831,6 +952,7 @@
               "apiUrl"
             ],
             "additionalProperties": false,
+            "title": "Telegram Notifier",
             "description": "Sends a message to a group chat using a bot you must set up yourself"
           },
           {
@@ -838,19 +960,24 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "apprise"
+                "const": "apprise",
+                "examples": [
+                  "apprise"
+                ]
               },
               "apiUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "The base URL of your Apprise instance",
-                "example": "http://localhost:8000",
-                "env": "APPRISE_API"
+                "description": "The base URL of your Apprise instance. Env: APPRISE_API",
+                "examples": [
+                  "http://localhost:8000"
+                ]
               },
               "urls": {
-                "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution",
-                "example": "mailto://user:pass@gmail.com",
-                "env": "APPRISE_URLS",
+                "description": "One or more URLs identifying where the notification should be sent to. If this field isn't specified then it automatically assumes the settings.APPRISE_STATELESS_URLS in your Apprise instance. More details: https://github.com/caronc/apprise-api#stateless-solution Env: APPRISE_URLS",
+                "examples": [
+                  "mailto://user:pass@gmail.com"
+                ],
                 "type": "string"
               }
             },
@@ -859,6 +986,7 @@
               "apiUrl"
             ],
             "additionalProperties": false,
+            "title": "Apprise Notifier",
             "description": "Sends a notification to many services via [Apprise API](https://github.com/caronc/apprise-api). Supports 70+ different [notification services](https://github.com/caronc/apprise/wiki#notification-services)."
           },
           {
@@ -866,18 +994,24 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "pushover"
+                "const": "pushover",
+                "examples": [
+                  "pushover"
+                ]
               },
               "token": {
                 "type": "string",
-                "description": "Guide: https://pushover.net/apps/build",
-                "example": "a172fyyl9gw99p2xi16tq8hnib48p2",
-                "env": "PUSHOVER_TOKEN"
+                "description": "Guide: https://pushover.net/apps/build Env: PUSHOVER_TOKEN",
+                "examples": [
+                  "a172fyyl9gw99p2xi16tq8hnib48p2"
+                ]
               },
               "userKey": {
                 "type": "string",
-                "example": "uvgidym7l5ggpwu2r8i1oy6diaapll",
-                "env": "PUSHOVER_USER_ID"
+                "description": "Env: PUSHOVER_USER_ID",
+                "examples": [
+                  "uvgidym7l5ggpwu2r8i1oy6diaapll"
+                ]
               }
             },
             "required": [
@@ -886,6 +1020,7 @@
               "userKey"
             ],
             "additionalProperties": false,
+            "title": "Pushover Notifier",
             "description": "Sends a pushover message"
           },
           {
@@ -893,27 +1028,33 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "gotify"
+                "const": "gotify",
+                "examples": [
+                  "gotify"
+                ]
               },
               "apiUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "The Gotify server host URL",
-                "example": "http://gotify.net",
-                "env": "GOTIFY_API_URL"
+                "description": "The Gotify server host URL. Env: GOTIFY_API_URL",
+                "examples": [
+                  "http://gotify.net"
+                ]
               },
               "token": {
                 "type": "string",
                 "minLength": 1,
-                "description": "On the Gotify web UI, Apps > Create Application > reveal the token",
-                "example": "SnL-wAvmfo_QT",
-                "env": "GOTIFY_TOKEN"
+                "description": "On the Gotify web UI, Apps > Create Application > reveal the token. Env: GOTIFY_TOKEN",
+                "examples": [
+                  "SnL-wAvmfo_QT"
+                ]
               },
               "priority": {
                 "default": 5,
-                "description": "The priority level sent with the message.",
-                "example": 7,
-                "env": "GOTIFY_PRIORITY",
+                "description": "The priority level sent with the message. Env: GOTIFY_PRIORITY",
+                "examples": [
+                  7
+                ],
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 10
@@ -926,6 +1067,7 @@
               "priority"
             ],
             "additionalProperties": false,
+            "title": "Gotify Notifier",
             "description": "Sends a message to a self-hosted [Gotify](https://gotify.net/) server"
           },
           {
@@ -933,14 +1075,18 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "slack"
+                "const": "slack",
+                "examples": [
+                  "slack"
+                ]
               },
               "webhookUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks",
-                "example": "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg",
-                "env": "SLACK_WEBHOOK"
+                "description": "slack channel webhook URL. Guide: https://api.slack.com/messaging/webhooks Env: SLACK_WEBHOOK",
+                "examples": [
+                  "https://hooks.slack.com/services/T22CE80ABCD/CE3AWABCDEFG/F8jdewBb4fmDDx6fV0abcdefg"
+                ]
               }
             },
             "required": [
@@ -948,6 +1094,7 @@
               "webhookUrl"
             ],
             "additionalProperties": false,
+            "title": "Slack Notifier",
             "description": "Sends a [slack](https://slack.com/) message using webhook"
           },
           {
@@ -955,26 +1102,34 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "homeassistant"
+                "const": "homeassistant",
+                "examples": [
+                  "homeassistant"
+                ]
               },
               "instance": {
                 "type": "string",
-                "example": "https://homeassistant.example.com",
-                "env": "HOMEASSISTANT_INSTANCE"
+                "description": "Env: HOMEASSISTANT_INSTANCE",
+                "examples": [
+                  "https://homeassistant.example.com"
+                ]
               },
               "token": {
                 "type": "string",
-                "env": "HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
+                "description": "Env: HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN"
               },
               "notifyservice": {
                 "type": "string",
-                "example": "mobile_app_smartphone_name",
-                "env": "HOMEASSISTANT_NOTIFYSERVICE"
+                "description": "Env: HOMEASSISTANT_NOTIFYSERVICE",
+                "examples": [
+                  "mobile_app_smartphone_name"
+                ]
               },
               "customData": {
-                "description": "A key-value pair object to additionally pass into the service's data object",
-                "example": "{ \"parse_mode\": \"html\" }",
-                "env": "HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                "description": "A key-value pair object to additionally pass into the service's data object. Env: HOMEASSISTANT_CUSTOM_DATA (stringified JSON)",
+                "examples": [
+                  "{ \"parse_mode\": \"html\" }"
+                ],
                 "type": "object",
                 "propertyNames": {
                   "type": "string"
@@ -995,6 +1150,7 @@
               "notifyservice"
             ],
             "additionalProperties": false,
+            "title": "Home Assistant Notifier",
             "description": "Sends a homeassistant notification"
           },
           {
@@ -1002,29 +1158,28 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "bark"
+                "const": "bark",
+                "examples": [
+                  "bark"
+                ]
               },
               "key": {
                 "type": "string",
-                "description": "Bark key",
-                "env": "BARK_KEY"
+                "description": "Bark key. Env: BARK_KEY"
               },
               "title": {
                 "default": "epicgames-freegames-node",
-                "description": "Bark title",
-                "env": "BARK_TITLE",
+                "description": "Bark title. Env: BARK_TITLE",
                 "type": "string"
               },
               "group": {
                 "default": "epicgames-freegames-node",
-                "description": "Bark group",
-                "env": "BARK_GROUP",
+                "description": "Bark group. Env: BARK_GROUP",
                 "type": "string"
               },
               "apiUrl": {
                 "default": "https://api.day.app",
-                "description": "Custom Bark server URL",
-                "env": "BARK_API_URL",
+                "description": "Custom Bark server URL. Env: BARK_API_URL",
                 "type": "string",
                 "format": "uri"
               }
@@ -1037,6 +1192,7 @@
               "apiUrl"
             ],
             "additionalProperties": false,
+            "title": "Bark Notifier",
             "description": "Send a notification to the Bark iOS app. https://github.com/Finb/Bark"
           },
           {
@@ -1044,26 +1200,32 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "ntfy"
+                "const": "ntfy",
+                "examples": [
+                  "ntfy"
+                ]
               },
               "webhookUrl": {
                 "type": "string",
                 "format": "uri",
-                "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/",
-                "example": "https://ntfy.sh/mytopic",
-                "env": "NTFY_WEBHOOK"
+                "description": "ntfy channel webhook URL. Guide: https://docs.ntfy.sh/publish/ Env: NTFY_WEBHOOK",
+                "examples": [
+                  "https://ntfy.sh/mytopic"
+                ]
               },
               "priority": {
                 "type": "string",
-                "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/",
-                "example": "urgent",
-                "env": "NTFY_PRIORITY"
+                "description": "ntfy channel priority. Guide: https://docs.ntfy.sh/publish/ Env: NTFY_PRIORITY",
+                "examples": [
+                  "urgent"
+                ]
               },
               "token": {
                 "type": "string",
-                "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens",
-                "example": "tk_yourtoken",
-                "env": "NTFY_TOKEN"
+                "description": "ntfy channel token. Guide: https://docs.ntfy.sh/config/#access-tokens Env: NTFY_TOKEN",
+                "examples": [
+                  "tk_yourtoken"
+                ]
               }
             },
             "required": [
@@ -1073,6 +1235,7 @@
               "token"
             ],
             "additionalProperties": false,
+            "title": "ntfy Notifier",
             "description": "Sends a ntfy message using webhook"
           },
           {
@@ -1080,18 +1243,21 @@
             "properties": {
               "type": {
                 "type": "string",
-                "const": "webhook"
+                "const": "webhook",
+                "examples": [
+                  "webhook"
+                ]
               },
               "url": {
                 "type": "string",
                 "format": "uri",
-                "description": "Webhook URL",
-                "env": "WEBHOOK_URL"
+                "description": "Webhook URL. Env: WEBHOOK_URL"
               },
               "headers": {
-                "description": "A key-value pair object to pass into the POST request headers",
-                "example": "{ Authorization: \"Bearer ABCD\" }",
-                "env": "WEBHOOK_HEADERS (stringified JSON)",
+                "description": "A key-value pair object to pass into the POST request headers. Env: WEBHOOK_HEADERS (stringified JSON)",
+                "examples": [
+                  "{ Authorization: \"Bearer ABCD\" }"
+                ],
                 "type": "object",
                 "propertyNames": {
                   "type": "string"
@@ -1106,101 +1272,114 @@
               "url"
             ],
             "additionalProperties": false,
-            "description": "ends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
+            "title": "Webhook Notifier",
+            "description": "Sends a POST request with the notification contents in the body to a [webhook](https://en.wikipedia.org/wiki/Webhook) URL"
           }
         ]
       }
     },
     "testNotifiers": {
-      "description": "When true, the process will send test notifications with a test redirect to example.com for all configured accounts. Be sure to disable this after a successful test. This test will block normal operation until the test link is accessed by one account. The test page can only be used once.",
-      "example": true,
+      "description": "When true, the process will send test notifications with a test redirect to example.com for all configured accounts. Be sure to disable this after a successful test. This test will block normal operation until the test link is accessed by one account. The test page can only be used once. Env: TEST_NOTIFIERS",
+      "examples": [
+        true
+      ],
       "default": false,
-      "env": "TEST_NOTIFIERS",
       "type": "boolean"
     },
     "skipVersionCheck": {
-      "description": "Skip the call to api.github.com that checks for the latest version on launch",
-      "example": true,
+      "description": "Skip the call to api.github.com that checks for the latest version on launch. Env: SKIP_VERSION_CHECK",
+      "examples": [
+        true
+      ],
       "default": false,
-      "env": "SKIP_VERSION_CHECK",
       "type": "boolean"
     },
     "browserLaunchTimeout": {
-      "description": "In seconds, how long before a stuck Chromium process times out and gets restarted",
-      "example": 30,
+      "description": "In seconds, how long before a stuck Chromium process times out and gets restarted. Env: BROWSER_LAUNCH_TIMEOUT",
+      "examples": [
+        30
+      ],
       "default": 15,
-      "env": "BROWSER_LAUNCH_TIMEOUT",
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
     },
     "browserLaunchRetryAttempts": {
-      "description": "How many times to attempt retry attempts to launch a browser after it times out",
-      "example": 2,
+      "description": "How many times to attempt retry attempts to launch a browser after it times out. Env: BROWSER_LAUNCH_RETRY_ATTEMPTS",
+      "examples": [
+        2
+      ],
       "default": 5,
-      "env": "BROWSER_LAUNCH_RETRY_ATTEMPTS",
       "type": "integer",
       "minimum": 0,
       "maximum": 9007199254740991
     },
     "browserNavigationTimeout": {
-      "description": "How long in milliseconds the browser navigation will wait before timing out. 0 disables timeout (not recommended). See: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout",
-      "example": 120000,
+      "description": "How long in milliseconds the browser navigation will wait before timing out. 0 disables timeout (not recommended). See: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout Env: BROWSER_NAVIGATION_TIMEOUT",
+      "examples": [
+        120000
+      ],
       "default": 30000,
-      "env": "BROWSER_NAVIGATION_TIMEOUT",
       "type": "integer",
       "minimum": 0,
       "maximum": 9007199254740991
     },
     "countryCode": {
-      "description": "The 2 character country code associated with your account. Used when determining if a game is blacklisted for your account. Commonly blacklisted countries: \"MO\",\"HK\",\"RU\",\"BY\",\"CN\"",
-      "example": "RU",
+      "description": "The 2 character country code associated with your account. Used when determining if a game is blacklisted for your account. Commonly blacklisted countries: \"MO\",\"HK\",\"RU\",\"BY\",\"CN\". Env: COUNTRY_CODE",
+      "examples": [
+        "RU"
+      ],
       "default": "blacklisting is not checked",
-      "env": "COUNTRY_CODE",
       "type": "string"
     },
     "deviceAuthClientId": {
-      "description": "The Epic Games application client ID used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients).",
-      "example": "b070f20729f84693b5d621c904fc5bc2 (Diesel - Dauntless)",
+      "description": "The Epic Games application client ID used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients). Env: DEVICE_AUTH_CLIENT_ID",
+      "examples": [
+        "b070f20729f84693b5d621c904fc5bc2 (Diesel - Dauntless)"
+      ],
       "default": "98f7e42c2e3a4f86a74eb43fbb41ed39 (fortniteNewSwitchGameClient)",
-      "env": "DEVICE_AUTH_CLIENT_ID",
       "type": "string"
     },
     "deviceAuthSecret": {
-      "description": "The Epic Games application secret used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients).",
-      "example": "HG@XE&TGCxEJsgT#&_p2]=aRo#~>=>+c6PhR)zXP (Diesel - Dauntless)",
+      "description": "The Epic Games application secret used for device code authorization to check your account's ownership of a game. List of available clients [here](https://github.com/Jaren8r/EpicClients). Env: DEVICE_AUTH_SECRET",
+      "examples": [
+        "HG@XE&TGCxEJsgT#&_p2]=aRo#~>=>+c6PhR)zXP (Diesel - Dauntless)"
+      ],
       "default": "0a2449a2-001a-451e-afec-3e812901c4d7 (fortniteNewSwitchGameClient client secret)",
-      "env": "DEVICE_AUTH_SECRET",
       "type": "string"
     },
     "deviceAuthPollRateSeconds": {
-      "description": "After redirecting to a device authorization verification URL, how often the Epic Games API is polled for a successful login.",
-      "example": 20,
+      "description": "After redirecting to a device authorization verification URL, how often the Epic Games API is polled for a successful login. Env: DEVICE_AUTH_POLL_RATE_SECONDS",
+      "examples": [
+        20
+      ],
       "default": 10,
-      "env": "DEVICE_AUTH_POLL_RATE_SECONDS",
       "type": "integer",
       "minimum": 10,
       "maximum": 9007199254740991
     },
     "errorsDir": {
-      "description": "The full path where the browser automation error screenshots will be output",
-      "example": "/errors",
+      "description": "The full path where the browser automation error screenshots will be output. Env: ERRORS_DIR",
+      "examples": [
+        "/errors"
+      ],
       "default": "${CONFIG_DIR}/errors",
-      "env": "ERRORS_DIR",
       "type": "string"
     },
     "usersDir": {
-      "description": "The full path where the browser automation error screenshots will be output",
-      "example": "/users",
+      "description": "The full path where the browser automation error screenshots will be output. Env: USERS_DIR",
+      "examples": [
+        "/users"
+      ],
       "default": "${CONFIG_DIR}/users",
-      "env": "USERS_DIR",
       "type": "string"
     },
     "notifyEula": {
-      "description": "If false, EULA updates will be automatically accepted. If true, the user will receive a notification to accept the EULA.",
-      "example": true,
+      "description": "If false, EULA updates will be automatically accepted. If true, the user will receive a notification to accept the EULA. Env: NOTIFY_EULA",
+      "examples": [
+        true
+      ],
       "default": false,
-      "env": "NOTIFY_EULA",
       "type": "boolean"
     }
   },
@@ -1228,5 +1407,6 @@
     "usersDir",
     "notifyEula"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "title": "Application Config"
 }
