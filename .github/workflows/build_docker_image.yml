@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - master
-      - develop
+  pull_request:
+    branches:
+      - 'master'
 
 jobs:
   build_multi_arch_image:
@@ -14,8 +16,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set environment variables
-        run: echo "GIT_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            charlocharlie/epicgames-freegames,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+            ghcr.io/claabs/epicgames-freegames-node,enable=true
+            
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=debian,enable={{is_default_branch}}
+            type=sha,enable={{is_default_branch}}
+            type=ref,event=pr,enable=${{ github.event_name == 'pull_request' }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -40,39 +53,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push master
-        if: ${{ github.ref == 'refs/heads/master' }}
         uses: docker/build-push-action@v7
         with:
-          provenance: false # enable later when runtime support is better
           target: deploy
           push: true
-          tags: |
-            charlocharlie/epicgames-freegames:latest
-            charlocharlie/epicgames-freegames:debian
-            charlocharlie/epicgames-freegames:${{ github.sha }}
-            ghcr.io/claabs/epicgames-freegames-node:latest
-            ghcr.io/claabs/epicgames-freegames-node:debian
-            ghcr.io/claabs/epicgames-freegames-node:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             COMMIT_SHA=${{ github.sha }}
-            BRANCH=${{ env.GIT_BRANCH }}
+            BRANCH=${{ github.head_ref || github.ref_name }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
 
-      - name: Build and push dev
-        if: ${{ github.ref == 'refs/heads/develop' }}
-        uses: docker/build-push-action@v7
-        with:
-          provenance: false # enable later when runtime support is better
-          target: deploy
-          push: true
-          tags: |
-            charlocharlie/epicgames-freegames:dev
-            ghcr.io/claabs/epicgames-freegames-node:dev
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            COMMIT_SHA=${{ github.sha }}
-            BRANCH=${{ env.GIT_BRANCH }}
-          cache-from: type=gha,scope=${{ github.workflow }}
-          cache-to: type=gha,mode=max,scope=${{ github.workflow }}
