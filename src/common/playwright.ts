@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { access } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
 import filenamify from 'filenamify';
@@ -120,7 +121,7 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
   await fsx.remove(path.join(userDir, 'SingletonLock'));
   await fsx.remove(path.join(userDir, 'SingletonSocket'));
   const launchArgs: Parameters<BrowserType['launchPersistentContext']>[1] = {
-    channel: 'chrome',
+    channel: os.arch() === 'arm64' ? 'chromium' : 'chrome',
     headless: false,
     viewport: null,
     ...getPlaywrightProxyConfig(),
