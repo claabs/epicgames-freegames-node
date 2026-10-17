@@ -22,19 +22,23 @@ RUN --mount=type=cache,target=/var/cache/apt \
     jq \
     tini \
     ca-certificates \
-    # Install browser with deps
-    && if [ "$TARGETARCH" = "amd64" ]; then \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install browser with deps
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    if [ "$TARGETARCH" = "amd64" ]; then \
     npx playwright install chrome --with-deps; \
     else \
     npx playwright install chromium --with-deps; \
     fi \
-    # Install supercronic
-    && SUPERCRONIC="supercronic-linux-$TARGETARCH" \
-    && SUPERCRONIC_URL="https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
-    && wget -O "$SUPERCRONIC" "$SUPERCRONIC_URL" \
-    && chmod +x "$SUPERCRONIC" \
-    && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
     && rm -rf /var/lib/apt/lists/*
+
+# Install supercronic
+RUN SUPERCRONIC="supercronic-linux-$TARGETARCH" \
+    && wget -O "$SUPERCRONIC" "https://github.com/aptible/supercronic/releases/latest/download/$SUPERCRONIC" \
+    && chmod +x "$SUPERCRONIC" \
+    && mv "$SUPERCRONIC" /usr/local/bin/supercronic
 
 # Add source code
 COPY src ./src
