@@ -2,13 +2,14 @@ import path from 'node:path';
 
 import filenamify from 'filenamify';
 import fsx, { ensureDir } from 'fs-extra/esm';
+import pTimeout, { TimeoutError } from 'p-timeout';
 import { chromium } from 'patchright';
 import psList from 'ps-list';
 
 import { getCommitSha } from '../version.js';
 import { config } from './config/index.js';
 
-import type { BrowserContext, Page } from 'patchright';
+import type { BrowserContext, BrowserType, Page } from 'patchright';
 import type { Logger } from 'pino';
 
 export default chromium;
@@ -27,6 +28,37 @@ const getPlaywrightProxyConfig = () => {
     };
   }
   return {};
+};
+
+/**
+ * This is a hacky solution to retry a function if it doesn't return within a timeout.
+ */
+const retryFunction = async <T>(
+  f: () => Promise<T>,
+  L: Logger,
+  outputName: string,
+  attempts = 0,
+): Promise<T> => {
+  const TIMEOUT = config.browserLaunchTimeout * 1000;
+  const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
+  try {
+    return await pTimeout(f(), { milliseconds: TIMEOUT });
+  } catch (err) {
+    if (!(err instanceof TimeoutError)) {
+      throw err;
+    }
+    if (attempts >= MAX_ATTEMPTS) {
+      L.error(
+        `If not already, consider using the Debian (:debian) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
+      );
+      throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
+    }
+    L.warn(
+      { attempts, MAX_ATTEMPTS },
+      `${outputName} did not work after ${TIMEOUT}ms. Trying again.`,
+    );
+    return retryFunction(f, L, outputName, attempts + 1);
+  }
 };
 
 export const killBrowserProcesses = async (L: Logger): Promise<void> => {
@@ -59,7 +91,7 @@ export const killBrowserProcesses = async (L: Logger): Promise<void> => {
  */
 export const safeNewPage = async (browser: BrowserContext, L: Logger): Promise<Page> => {
   L.debug('Launching a new page');
-  const page = await browser.newPage();
+  const page = await retryFunction(async () => browser.newPage(), L, 'new page');
   page.setDefaultTimeout(config.browserNavigationTimeout);
   return page;
 };
@@ -74,7 +106,7 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
   await fsx.remove(path.join(userDir, 'SingletonCookie'));
   await fsx.remove(path.join(userDir, 'SingletonLock'));
   await fsx.remove(path.join(userDir, 'SingletonSocket'));
-  return chromium.launchPersistentContext(userDir, {
+  const launchArgs: Parameters<BrowserType['launchPersistentContext']>[1] = {
     channel: 'chrome',
     headless: false,
     viewport: null,
@@ -86,5 +118,10 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
     //   '--disable-default-apps',
     //   '--no-first-run',
     // ],
-  });
+  };
+  return retryFunction(
+    async () => chromium.launchPersistentContext(userDir, launchArgs),
+    L,
+    'browser launch',
+  );
 };
