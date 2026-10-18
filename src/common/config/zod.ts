@@ -641,12 +641,14 @@ Env: SEARCH_STRATEGY`,
 
       runOnStartup: z
         .boolean()
-        .prefault(process.env.RUN_ON_STARTUP?.toLowerCase() === 'true')
+        .prefault(
+          process.env.RUN_ON_STARTUP ? process.env.RUN_ON_STARTUP.toLowerCase() === 'true' : true,
+        )
         .meta({
           description:
             'If true, the process will run on startup in addition to the scheduled time. Env: RUN_ON_STARTUP',
-          examples: [true],
-          default: false,
+          examples: [false],
+          default: true,
         }),
 
       runOnce: z
@@ -748,13 +750,13 @@ Env: SEARCH_STRATEGY`,
         .prefault(
           process.env.BROWSER_LAUNCH_TIMEOUT
             ? parseInt(process.env.BROWSER_LAUNCH_TIMEOUT, 10)
-            : 15,
+            : 30,
         )
         .meta({
           description:
             'In seconds, how long before a stuck Chromium process times out and gets restarted. Env: BROWSER_LAUNCH_TIMEOUT',
-          examples: [30],
-          default: 15,
+          examples: [60],
+          default: 30,
         }),
 
       browserLaunchRetryAttempts: z

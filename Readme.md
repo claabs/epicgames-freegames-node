@@ -214,12 +214,14 @@ The application forwards the selected proxy value unchanged to Chrome with `--pr
 
 ### v5 to v6 Migration
 
+- `runOnStartup` defaults to true instead of false to aid with first time setup
 - `deviceAuthPollRateSeconds` minimum increased from 1 to 10 (it got overridden to that anyway)
 - `:bullseye-slim` tag no longer published. Just use `:latest`.
 - `:debian` tag is deprectated. Just use `:latest` .
 - These are recommended by [Playwright](https://playwright.dev/docs/docker#recommended-docker-configuration):
   - Add `--ipc=host` / `ipc: host` to your container
   - Add `--init / init: true` to your container
+- `browserLaunchTimeout` default increased from 15s to 30s to help with low power devices
 
 ### Thanks
 
