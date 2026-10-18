@@ -38,9 +38,9 @@
     "runOnStartup": {
       "description": "If true, the process will run on startup in addition to the scheduled time. Env: RUN_ON_STARTUP",
       "examples": [
-        true
+        false
       ],
-      "default": false,
+      "default": true,
       "type": "boolean"
     },
     "runOnce": {
@@ -201,9 +201,9 @@
     "browserLaunchTimeout": {
       "description": "In seconds, how long before a stuck Chromium process times out and gets restarted. Env: BROWSER_LAUNCH_TIMEOUT",
       "examples": [
-        30
+        60
       ],
-      "default": 15,
+      "default": 30,
       "type": "integer",
       "minimum": 1,
       "maximum": 9007199254740991
