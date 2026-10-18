@@ -30,9 +30,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     if [ "$TARGETARCH" = "amd64" ]; then \
-    npx playwright install chrome --with-deps; \
+    npx playwright install chrome --with-deps --no-shell; \
     else \
-    npx playwright install chromium --with-deps; \
+    npx playwright install chromium --with-deps --no-shell; \
     fi \
     && rm -rf /var/lib/apt/lists/*
 

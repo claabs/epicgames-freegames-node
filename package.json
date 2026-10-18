@@ -12,10 +12,10 @@
     "lint": "tsc && eslint . --cache",
     "fix-build-perms": "sudo chmod -R 775 ./config/users",
     "docker:build": "docker build . -t charlocharlie/epicgames-freegames-node:latest --build-arg=\"COMMIT_SHA=$(git rev-parse HEAD)\"",
+    "docker:build-arm": "docker buildx build --platform=linux/arm64 --load -t charlocharlie/epicgames-freegames-node:arm64 .",
     "docker:run": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
-    "docker:run-arm": "docker run --rm -ti --platform linux/arm64 -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
+    "docker:run-arm": "docker run --rm -ti --platform linux/arm64 -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 --init --ipc=host -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:arm64",
     "docker:run-legacy": "docker run --rm -ti -v $(pwd)/config:/usr/app/config -p 3225:3225 -p 3001:3001 -e DEBUG=pw:browser* charlocharlie/epicgames-freegames-node:latest",
-    "docker:buildx": "docker buildx build --platform=linux/arm64 --load -t charlocharlie/epicgames-freegames-node:latest .",
     "docs": "node scripts/generate-json-schema.ts",
     "prepare": "husky || true"
   },
