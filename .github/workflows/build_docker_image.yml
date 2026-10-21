@@ -5,6 +5,9 @@ on:
     branches:
       - master
       - develop
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 jobs:
   build_multi_arch_image:
