@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - develop
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
