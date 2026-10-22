@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import cronParser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import json5 from 'json5';
@@ -104,7 +104,7 @@ const config = configParseResult.data;
 L.debug({ config });
 
 const { cronSchedule } = config;
-const cronExpression = cronParser.parseExpression(cronSchedule);
+const cronExpression = CronExpressionParser.parse(cronSchedule);
 const prevDate = cronExpression.prev();
 const nextDate = cronExpression.next();
 const cronIntervalMs = nextDate.getTime() - prevDate.getTime();
@@ -119,5 +119,5 @@ if (cronIntervalMs > intervalMinimumMs) {
 export { config };
 
 export function getMsUntilNextRun(): number {
-  return cronParser.parseExpression(config.cronSchedule).next().getTime() - new Date().getTime();
+  return CronExpressionParser.parse(config.cronSchedule).next().getTime() - new Date().getTime();
 }
