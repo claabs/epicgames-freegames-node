@@ -3,22 +3,22 @@ import Hashids from 'hashids';
 import pTimeout from 'p-timeout';
 import urlJoin from 'url-join';
 
-import axios from './axios-base.js';
-import { config } from './common/config/index.js';
-import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.js';
-import { getAccountAuth, setAccountAuth } from './common/device-auths.js';
-import { getLocaltunnelUrl } from './common/localtunnel.js';
-import logger from './common/logger.js';
-import { serverRoute } from './common/server.js';
-import { NotificationReason } from './interfaces/notification-reason.js';
+import axios from './axios-base.ts';
+import { config, getMsUntilNextRun } from './common/config/index.ts';
+import { ACCOUNT_OAUTH_DEVICE_AUTH, ACCOUNT_OAUTH_TOKEN } from './common/constants.ts';
+import { getAccountAuth, setAccountAuth } from './common/device-auths.ts';
+import { getLocaltunnelUrl } from './common/localtunnel.ts';
+import logger from './common/logger.ts';
+import { serverRoute } from './common/server.ts';
 // eslint-disable-next-line import-x/no-cycle
-import { sendNotification } from './notify.js';
+import { sendNotification } from './notify.ts';
 
 import type { AxiosRequestConfig } from 'axios';
 import type { RequestHandler } from 'express';
 import type { Logger } from 'pino';
 
-import type { AuthTokenResponse } from './common/device-auths.js';
+import type { AuthTokenResponse } from './common/device-auths.ts';
+import type { NotificationReason } from './notify.ts';
 
 export interface ClientCredentialsTokenResponse {
   access_token: string;
@@ -110,7 +110,7 @@ export class DeviceLogin {
 
   public async testServerNotify(): Promise<void> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
+    const notificationTimeout = getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
@@ -128,14 +128,14 @@ export class DeviceLogin {
           message: 'Test notification timed out',
         },
       ),
-      this.notify(NotificationReason.TEST, url),
+      this.notify('TEST', url),
     ]);
     pendingRedirects.delete(reqId);
   }
 
-  public async newDeviceAuthLogin(): Promise<void> {
+  public async newDeviceAuthLogin(): Promise<AuthTokenResponse> {
     const { reqId, url } = getUniqueUrl();
-    const notificationTimeout = config.getMsUntilNextRun() - timeoutBufferMs;
+    const notificationTimeout = getMsUntilNextRun() - timeoutBufferMs;
 
     logger.trace(
       { notificationTimeout: `in ${(notificationTimeout / (60 * 1000)).toFixed(1)} minutes` },
@@ -143,9 +143,9 @@ export class DeviceLogin {
     );
 
     // Wait on a promise to be resolved by the web redirect and login completing
-    await Promise.all([
+    const [authTokenResponse] = await Promise.all([
       pTimeout(
-        new Promise((resolve, reject) => {
+        new Promise<AuthTokenResponse>((resolve, reject) => {
           pendingRedirects.set(reqId, this.onLoginVisit(resolve, reject).bind(this));
         }),
         {
@@ -153,9 +153,10 @@ export class DeviceLogin {
           message: 'Device login timed out',
         },
       ),
-      this.notify(NotificationReason.LOGIN, url),
+      this.notify('LOGIN', url),
     ]);
     pendingRedirects.delete(reqId);
+    return authTokenResponse;
   }
 
   private async notify(reason: NotificationReason, inUrl: string): Promise<void> {
@@ -177,7 +178,10 @@ export class DeviceLogin {
   }
 
   private onLoginVisit =
-    (resolve: (value: unknown) => void, reject: (reason?: Error) => void): RequestHandler =>
+    (
+      resolve: (value: AuthTokenResponse) => void,
+      reject: (reason?: Error) => void,
+    ): RequestHandler =>
     async (_req, res) => {
       try {
         const deviceAuthorizationCodeResponse = await this.startDeviceAuthorization();
@@ -192,7 +196,7 @@ export class DeviceLogin {
         // TODO: check that the user matches, only possible with accountId hash
         this.L.info('Successful login, saving auth token');
         await setAccountAuth(this.user, deviceCodeResponse);
-        resolve(undefined);
+        resolve(deviceCodeResponse);
       } catch (err) {
         reject(err);
       }
@@ -210,7 +214,7 @@ export class DeviceLogin {
       }
     };
 
-  public async refreshDeviceAuth(): Promise<boolean> {
+  public async refreshDeviceAuth(): Promise<AuthTokenResponse | undefined> {
     try {
       const existingAuth = await getAccountAuth(this.user);
       this.L.trace(
@@ -220,7 +224,8 @@ export class DeviceLogin {
         },
         'Pre-refresh auth expiry',
       );
-      if (!(existingAuth && new Date(existingAuth.refresh_expires_at) > new Date())) return false;
+      if (!(existingAuth && new Date(existingAuth.refresh_expires_at) > new Date()))
+        return undefined;
 
       const reqConfig: AxiosRequestConfig = {
         method: 'POST',
@@ -237,11 +242,11 @@ export class DeviceLogin {
       const resp = await axios.request<AuthTokenResponse>(reqConfig);
       this.L.debug({ authResp: resp.data }, 'Refresh auth token response');
       await setAccountAuth(this.user, resp.data);
-      return true;
+      return resp.data;
     } catch (err) {
       this.L.warn({ err }, 'Failed to refresh auth, getting it fresh');
     }
-    return false;
+    return undefined;
   }
 
   private async getClientCredentialsToken(): Promise<ClientCredentialsTokenResponse> {

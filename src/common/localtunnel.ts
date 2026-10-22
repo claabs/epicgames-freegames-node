@@ -1,6 +1,6 @@
 import localtunnel from 'localtunnel';
 
-import { config } from './config/index.js';
+import { config } from './config/index.ts';
 
 export async function getLocaltunnelUrl(originalUrl: string): Promise<string> {
   const url = new URL(originalUrl);

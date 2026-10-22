@@ -4,7 +4,7 @@ import https from 'node:https';
 
 import express from 'express';
 
-import { config } from './config/index.js';
+import { config } from './config/index.ts';
 
 const app = express();
 const router = express.Router();
