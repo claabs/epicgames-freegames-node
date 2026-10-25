@@ -1,3 +1,5 @@
+![Made by human; no agentic AI used](https://codeberg.org/sanin/no-ai-used-badges/raw/branch/master/assets/images/webp/no-agentic.webp)
+
 # Epic Games Store Weekly Free Games
 
 Automatically login and find available free games the Epic Games Store.
@@ -216,6 +218,7 @@ The application forwards the selected proxy value unchanged to Chrome with `--pr
 
 - `runOnStartup` defaults to true instead of false to aid with first time setup
 - `deviceAuthPollRateSeconds` minimum increased from 1 to 10 (it got overridden to that anyway)
+- `armv7` images no longer published, sorry.
 - `:bullseye-slim` tag no longer published. Just use `:latest`.
 - `:debian` tag is deprectated. Just use `:latest` .
 - These are recommended by [Playwright](https://playwright.dev/docs/docker#recommended-docker-configuration):
