@@ -37,13 +37,13 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     let isCookieValid = await freeGames.checkCookie();
 
     if (!isCookieValid && deviceAuth) {
-      // If invalid, set from refreshed device auth
+      L.info('Stored cookie is missing/expired. Refreshing with cached device auth');
       await freeGames.setupCookies(deviceAuth);
       isCookieValid = await freeGames.checkCookie();
     }
 
     if (!isCookieValid) {
-      // fallback to new device login
+      L.info('Stored cookie is missing/expired. Refreshing with new device auth');
       deviceAuth = await deviceLogin.newDeviceAuthLogin();
       await freeGames.setupCookies(deviceAuth);
       isCookieValid = await freeGames.checkCookie();
