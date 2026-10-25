@@ -624,7 +624,7 @@
               "format": "uri",
               "description": "The Gotify server host URL. Env: GOTIFY_API_URL",
               "examples": [
-                "http://gotify.net"
+                "https://gotify.net"
               ]
             },
             "token": {
