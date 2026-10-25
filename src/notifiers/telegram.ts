@@ -1,14 +1,16 @@
-import axios from '../axios-base.js';
-import { NotifierService } from './notifier-service.js';
-import logger from '../common/logger.js';
+import axios from '../axios-base.ts';
+import { NotifierService } from './notifier-service.ts';
+import logger from '../common/logger.ts';
 
-import type { TelegramConfig } from '../common/config/index.js';
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type z from 'zod';
+
+import type { telegramConfigSchema } from '../common/config/index.ts';
+import type { NotificationReason } from '../notify.ts';
 
 export class TelegramNotifier extends NotifierService {
-  private config: TelegramConfig;
+  private config: z.infer<typeof telegramConfigSchema>;
 
-  constructor(config: TelegramConfig) {
+  constructor(config: z.infer<typeof telegramConfigSchema>) {
     super();
 
     this.config = config;
@@ -23,7 +25,7 @@ export class TelegramNotifier extends NotifierService {
 
     const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}\nurl: [Click here](${url})`;
     // https://stackoverflow.com/a/60145565/5037239
-    const escapedMessage = message.replace(
+    const escapedMessage = message.replaceAll(
       /(\[[^\][]*]\(http[^()]*\))|[_*[\]()~>#+=|{}.!-]/gi,
       (x: string, y: string): string => y || `\\${x}`,
     );
@@ -41,10 +43,10 @@ export class TelegramNotifier extends NotifierService {
       await axios.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, jsonPayload, {
         responseType: 'json',
       });
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error({ chatId: this.config.chatId }, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

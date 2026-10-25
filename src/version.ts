@@ -1,26 +1,31 @@
 import { promises as fsPromises } from 'node:fs';
 
-import axios from './axios-base.js';
-import { config } from './common/config/index.js';
+import axios from './axios-base.ts';
+import { config } from './common/config/index.ts';
 // eslint-disable-next-line import-x/no-rename-default
-import L from './common/logger.js';
+import L from './common/logger.ts';
+
+interface CommitsResp {
+  sha?: string;
+}
 
 const PROJECT_NAME = 'epicgames-freegames-node';
-const { DISTRO } = process.env;
 let { COMMIT_SHA, BRANCH } = process.env;
 try {
-  COMMIT_SHA = (await fsPromises.readFile('./commit-sha.txt', { encoding: 'utf-8' })).trim();
+  const rawSha = await fsPromises.readFile('./commit-sha.txt', { encoding: 'utf8' });
+  COMMIT_SHA = rawSha.trim();
 } catch {
   L.debug('Fallback to environment variable commit SHA');
 }
 try {
-  BRANCH = (await fsPromises.readFile('./branch.txt', { encoding: 'utf-8' })).trim();
+  const rawBranch = await fsPromises.readFile('./branch.txt', { encoding: 'utf8' });
+  BRANCH = rawBranch.trim();
 } catch {
   L.debug('Fallback to environment variable branch');
 }
 
 export async function checkForUpdate(): Promise<void> {
-  L.info({ COMMIT_SHA, BRANCH, DISTRO }, `Started ${PROJECT_NAME}`);
+  L.info({ COMMIT_SHA, BRANCH }, `Started ${PROJECT_NAME}`);
   if (!(COMMIT_SHA && BRANCH) || config.skipVersionCheck) {
     L.debug(
       { COMMIT_SHA, BRANCH, skipVersionCheck: config.skipVersionCheck },
@@ -30,7 +35,7 @@ export async function checkForUpdate(): Promise<void> {
   }
   L.debug({ PROJECT_NAME, BRANCH, COMMIT_SHA }, 'Performing version check');
   try {
-    const resp = await axios.get(
+    const resp = await axios.get<CommitsResp>(
       `https://api.github.com/repos/claabs/${PROJECT_NAME}/commits/${BRANCH}`,
       {
         responseType: 'json',
@@ -43,9 +48,9 @@ export async function checkForUpdate(): Promise<void> {
         `A newer version of ${PROJECT_NAME} is available! \`docker pull\` this image to update.`,
       );
     }
-  } catch (err) {
+  } catch (error) {
     L.warn('Version check API call failed');
-    L.debug(err);
+    L.debug(error);
   }
 }
 
@@ -54,7 +59,7 @@ export const getCommitSha = (): string | undefined => {
 };
 
 export function logVersionOnError(): void {
-  if (COMMIT_SHA || BRANCH || DISTRO) {
-    L.warn({ COMMIT_SHA, BRANCH, DISTRO }, 'Current version');
+  if (COMMIT_SHA || BRANCH) {
+    L.warn({ COMMIT_SHA, BRANCH }, 'Current version');
   }
 }

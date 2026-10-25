@@ -1,0 +1,71 @@
+name: Docker Build
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  docker:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            charlocharlie/epicgames-freegames,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+            ghcr.io/claabs/epicgames-freegames-node,enable=true
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=debian,enable={{is_default_branch}}
+            type=sha,enable={{is_default_branch}}
+            type=ref,event=pr,enable=${{ github.event_name == 'pull_request' }}
+          labels: |
+            org.opencontainers.image.created={{ date 'YYYY-MM-DD[T]HH:mm:ss[Z]' }}
+            org.opencontainers.image.authors=Charlie Laabs (https://github.com/claabs)
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision={{ sha }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=epicgames-freegames-node
+            org.opencontainers.image.description=Automatically notify about free games promotions on the Epic Games store
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            COMMIT_SHA=${{ github.event.pull_request.head.sha || github.sha }}
+            BRANCH=${{ github.head_ref || github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

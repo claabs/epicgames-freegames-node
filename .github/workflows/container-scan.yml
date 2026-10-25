@@ -11,25 +11,13 @@ jobs:
     steps:
       - name: Create folder
         run: mkdir -p sarif-results
-      - name: Scan Alpine image
+      - name: Scan latest image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ghcr.io/claabs/epicgames-freegames-node:latest
           format: sarif
-          output: sarif-results/alpine.sarif
+          output: trivy-results.sarif
       - name: Upload Alpine results
-        uses: github/codeql-action/upload-sarif@v4.38.2
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: sarif-results/alpine.sarif
-          category: container-scan-alpine
-      - name: Scan Debian image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ghcr.io/claabs/epicgames-freegames-node:debian
-          format: sarif
-          output: sarif-results/debian.sarif
-      - name: Upload Debian results
-        uses: github/codeql-action/upload-sarif@v4.38.2
-        with:
-          sarif_file: sarif-results/debian.sarif
-          category: container-scan-debian
+          sarif_file: "trivy-results.sarif"

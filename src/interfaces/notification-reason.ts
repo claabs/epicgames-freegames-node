@@ -1,6 +1,0 @@
-export enum NotificationReason {
-  LOGIN = 'LOGIN',
-  PURCHASE = 'PURCHASE',
-  TEST = 'TEST',
-  PRIVACY_POLICY_ACCEPTANCE = 'PRIVACY_POLICY_ACCEPTANCE',
-}

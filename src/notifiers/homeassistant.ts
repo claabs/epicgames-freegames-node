@@ -1,14 +1,16 @@
-import axios from '../axios-base.js';
-import { NotifierService } from './notifier-service.js';
-import logger from '../common/logger.js';
+import axios from '../axios-base.ts';
+import { NotifierService } from './notifier-service.ts';
+import logger from '../common/logger.ts';
 
-import type { HomeassistantConfig } from '../common/config/index.js';
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type z from 'zod';
 
-export class HomeassistantNotifier extends NotifierService {
-  private config: HomeassistantConfig;
+import type { homeAssistantConfigSchema } from '../common/config/index.ts';
+import type { NotificationReason } from '../notify.ts';
 
-  constructor(config: HomeassistantConfig) {
+export class HomeAssistantNotifier extends NotifierService {
+  private config: z.infer<typeof homeAssistantConfigSchema>;
+
+  constructor(config: z.infer<typeof homeAssistantConfigSchema>) {
     super();
     this.config = config;
   }
@@ -26,7 +28,7 @@ export class HomeassistantNotifier extends NotifierService {
           data: {
             url,
             clickAction: url,
-            ...(this.config.customData ?? {}),
+            ...this.config.customData,
           },
         },
         {
@@ -36,13 +38,13 @@ export class HomeassistantNotifier extends NotifierService {
           responseType: 'json',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { homeassistantConfig: this.config },
         'Error sending homeassistant message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

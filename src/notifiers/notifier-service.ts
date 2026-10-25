@@ -1,4 +1,4 @@
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type { NotificationReason } from '../notify.ts';
 
 export abstract class NotifierService {
   abstract sendNotification(

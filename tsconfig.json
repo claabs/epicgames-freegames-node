@@ -1,35 +1,25 @@
 {
   "extends": [
     "@tsconfig/strictest/tsconfig",
-    "@tsconfig/node22/tsconfig",
+    "@tsconfig/node26/tsconfig",
+    "@tsconfig/node-ts/tsconfig.json",
   ],
   "compilerOptions": {
     // ESM
-    "module": "node16",
-    "moduleResolution": "node16",
+    "moduleResolution": "nodenext",
     // Disable extra strict rules
     "exactOptionalPropertyTypes": false,
     "noPropertyAccessFromIndexSignature": false,
     // Project requirements
-    "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "useUnknownInCatchVariables": false,
-    // Types    
-    "typeRoots": [
-      "node_modules/@types",
-    ], /* List of folders to include type definitions from. */
     // Output
-    "outDir": "./dist", /* Redirect output structure to the directory. */
-    "rootDir": ".",
-    "removeComments": true, /* Do not emit comments to output. */
-    "inlineSourceMap": true, /* Emit a single file with source maps instead of having a separate file. */
+    "noEmit": true,
   },
   "include": [
     "**/*.ts",
     ".*.*js",
   ],
   "exclude": [
-    "node_modules",
-    "dist"
+    "node_modules"
   ]
 }

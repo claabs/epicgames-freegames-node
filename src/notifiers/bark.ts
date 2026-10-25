@@ -1,14 +1,16 @@
-import axios from '../axios-base.js';
-import { NotifierService } from './notifier-service.js';
-import logger from '../common/logger.js';
+import axios from '../axios-base.ts';
+import { NotifierService } from './notifier-service.ts';
+import logger from '../common/logger.ts';
 
-import type { BarkConfig } from '../common/config/index.js';
-import type { NotificationReason } from '../interfaces/notification-reason.js';
+import type z from 'zod';
+
+import type { barkConfigSchema } from '../common/config/index.ts';
+import type { NotificationReason } from '../notify.ts';
 
 export class BarkNotifier extends NotifierService {
-  private config: BarkConfig;
+  private config: z.infer<typeof barkConfigSchema>;
 
-  constructor(config: BarkConfig) {
+  constructor(config: z.infer<typeof barkConfigSchema>) {
     super();
     this.config = config;
   }
@@ -26,10 +28,10 @@ export class BarkNotifier extends NotifierService {
     L.trace({ requestUrl }, 'Sending request');
     try {
       await axios.get(requestUrl);
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(this.config, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

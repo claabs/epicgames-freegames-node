@@ -1,32 +1,33 @@
-import PuppetBase from './base.js';
-import { config, SearchStrategy } from '../common/config/index.js';
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import PuppetBase from './base.ts';
+import { config } from '../common/config/index.ts';
 import {
   FREE_GAMES_PROMOTIONS_ENDPOINT,
   GRAPHQL_ENDPOINT,
   STORE_CONTENT,
-} from '../common/constants.js';
+} from '../common/constants.ts';
 
 import type {
   CatalogOffer,
   GetCatalogOfferResponse,
-} from '../interfaces/get-catalog-offer-response.js';
-import type { OffersValidationResponse } from '../interfaces/offers-validation.js';
+} from '../interfaces/get-catalog-offer-response.ts';
+import type { OffersValidationResponse } from '../interfaces/offers-validation.ts';
 import type {
   PageSlugMappingResponse,
   PageSlugMappingResult,
-} from '../interfaces/page-slug-mapping.js';
+} from '../interfaces/page-slug-mapping.ts';
 import type {
   GraphQLErrorResponse,
   Offer,
   Page as ProductInfoPage,
   ProductInfo,
-} from '../interfaces/product-info.js';
-import type { PromotionsQueryResponse } from '../interfaces/promotions-response.js';
+} from '../interfaces/product-info.ts';
+import type { PromotionsQueryResponse } from '../interfaces/promotions-response.ts';
 import type {
   Element as SearchStoreElement,
   SearchStoreQueryResponse,
-} from '../interfaces/search-store-query-response.js';
-import type { OfferInfo } from '../interfaces/types.js';
+} from '../interfaces/search-store-query-response.ts';
+import type { OfferInfo } from '../interfaces/types.ts';
 
 export default class PuppetFreeGames extends PuppetBase {
   async getCatalogFreeGames(onSale = true): Promise<OfferInfo[]> {
@@ -71,7 +72,9 @@ export default class PuppetFreeGames extends PuppetBase {
         variables: JSON.stringify(variables),
         extensions: JSON.stringify(extensions),
       });
+
       const elements = responseBody.data?.Catalog?.searchStore?.elements;
+
       if (!elements) {
         throw new Error(`Error paginating catalog data: ${JSON.stringify(responseBody)}`);
       }
@@ -82,22 +85,22 @@ export default class PuppetFreeGames extends PuppetBase {
       }
     } while (keepGoing);
 
-    this.L.debug(`Retrieved catalog data for ${items.length} games`);
+    this.L.debug(`Retrieved catalog data for ${items.length.toFixed(0)} games`);
     // outputJsonSync('hars/catalog.json', items);
     const freeGames = items.filter((game) => {
       return game.price?.totalPrice?.discountPrice === 0;
     });
-    this.L.trace(`Found ${freeGames.length} free games in catalog`);
+    this.L.trace(`Found ${freeGames.length.toFixed(0)} free games in catalog`);
     const uniqueFreeGames: SearchStoreElement[] = [];
     const map = new Map();
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const item of freeGames) {
       if (!map.has(item.productSlug)) {
         map.set(item.productSlug, true); // set any value to Map
         uniqueFreeGames.push(item);
       }
     }
-    this.L.debug(`Found ${uniqueFreeGames.length} unique free games in catalog`);
+    this.L.debug(`Found ${uniqueFreeGames.length.toFixed(0)} unique free games in catalog`);
     const offers: OfferInfo[] = uniqueFreeGames.map((game) => ({
       offerId: game.id,
       offerNamespace: game.namespace,
@@ -122,68 +125,69 @@ export default class PuppetFreeGames extends PuppetBase {
       searchParams,
     );
     const nowDate = new Date();
+
     const elements = body.data?.Catalog?.searchStore?.elements;
+
     if (!elements) {
       throw new Error(`Error parsing free games data: ${JSON.stringify(body)}`);
     }
     const freeOfferedGames = elements.filter((offer) => {
       let r = false;
+
       if (offer.promotions) {
-        offer.promotions.promotionalOffers.forEach((innerOffers) => {
-          innerOffers.promotionalOffers.forEach((pOffer) => {
+        for (const innerOffers of offer.promotions.promotionalOffers) {
+          for (const pOffer of innerOffers.promotionalOffers) {
             const startDate = new Date(pOffer.startDate);
             const endDate = new Date(pOffer.endDate);
             const isFree = pOffer.discountSetting.discountPercentage === 0;
             if (startDate <= nowDate && nowDate <= endDate && isFree) {
               r = true;
             }
-          });
-        });
+          }
+        }
       }
       return r;
     });
     // The id/namespace we have here is not necessarily the actual product on sale.
     // We need to lookup the product by its slug to get all its offers
-    const allProductOffers: OfferInfo[] = (
-      await Promise.all(
-        freeOfferedGames.map(async (game) => {
-          let pageSlug =
-            game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
-              ?.pageSlug ?? game.productSlug;
-          const { productSlug, offerType } = game;
-          let { id: offerId, namespace } = game;
+    const nestedProductOffers: OfferInfo[][] = await Promise.all(
+      freeOfferedGames.map(async (game) => {
+        let pageSlug =
+          game?.catalogNs?.mappings?.find((mapping) => mapping.pageType === 'productHome')
+            ?.pageSlug ?? game.productSlug;
+        const { productSlug, offerType } = game;
+        let { id: offerId, namespace } = game;
 
-          if (pageSlug && productSlug) {
-            const mappingResp = await this.getPageSlugMapping(pageSlug);
-            if (typeof mappingResp === 'string') {
-              // Older CMS product lookup strategy
-              pageSlug = mappingResp;
-              const productOffers = await this.getCmsProduct(pageSlug, offerType);
-              return productOffers
-                .filter((o) => o.hasOffer)
-                .map((o) => ({
-                  offerNamespace: o.namespace,
-                  offerId: o.id,
-                  productName: game.title,
-                  productSlug: pageSlug,
-                }));
-            }
-            // Newer catalog lookup strategy (Bloons TD6)
-            offerId = mappingResp.offerId;
-            namespace = mappingResp.namespace;
+        if (pageSlug && productSlug) {
+          const mappingResp = await this.getPageSlugMapping(pageSlug);
+          if (typeof mappingResp === 'string') {
+            // Older CMS product lookup strategy
+            pageSlug = mappingResp;
+            const productOffers = await this.getCmsProduct(pageSlug, offerType);
+            return productOffers
+              .filter((o) => o.hasOffer)
+              .map((o) => ({
+                offerNamespace: o.namespace,
+                offerId: o.id,
+                productName: game.title,
+                productSlug: pageSlug,
+              }));
           }
-          return [
-            {
-              offerNamespace: namespace,
-              offerId,
-              productName: game.title,
-              productSlug: pageSlug,
-            },
-          ];
-        }),
-      )
-    ).flat();
-    return allProductOffers;
+          // Newer catalog lookup strategy (Bloons TD6)
+          offerId = mappingResp.offerId;
+          namespace = mappingResp.namespace;
+        }
+        return [
+          {
+            offerNamespace: namespace,
+            offerId,
+            productName: game.title,
+            productSlug: pageSlug,
+          },
+        ];
+      }),
+    );
+    return nestedProductOffers.flat();
   }
 
   async getPageSlugMapping(pageSlug: string): Promise<PageSlugMappingResult | string> {
@@ -362,27 +366,26 @@ export default class PuppetFreeGames extends PuppetBase {
   }
 
   async getAllFreeGames(): Promise<OfferInfo[]> {
-    await this.setupPage();
     let validFreeGames: OfferInfo[];
-    if (config.searchStrategy === SearchStrategy.WEEKLY) {
+    if (config.searchStrategy === 'weekly') {
       validFreeGames = await this.getWeeklyFreeGames();
-    } else if (config.searchStrategy === SearchStrategy.PROMOTION) {
+    } else if (config.searchStrategy === 'promotion') {
       validFreeGames = await this.getCatalogFreeGames();
     } else {
       this.L.info('searchStrategy is `all`: searching for weekly and promotional games');
-      let weeklyFreeGames: OfferInfo[] | null = null;
-      let catalogFreeGames: OfferInfo[] | null = null;
+      let weeklyFreeGames: OfferInfo[] | undefined;
+      let catalogFreeGames: OfferInfo[] | undefined;
       try {
         weeklyFreeGames = await this.getWeeklyFreeGames();
-      } catch (err) {
-        this.L.warn(err, 'Failed to lookup weekly free games');
+      } catch (error) {
+        this.L.warn(error, 'Failed to lookup weekly free games');
       }
       try {
         catalogFreeGames = await this.getCatalogFreeGames();
-      } catch (err) {
-        this.L.warn(err, 'Failed to lookup catalog free games');
+      } catch (error) {
+        this.L.warn(error, 'Failed to lookup catalog free games');
       }
-      if (weeklyFreeGames === null && catalogFreeGames === null) {
+      if (weeklyFreeGames === undefined && catalogFreeGames === undefined) {
         throw new Error('Both free game API lookups failed');
       }
       validFreeGames = [...(weeklyFreeGames ?? []), ...(catalogFreeGames ?? [])];
@@ -393,13 +396,12 @@ export default class PuppetFreeGames extends PuppetBase {
       );
     }
     // Get true offerIds for weekly offers, and use offer data to filter by country restrictions for catalog offers
-    validFreeGames = (
-      await Promise.all(
-        validFreeGames.map(async (offer) =>
-          this.validateOffer(offer.offerId, offer.offerNamespace),
-        ),
-      )
-    ).filter((offer): offer is OfferInfo => offer !== undefined);
+    const unvalidatedFreeGames = await Promise.all(
+      validFreeGames.map(async (offer) => this.validateOffer(offer.offerId, offer.offerNamespace)),
+    );
+    validFreeGames = unvalidatedFreeGames.filter(
+      (offer): offer is OfferInfo => offer !== undefined,
+    );
     // TODO: Potential dupes here?
     this.L.info(
       { availableGames: validFreeGames.map((game) => game.productName) },
@@ -410,7 +412,7 @@ export default class PuppetFreeGames extends PuppetBase {
       { purchasableGames: purchasableGames.map((game) => game.productName) },
       'Unpurchased free games',
     );
-    this.teardownPage();
+    await this.teardownPage();
     return purchasableGames;
   }
 }

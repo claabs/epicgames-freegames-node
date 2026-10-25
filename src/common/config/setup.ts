@@ -1,15 +1,16 @@
 import path from 'node:path';
 
-import { instanceToPlain, plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
-import cronParser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 import 'dotenv/config';
 import fs from 'fs-extra';
 import json5 from 'json5';
 import { pino } from 'pino';
-import 'reflect-metadata';
 
-import { AppConfig, CONFIG_DIR } from './classes.js';
+import { appConfigSchema, CONFIG_DIR } from './zod.ts';
+
+import type z from 'zod';
+
+import type { AppConfig, AppConfigInput } from './zod.ts';
 
 // Declare pino logger as importing would cause dependency cycle
 const L = pino({
@@ -45,43 +46,66 @@ export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
   : 'config';
 
 const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}${ext}`));
-const configPath = (
-  await Promise.all(configPaths.map(async (p) => ((await fs.exists(p)) ? p : undefined)))
-).find(Boolean);
-// eslint-disable-next-line import-x/no-mutable-exports
-let config: AppConfig;
-if (!configPath) {
-  L.warn('No config file detected');
-  const newConfigPath = path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.json`);
-  config = new AppConfig();
+const existingPaths = await Promise.all(
+  configPaths.map(async (p) => ((await fs.exists(p)) ? p : undefined)),
+);
+const configPath = existingPaths.find(Boolean);
+
+const defaultConfig: AppConfigInput = {
+  accounts: [{ email: 'youremailhere' }],
+  notifiers: [
+    {
+      type: 'discord',
+      webhookUrl: 'configure a notifier',
+    },
+  ],
+};
+
+let configParseResult: z.ZodSafeParseResult<AppConfig>;
+
+if (configPath) {
+  L.debug({ configPath }, 'Reading existing config file');
+  let configRaw: string;
   try {
-    L.debug({ newConfigPath }, 'Creating new config file');
-    await fs.writeJSON(newConfigPath, instanceToPlain(config), { spaces: 2 });
-    L.info({ newConfigPath }, 'Wrote new default config file');
-  } catch (err) {
-    L.debug(err);
-    L.info('Not allowed to create new config. Continuing...');
+    configRaw = await fs.readFile(configPath, 'utf8');
+  } catch (error) {
+    L.error(error, `Unable to read ${configPath}. Fix the permissions and restart.`);
+    throw error;
   }
+  const parsedConfig = json5.parse<unknown>(configRaw);
+  configParseResult = appConfigSchema.safeParse(parsedConfig);
 } else {
-  L.debug({ configPath });
-  const parsedConfig = json5.parse(await fs.readFile(configPath, 'utf8'));
-  config = plainToInstance(AppConfig, parsedConfig);
+  L.info('No config file detected, checking if valid with environment variables');
+  configParseResult = appConfigSchema.safeParse({});
+
+  if (!configParseResult.success) {
+    L.warn(
+      { errors: configParseResult.error },
+      'Config invalid with only environment variables. Creating default config for user convenience',
+    );
+
+    const newConfigPath = path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}.json`);
+    try {
+      L.debug({ newConfigPath }, 'Creating new config file');
+      await fs.writeJSON(newConfigPath, defaultConfig, { spaces: 2 });
+      L.info({ newConfigPath }, 'Wrote new default config file');
+    } catch (error) {
+      L.warn({ err: error }, 'Not allowed to create new config.');
+    }
+    L.warn(`New config generated at ${newConfigPath}. Populate it with your details and restart.`);
+  }
 }
 
-const errors = await validate(config, {
-  validationError: {
-    target: false,
-  },
-});
-if (errors.length > 0) {
-  L.error({ errors }, 'Validation error(s)');
+if (configParseResult.error) {
+  L.error({ err: configParseResult.error }, 'Config validation error(s)');
   throw new Error('Invalid config');
 }
 
-L.debug({ config: instanceToPlain(config) });
+const config = configParseResult.data;
+L.debug({ config });
 
 const { cronSchedule } = config;
-const cronExpression = cronParser.parseExpression(cronSchedule);
+const cronExpression = CronExpressionParser.parse(cronSchedule);
 const prevDate = cronExpression.prev();
 const nextDate = cronExpression.next();
 const cronIntervalMs = nextDate.getTime() - prevDate.getTime();
@@ -94,3 +118,7 @@ if (cronIntervalMs > intervalMinimumMs) {
 }
 
 export { config };
+
+export function getMsUntilNextRun(): number {
+  return CronExpressionParser.parse(config.cronSchedule).next().getTime() - Date.now();
+}

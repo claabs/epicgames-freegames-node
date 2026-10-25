@@ -1,23 +1,20 @@
 import path from 'node:path';
 
 import { ensureDir } from 'fs-extra/esm';
+import { decodeJwt } from 'jose';
 
-import { config } from '../common/config/index.js';
-import { STORE_CART_EN } from '../common/constants.js';
-import { getCookiesRaw, setPuppeteerCookies, userHasValidCookie } from '../common/cookie.js';
-import { getAccountAuth } from '../common/device-auths.js';
-import logger from '../common/logger.js';
-import {
-  getDevtoolsUrl,
-  safeNewPage,
-  toughCookieFileStoreToPuppeteerCookie,
-} from '../common/puppeteer.js';
+import { config } from '../common/config/index.ts';
+import { STORE_CART_EN, STORE_HOMEPAGE } from '../common/constants.ts';
+import logger from '../common/logger.ts';
+import { safeNewPage } from '../common/playwright.ts';
 
+import type { BrowserContext, Cookie, Page } from 'patchright';
 import type { Logger } from 'pino';
-import type { Browser, Cookie, Page } from 'puppeteer';
+
+import type { AuthTokenResponse } from '../common/device-auths.ts';
 
 export interface PuppetBaseProps {
-  browser: Browser;
+  browser: BrowserContext;
   email: string;
 }
 
@@ -32,7 +29,7 @@ export default class PuppetBase {
 
   protected email: string;
 
-  protected browser: Browser;
+  protected browser: BrowserContext;
 
   protected page?: Page;
 
@@ -51,19 +48,19 @@ export default class PuppetBase {
     throwForError = false,
   ): Promise<T> {
     if (!this.page) {
-      this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+      this.page = await safeNewPage(this.browser, this.L);
+      await this.page.goto(STORE_CART_EN);
     }
 
     let fetchUrl: URL;
     if (params) {
       const searchParams = new URLSearchParams(params);
-      fetchUrl = new URL(`${url}?${searchParams}`);
+      fetchUrl = new URL(`${url}?${searchParams.toString()}`);
     } else {
       fetchUrl = new URL(url);
     }
-    const resp = await this.page.evaluate(
-      async (inFetchUrl: string, inMethod: string) => {
+    const resp = await this.page.evaluate<T, [string, string]>(
+      async ([inFetchUrl, inMethod]) => {
         const response = await fetch(inFetchUrl, {
           method: inMethod,
         });
@@ -71,8 +68,7 @@ export default class PuppetBase {
         if (!response.ok && throwForError) throw new Error(JSON.stringify(json));
         return json;
       },
-      fetchUrl.toString(),
-      method,
+      [fetchUrl.toString(), method],
     );
     return resp;
   }
@@ -83,14 +79,17 @@ export default class PuppetBase {
     headers?: Record<string, string>,
   ): Promise<RawRequestResponse> {
     if (!this.page) {
-      this.page = await this.setupPage();
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' });
+      this.page = await safeNewPage(this.browser, this.L);
+      await this.page.goto(STORE_CART_EN);
     }
 
     const fetchUrl = new URL(url);
 
-    const resp = await this.page.evaluate(
-      async (inFetchUrl: string, inMethod: string, inHeaders) => {
+    const resp = await this.page.evaluate<
+      RawRequestResponse,
+      [string, string, Record<string, string> | undefined]
+    >(
+      async ([inFetchUrl, inMethod, inHeaders]) => {
         const response = await fetch(inFetchUrl, {
           method: inMethod,
           headers: inHeaders,
@@ -98,60 +97,71 @@ export default class PuppetBase {
         const body = await response.text();
         return { headers: Object.fromEntries(response.headers), body, status: response.status };
       },
-      fetchUrl.toString(),
-      method,
-      headers,
+      [fetchUrl.toString(), method, headers],
     );
     return resp;
   }
 
-  protected async setupPage(): Promise<Page> {
-    // Get cookies or latest access_token cookies
-    let puppeteerCookies: Cookie[] = [];
-    if (await userHasValidCookie(this.email, 'EPIC_BEARER_TOKEN')) {
-      this.L.debug('Setting auth from bearer token cookies');
-      const userCookies = await getCookiesRaw(this.email);
-      puppeteerCookies = toughCookieFileStoreToPuppeteerCookie(userCookies);
-    }
-    const deviceAuth = await getAccountAuth(this.email);
-    if (deviceAuth) {
-      this.L.debug({ deviceAuth }, 'Setting auth from device auth');
-      const bearerCookies: Cookie[] = [
-        '.epicgames.com',
-        '.twinmotion.com',
-        '.fortnite.com',
-        '.unrealengine.com',
-      ].map((domain) => {
-        const name = 'EPIC_BEARER_TOKEN';
-        const value = deviceAuth.access_token;
-        const size = name.length + value.length;
-        return {
-          name,
-          value,
-          expires: new Date(deviceAuth.expires_at).getTime() / 1000,
-          domain,
-          path: '/',
-          secure: true,
-          httpOnly: true,
-          sameSite: 'Lax',
-          session: false,
-          size,
-        };
-      });
-      puppeteerCookies.push(...bearerCookies);
-    } else {
-      this.L.warn('No device auth found, auth issues may occur');
-    }
-    this.L.debug('Logging in with puppeteer');
-    this.page = await safeNewPage(this.browser, this.L);
+  public async checkCookie(): Promise<boolean> {
+    const cookies = await this.browser.cookies(STORE_HOMEPAGE);
+    const eg1Cookie = cookies.find((c) => c.name === 'EPIC_EG1');
+    if (!eg1Cookie) return false;
+    this.L.trace({ eg1Cookie }, 'EG1 cookie found');
+    const jwtValue = eg1Cookie.value.split('~', 2)[1];
+    if (!jwtValue) return false;
     try {
-      this.L.trace(getDevtoolsUrl(this.page));
-      await this.browser.setCookie(...puppeteerCookies);
-      await this.page.goto(STORE_CART_EN, { waitUntil: 'networkidle0' }); // Get EG1 cookie
-      return this.page;
-    } catch (err) {
-      await this.handlePageError(err);
-      throw err;
+      const { exp } = decodeJwt(jwtValue);
+      if (!exp) return false;
+      if (new Date(exp * 1000) <= new Date()) {
+        this.L.debug('EG1 cookie is expired');
+        return false;
+      }
+      return true;
+    } catch {
+      this.L.warn('invalid EG1 JWT');
+    }
+    return false;
+  }
+
+  public async setupCookies(deviceAuth?: AuthTokenResponse): Promise<void> {
+    this.L.debug('Logging in with Playwright');
+    try {
+      if (deviceAuth) {
+        this.L.debug({ deviceAuth }, 'Setting auth from device auth');
+        const bearerCookies: Cookie[] = [
+          '.epicgames.com',
+          '.twinmotion.com',
+          '.fortnite.com',
+          '.unrealengine.com',
+        ].map((domain) => {
+          const name = 'EPIC_BEARER_TOKEN';
+
+          const value = deviceAuth.access_token;
+          const size = name.length + value.length;
+          return {
+            name,
+            value,
+
+            expires: new Date(deviceAuth.expires_at).getTime() / 1000,
+            domain,
+            path: '/',
+            secure: true,
+            httpOnly: true,
+            sameSite: 'Lax',
+            session: false,
+            size,
+          };
+        });
+        await this.browser.addCookies(bearerCookies);
+      } else {
+        this.L.debug('Using browser cookies as auth instead of device auth');
+      }
+      this.page = await safeNewPage(this.browser, this.L);
+      this.L.debug('Going to page: STORE_CART_EN');
+      await this.page.goto(STORE_CART_EN); // Get EG1 cookie;
+    } catch (error) {
+      await this.handlePageError(error);
+      throw error;
     }
   }
 
@@ -159,13 +169,11 @@ export default class PuppetBase {
     if (!this.page) return;
     try {
       this.L.trace('Saving new cookies');
-      const currentCookies = await this.browser.cookies();
-      await setPuppeteerCookies(this.email, currentCookies);
-      this.L.trace('Saved cookies, closing browser');
-      // await this.page.close(); // Getting `Protocol error (Target.createTarget): Target closed` with this for some reason
+      this.L.trace('Closing browser');
+      await this.page.close();
       this.page = undefined;
-    } catch (err) {
-      await this.handlePageError(err);
+    } catch (error) {
+      await this.handlePageError(error);
     }
   }
 
