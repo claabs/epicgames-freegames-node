@@ -25,7 +25,7 @@ export class TelegramNotifier extends NotifierService {
 
     const message = `epicgames-freegames-node\nreason: ${reason},\naccount: ${account}\nurl: [Click here](${url})`;
     // https://stackoverflow.com/a/60145565/5037239
-    const escapedMessage = message.replace(
+    const escapedMessage = message.replaceAll(
       /(\[[^\][]*]\(http[^()]*\))|[_*[\]()~>#+=|{}.!-]/gi,
       (x: string, y: string): string => y || `\\${x}`,
     );
@@ -43,10 +43,10 @@ export class TelegramNotifier extends NotifierService {
       await axios.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, jsonPayload, {
         responseType: 'json',
       });
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error({ chatId: this.config.chatId }, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

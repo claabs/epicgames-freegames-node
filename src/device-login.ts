@@ -83,7 +83,7 @@ const getUniqueUrl = (): { reqId: string; url: string } => {
 
 const pendingRedirects = new Map<string, RequestHandler>();
 
-serverRoute.get('/:reqId', async (req, res, next) => {
+serverRoute.get('/:reqId', (req, res, next) => {
   const { reqId } = req.params;
   if (reqId) {
     const reqHandler = pendingRedirects.get(reqId);
@@ -160,13 +160,7 @@ export class DeviceLogin {
   }
 
   private async notify(reason: NotificationReason, inUrl: string): Promise<void> {
-    let url: string;
-
-    if (config.webPortalConfig?.localtunnel) {
-      url = await getLocaltunnelUrl(inUrl);
-    } else {
-      url = inUrl;
-    }
+    const url = config.webPortalConfig?.localtunnel ? await getLocaltunnelUrl(inUrl) : inUrl;
 
     this.L.info({ reason, url }, 'Dispatching notification');
     await sendNotification(this.user, reason, url);
@@ -197,20 +191,29 @@ export class DeviceLogin {
         this.L.info('Successful login, saving auth token');
         await setAccountAuth(this.user, deviceCodeResponse);
         resolve(deviceCodeResponse);
-      } catch (err) {
-        reject(err);
+      } catch (error) {
+        if (error instanceof Error) {
+          reject(error);
+        } else {
+          reject(new Error('Unknown error occurred'));
+        }
       }
     };
 
   private onTestVisit =
-    (resolve: (value: unknown) => void, reject: (reason?: Error) => void): RequestHandler =>
-    async (_req, res) => {
+    (resolve: (value: undefined) => void, reject: (reason?: Error) => void): RequestHandler =>
+    (_req, res) => {
       try {
         res.redirect('https://example.com/');
         this.L.info('Successful tested redirect');
+        // eslint-disable-next-line unicorn/no-useless-undefined
         resolve(undefined);
-      } catch (err) {
-        reject(err);
+      } catch (error) {
+        if (error instanceof Error) {
+          reject(error);
+        } else {
+          reject(new Error('Unknown error occurred'));
+        }
       }
     };
 
@@ -243,8 +246,8 @@ export class DeviceLogin {
       this.L.debug({ authResp: resp.data }, 'Refresh auth token response');
       await setAccountAuth(this.user, resp.data);
       return resp.data;
-    } catch (err) {
-      this.L.warn({ err }, 'Failed to refresh auth, getting it fresh');
+    } catch (error) {
+      this.L.warn({ err: error }, 'Failed to refresh auth, getting it fresh');
     }
     return undefined;
   }
@@ -309,14 +312,15 @@ export class DeviceLogin {
       const resp = await axios.request<AuthTokenResponse>(reqConfig);
       this.L.debug({ authResp: resp.data }, 'Auth token response');
       return resp.data;
-    } catch (err) {
-      if (!isAxiosError<ClientCredentialsError>(err)) {
+    } catch (error) {
+      if (!isAxiosError<ClientCredentialsError>(error)) {
         throw new Error('Unable to get device authorization token');
       }
       if (
-        err.response?.data.errorCode !== 'errors.com.epicgames.account.oauth.authorization_pending'
+        error.response?.data.errorCode !==
+        'errors.com.epicgames.account.oauth.authorization_pending'
       ) {
-        this.L.error({ err, response: err.response?.data });
+        this.L.error({ err: error, response: error.response?.data });
         throw new Error('Unable to get device authorization token');
       }
       await new Promise((resolve) => {

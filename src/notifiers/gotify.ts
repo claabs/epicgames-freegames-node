@@ -43,10 +43,10 @@ export class GotifyNotifier extends NotifierService {
       await axios.post(`${this.config.apiUrl}/message?token=${this.config.token}`, jsonPayload, {
         responseType: 'json',
       });
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(this.config, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

@@ -32,13 +32,13 @@ export class WebhookNotifier extends NotifierService {
           headers: this.config.headers,
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { webhookConfig: this.config },
         'Error sending webhook message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

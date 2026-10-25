@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import path from 'node:path';
 
 import z from 'zod';
 
@@ -133,7 +133,7 @@ export const gotifyConfigSchema = z
     type: z.literal('gotify').meta({ examples: ['gotify'] }),
     apiUrl: z.url().meta({
       description: 'The Gotify server host URL. Env: GOTIFY_API_URL',
-      examples: ['http://gotify.net'],
+      examples: ['https://gotify.net'],
     }),
     token: z
       .string()
@@ -220,7 +220,7 @@ export const emailConfigSchema = z
       .number()
       .int()
       .min(0)
-      .max(65535)
+      .max(65_535)
       .meta({
         description: 'The outgoing SMTP port (SSL or TLS, see secure). Env: SMTP_PORT',
         examples: [587],
@@ -411,6 +411,11 @@ export const accountConfigSchema = z
     title: 'Account Config',
   });
 
+interface RoughInputSchema {
+  notifiers: unknown[];
+  [key: string]: unknown;
+}
+
 export const appConfigSchema = z.preprocess(
   (input) => {
     // If undefined, default to an empty object so defaults and env vars apply
@@ -421,13 +426,13 @@ export const appConfigSchema = z.preprocess(
       return input;
     }
 
-    const config = input as Record<string, unknown>;
+    const config = input as RoughInputSchema;
 
     config.notifiers = Array.isArray(config.notifiers) ? [...config.notifiers] : [];
 
     const addNotifierIfMissing = (notifierObj: AnyNotifierConfigInput) => {
       const hasType = (config.notifiers as AnyNotifierConfigInput[]).some(
-        (n) => n?.type === notifierObj.type,
+        (n) => n.type === notifierObj.type,
       );
       if (!hasType) {
         (config.notifiers as AnyNotifierConfigInput[]).push(notifierObj);
@@ -463,7 +468,7 @@ export const appConfigSchema = z.preprocess(
       addNotifierIfMissing({
         type: 'email',
         smtpHost: SMTP_HOST,
-        smtpPort: parseInt(SMTP_PORT, 10),
+        smtpPort: Number.parseInt(SMTP_PORT, 10),
         emailSenderAddress: EMAIL_SENDER_ADDRESS,
         emailSenderName: EMAIL_SENDER_NAME,
         emailRecipientAddress: EMAIL_RECIPIENT_ADDRESS,
@@ -501,7 +506,7 @@ export const appConfigSchema = z.preprocess(
         type: 'telegram',
         token: TELEGRAM_TOKEN,
         chatId: TELEGRAM_CHAT_ID,
-        topic: TELEGRAM_TOPIC ? parseInt(TELEGRAM_TOPIC, 10) : undefined,
+        topic: TELEGRAM_TOPIC ? Number.parseInt(TELEGRAM_TOPIC, 10) : undefined,
         apiUrl: TELEGRAM_API_URL,
       });
     }
@@ -522,7 +527,7 @@ export const appConfigSchema = z.preprocess(
         type: 'gotify',
         apiUrl: GOTIFY_API_URL,
         token: GOTIFY_TOKEN,
-        priority: GOTIFY_PRIORITY ? parseInt(GOTIFY_PRIORITY, 10) : undefined,
+        priority: GOTIFY_PRIORITY ? Number.parseInt(GOTIFY_PRIORITY, 10) : undefined,
       });
     }
 
@@ -560,7 +565,9 @@ export const appConfigSchema = z.preprocess(
         instance: HOMEASSISTANT_INSTANCE,
         token: HOMEASSISTANT_LONG_LIVED_ACCESS_TOKEN,
         notifyservice: HOMEASSISTANT_NOTIFYSERVICE,
-        customData: HOMEASSISTANT_CUSTOM_DATA ? JSON.parse(HOMEASSISTANT_CUSTOM_DATA) : undefined,
+        customData: HOMEASSISTANT_CUSTOM_DATA
+          ? (JSON.parse(HOMEASSISTANT_CUSTOM_DATA) as Record<string, string | number | boolean>)
+          : undefined,
       });
     }
 
@@ -580,23 +587,23 @@ export const appConfigSchema = z.preprocess(
       addNotifierIfMissing({
         type: 'webhook',
         url: WEBHOOK_URL,
-        headers: WEBHOOK_HEADERS ? JSON.parse(WEBHOOK_HEADERS) : undefined,
+        headers: WEBHOOK_HEADERS
+          ? (JSON.parse(WEBHOOK_HEADERS) as Record<string, string>)
+          : undefined,
       });
     }
 
     const { BASE_URL, SERVER_PORT } = process.env;
     if (BASE_URL) {
-      (config.webPortalConfig as z.input<typeof webPortalConfigSchema>) ??= {};
+      (config.webPortalConfig as z.input<typeof webPortalConfigSchema> | undefined) ??= {};
       (config.webPortalConfig as z.input<typeof webPortalConfigSchema>).baseUrl = BASE_URL;
     }
     if (SERVER_PORT) {
-      (config.webPortalConfig as z.input<typeof webPortalConfigSchema>) ??= {};
+      (config.webPortalConfig as z.input<typeof webPortalConfigSchema> | undefined) ??= {};
       (config.webPortalConfig as z.input<typeof webPortalConfigSchema>).listenOpts ??= {};
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      (config.webPortalConfig as z.input<typeof webPortalConfigSchema>).listenOpts!.port = parseInt(
-        SERVER_PORT,
-        10,
-      );
+      (config.webPortalConfig as z.input<typeof webPortalConfigSchema>).listenOpts!.port =
+        Number.parseInt(SERVER_PORT, 10);
 
       // Use environment variables to fill blacklisted games list if present
       const { BLACKLISTED_GAMES } = process.env;
@@ -628,7 +635,9 @@ export const appConfigSchema = z.preprocess(
 
       searchStrategy: z
         .enum(['weekly', 'promotion', 'all'] as const)
-        .prefault((process.env.SEARCH_STRATEGY as never) ?? 'all')
+        .prefault(
+          (process.env.SEARCH_STRATEGY as 'weekly' | 'promotion' | 'all' | undefined) ?? 'all',
+        )
         .meta({
           description: `The search criteria for finding free games. 
 "weekly": Redeem only the games defined as a weekly free game at https://www.epicgames.com/store/free-games. This uses a different set of APIs from the other search strategies, so it may work in case finding games breaks. Generally is less stable than "promotion" due to a more complex lookup method.
@@ -675,7 +684,7 @@ Env: SEARCH_STRATEGY`,
         .number()
         .int()
         .min(0)
-        .prefault(process.env.INTERVAL_TIME ? parseInt(process.env.INTERVAL_TIME, 10) : 60)
+        .prefault(process.env.INTERVAL_TIME ? Number.parseInt(process.env.INTERVAL_TIME, 10) : 60)
         .meta({
           description:
             'The delay interval between runs of each account in seconds. (Only effective when multiple accounts are configured). Env: INTERVAL_TIME',
@@ -688,7 +697,9 @@ Env: SEARCH_STRATEGY`,
         .int()
         .min(1)
         .prefault(
-          process.env.ACCOUNT_CONCURRENCY ? parseInt(process.env.ACCOUNT_CONCURRENCY, 10) : 3,
+          process.env.ACCOUNT_CONCURRENCY
+            ? Number.parseInt(process.env.ACCOUNT_CONCURRENCY, 10)
+            : 3,
         )
         .meta({
           description:
@@ -699,7 +710,10 @@ Env: SEARCH_STRATEGY`,
 
       logLevel: z
         .enum(['silent', 'error', 'warn', 'info', 'debug', 'trace'] as const)
-        .prefault((process.env.LOG_LEVEL as never) ?? 'info')
+        .prefault(
+          (process.env.LOG_LEVEL as
+            'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace' | undefined) ?? 'info',
+        )
         .meta({
           description:
             'Log level in lower case. Can be [silent, error, warn, info, debug, trace]. Env: LOG_LEVEL',
@@ -749,7 +763,7 @@ Env: SEARCH_STRATEGY`,
         .min(1)
         .prefault(
           process.env.BROWSER_LAUNCH_TIMEOUT
-            ? parseInt(process.env.BROWSER_LAUNCH_TIMEOUT, 10)
+            ? Number.parseInt(process.env.BROWSER_LAUNCH_TIMEOUT, 10)
             : 30,
         )
         .meta({
@@ -765,7 +779,7 @@ Env: SEARCH_STRATEGY`,
         .min(0)
         .prefault(
           process.env.BROWSER_LAUNCH_RETRY_ATTEMPTS
-            ? parseInt(process.env.BROWSER_LAUNCH_RETRY_ATTEMPTS, 10)
+            ? Number.parseInt(process.env.BROWSER_LAUNCH_RETRY_ATTEMPTS, 10)
             : 5,
         )
         .meta({
@@ -781,14 +795,14 @@ Env: SEARCH_STRATEGY`,
         .min(0)
         .prefault(
           process.env.BROWSER_NAVIGATION_TIMEOUT
-            ? parseInt(process.env.BROWSER_NAVIGATION_TIMEOUT, 10)
-            : 30000,
+            ? Number.parseInt(process.env.BROWSER_NAVIGATION_TIMEOUT, 10)
+            : 30_000,
         )
         .meta({
           description:
             'How long in milliseconds the browser navigation will wait before timing out. 0 disables timeout (not recommended). See: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout Env: BROWSER_NAVIGATION_TIMEOUT',
-          examples: [120000],
-          default: 30000,
+          examples: [120_000],
+          default: 30_000,
         }),
 
       countryCode: z
@@ -829,7 +843,7 @@ Env: SEARCH_STRATEGY`,
         .min(10)
         .prefault(
           process.env.DEVICE_AUTH_POLL_RATE_SECONDS
-            ? parseInt(process.env.DEVICE_AUTH_POLL_RATE_SECONDS, 10)
+            ? Number.parseInt(process.env.DEVICE_AUTH_POLL_RATE_SECONDS, 10)
             : 10,
         )
         .meta({
@@ -841,7 +855,7 @@ Env: SEARCH_STRATEGY`,
 
       errorsDir: z
         .string()
-        .prefault(process.env.ERRORS_DIR ?? join(CONFIG_DIR, 'errors'))
+        .prefault(process.env.ERRORS_DIR ?? path.join(CONFIG_DIR, 'errors'))
         .meta({
           description:
             'The full path where the browser automation error screenshots will be output. Env: ERRORS_DIR',
@@ -852,7 +866,7 @@ Env: SEARCH_STRATEGY`,
 
       usersDir: z
         .string()
-        .prefault(process.env.USERS_DIR ?? join(CONFIG_DIR, 'users'))
+        .prefault(process.env.USERS_DIR ?? path.join(CONFIG_DIR, 'users'))
         .meta({
           description:
             'The full path where the browser automation error screenshots will be output. Env: USERS_DIR',

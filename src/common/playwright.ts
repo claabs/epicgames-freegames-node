@@ -15,8 +15,6 @@ import { config } from './config/index.ts';
 import type { BrowserContext, BrowserType, Page } from 'patchright';
 import type { Logger } from 'pino';
 
-export default chromium;
-
 const getProxyEnvironmentVariable = (name: string): string | undefined =>
   [process.env[name.toLowerCase()], process.env[name.toUpperCase()]].find(Boolean);
 
@@ -46,19 +44,21 @@ const retryFunction = async <T>(
   const MAX_ATTEMPTS = config.browserLaunchRetryAttempts;
   try {
     return await pTimeout(f(), { milliseconds: TIMEOUT });
-  } catch (err) {
-    if (!(err instanceof TimeoutError)) {
-      throw err;
+  } catch (error) {
+    if (!(error instanceof TimeoutError)) {
+      throw error;
     }
     if (attempts >= MAX_ATTEMPTS) {
       L.error(
         `If not already, consider using the Debian (:debian) version of the image. More: https://github.com/claabs/epicgames-freegames-node#docker-configuration`,
       );
-      throw new Error(`Could not do ${outputName} after ${MAX_ATTEMPTS + 1} failed attempts.`);
+      throw new Error(
+        `Could not do ${outputName} after ${(MAX_ATTEMPTS + 1).toFixed(0)} failed attempts.`,
+      );
     }
     L.warn(
       { attempts, MAX_ATTEMPTS },
-      `${outputName} did not work after ${TIMEOUT}ms. Trying again.`,
+      `${outputName} did not work after ${TIMEOUT.toFixed(0)}ms. Trying again.`,
     );
     return retryFunction(f, L, outputName, attempts + 1);
   }
@@ -80,13 +80,13 @@ export const killBrowserProcesses = async (L: Logger): Promise<void> => {
     })
     .filter((name): name is string => typeof name === 'string');
   L.debug({ processNames }, 'Killing dangling browser processes');
-  browserProcesses.forEach((p) => {
+  for (const p of browserProcesses) {
     try {
       process.kill(p.pid);
-    } catch (err) {
-      L.warn({ pid: p.pid, name: p.name, err }, 'Unable to kill process');
+    } catch (error) {
+      L.warn({ pid: p.pid, name: p.name, err: error }, 'Unable to kill process');
     }
-  });
+  }
 };
 
 /**
@@ -109,12 +109,12 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
   try {
     await ensureDir(userDir);
     await access(userDir, fs.constants.W_OK);
-  } catch (err) {
+  } catch (error) {
     L.error(
-      err,
+      error,
       `Unable to write to ${userDir} to save browser profiles. Fix the permissions and restart.`,
     );
-    throw err;
+    throw error;
   }
 
   await fsx.remove(path.join(userDir, 'SingletonCookie'));
@@ -123,7 +123,7 @@ export const safeLaunchBrowser = async (L: Logger, account: string): Promise<Bro
   const launchArgs: Parameters<BrowserType['launchPersistentContext']>[1] = {
     channel: os.arch() === 'arm64' ? 'chromium' : 'chrome',
     headless: false,
-    viewport: null,
+    viewport: undefined,
     ...getPlaywrightProxyConfig(),
   };
   return retryFunction(

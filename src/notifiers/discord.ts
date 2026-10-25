@@ -53,10 +53,10 @@ export class DiscordNotifier extends NotifierService {
           responseType: 'json',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error({ webhookUrl: this.config.webhookUrl }, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

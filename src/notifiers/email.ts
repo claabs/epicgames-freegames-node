@@ -50,9 +50,9 @@ export class EmailNotifier extends NotifierService {
         },
         'Email sent.',
       );
-    } catch (err) {
+    } catch (error) {
       L.error({ emailConfig: this.config }, 'Error sending email. Please check your configuration');
-      throw err;
+      throw error;
     }
   }
 }

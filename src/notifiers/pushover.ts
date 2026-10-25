@@ -32,13 +32,13 @@ export class PushoverNotifier extends NotifierService {
           responseType: 'json',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { pushoverConfig: this.config },
         'Error sending pushover message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

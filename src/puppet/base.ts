@@ -55,7 +55,7 @@ export default class PuppetBase {
     let fetchUrl: URL;
     if (params) {
       const searchParams = new URLSearchParams(params);
-      fetchUrl = new URL(`${url}?${searchParams}`);
+      fetchUrl = new URL(`${url}?${searchParams.toString()}`);
     } else {
       fetchUrl = new URL(url);
     }
@@ -107,7 +107,7 @@ export default class PuppetBase {
     const eg1Cookie = cookies.find((c) => c.name === 'EPIC_EG1');
     if (!eg1Cookie) return false;
     this.L.trace({ eg1Cookie }, 'EG1 cookie found');
-    const jwtValue = eg1Cookie.value.split('~')[1];
+    const jwtValue = eg1Cookie.value.split('~', 2)[1];
     if (!jwtValue) return false;
     try {
       const { exp } = decodeJwt(jwtValue);
@@ -152,16 +152,16 @@ export default class PuppetBase {
             size,
           };
         });
-        this.browser.addCookies(bearerCookies);
+        await this.browser.addCookies(bearerCookies);
       } else {
         this.L.debug('Using browser cookies as auth instead of device auth');
       }
       this.page = await safeNewPage(this.browser, this.L);
       this.L.debug('Going to page: STORE_CART_EN');
       await this.page.goto(STORE_CART_EN); // Get EG1 cookie;
-    } catch (err) {
-      await this.handlePageError(err);
-      throw err;
+    } catch (error) {
+      await this.handlePageError(error);
+      throw error;
     }
   }
 
@@ -172,8 +172,8 @@ export default class PuppetBase {
       this.L.trace('Closing browser');
       await this.page.close();
       this.page = undefined;
-    } catch (err) {
-      await this.handlePageError(err);
+    } catch (error) {
+      await this.handlePageError(error);
     }
   }
 

@@ -34,13 +34,13 @@ export class NtfyNotifier extends NotifierService {
           responseType: 'text',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { NtfyConfig: this.config },
         'Error sending Ntfy message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

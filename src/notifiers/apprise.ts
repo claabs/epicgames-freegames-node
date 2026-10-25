@@ -40,10 +40,10 @@ url: ${url}`,
       await axios.post(`${this.config.apiUrl}/notify`, jsonPayload, {
         responseType: 'text',
       });
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error({ urls: this.config.urls }, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

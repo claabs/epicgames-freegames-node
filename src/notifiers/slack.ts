@@ -29,13 +29,13 @@ export class SlackNotifier extends NotifierService {
           responseType: 'text',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { SlackConfig: this.config },
         'Error sending Slack message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

@@ -40,34 +40,45 @@ export async function sendNotification(
   }
   const notifiers = notifierConfigs.map((notifierConfig) => {
     switch (notifierConfig.type) {
-      case 'discord':
+      case 'discord': {
         return new DiscordNotifier(notifierConfig);
-      case 'pushover':
+      }
+      case 'pushover': {
         return new PushoverNotifier(notifierConfig);
-      case 'email':
+      }
+      case 'email': {
         return new EmailNotifier(notifierConfig);
-      case 'local':
+      }
+      case 'local': {
         return new LocalNotifier();
-      case 'telegram':
+      }
+      case 'telegram': {
         return new TelegramNotifier(notifierConfig);
-      case 'apprise':
+      }
+      case 'apprise': {
         return new AppriseNotifier(notifierConfig);
-      case 'gotify':
+      }
+      case 'gotify': {
         return new GotifyNotifier(notifierConfig);
-      case 'slack':
+      }
+      case 'slack': {
         return new SlackNotifier(notifierConfig);
-      case 'homeassistant':
+      }
+      case 'homeassistant': {
         return new HomeAssistantNotifier(notifierConfig);
-      case 'bark':
+      }
+      case 'bark': {
         return new BarkNotifier(notifierConfig);
-      case 'ntfy':
+      }
+      case 'ntfy': {
         return new NtfyNotifier(notifierConfig);
-      case 'webhook':
+      }
+      case 'webhook': {
         return new WebhookNotifier(notifierConfig);
-      default:
-        throw new Error(
-          `Unexpected notifier config: ${(notifierConfig as Record<string, string>).type}`,
-        );
+      }
+      default: {
+        throw new Error(`Unexpected notifier config type`);
+      }
     }
   });
 

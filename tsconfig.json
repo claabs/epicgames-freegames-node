@@ -12,7 +12,6 @@
     "noPropertyAccessFromIndexSignature": false,
     // Project requirements
     "strictPropertyInitialization": false,
-    "useUnknownInCatchVariables": false,
     // Output
     "noEmit": true,
   },

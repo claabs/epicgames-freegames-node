@@ -1,4 +1,5 @@
 /* eslint-disable n/no-process-exit */
+import { isAxiosError } from 'axios';
 import PQueue from 'p-queue';
 
 import { config } from './common/config/index.ts';
@@ -62,20 +63,20 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
     await browser.close();
     L.trace('Browser finished closing');
 
-    if (offers.length) {
-      L.debug(`Sending checkout link for ${offers.length} offer(s)`);
+    if (offers.length > 0) {
+      L.debug(`Sending checkout link for ${offers.length.toFixed(0)} offer(s)`);
       const checkoutUrl = generateCheckoutUrl(offers);
       L.info({ url: checkoutUrl }, 'Dispatching checkout notification');
       await sendNotification(account.email, 'PURCHASE', checkoutUrl);
     } else {
       L.info('No free games available');
     }
-  } catch (e) {
-    if (e.response) {
-      if (e.response.body) L.error(e.response.body);
-      else L.error(e.response);
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      if (error.response.data) L.error(error.response.data);
+      else L.error(error.response);
     }
-    L.error(e);
+    L.error(error);
     logVersionOnError();
   }
 }
@@ -100,15 +101,16 @@ export async function main(): Promise<void> {
     server.close();
     await killBrowserProcesses(logger);
     logger.info('Exiting successfully');
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(0); // For some reason, puppeteer will keep a zombie promise alive and stop Node from exiting
   }
 }
 
 try {
   await main();
-} catch (err) {
-  logger.error(err);
+} catch (error) {
+  logger.error(error);
   logVersionOnError();
   await killBrowserProcesses(logger);
-  process.exit(1);
+  throw error;
 }

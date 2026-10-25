@@ -30,10 +30,10 @@ const deviceAuthsFilename = path.join(CONFIG_DIR, `device-auths.json`);
 
 export async function getDeviceAuths(): Promise<DeviceAuthsFile | undefined> {
   try {
-    const deviceAuths: DeviceAuthsFile = await fsx.readJSON(deviceAuthsFilename, 'utf-8');
+    const deviceAuths = (await fsx.readJSON(deviceAuthsFilename, 'utf8')) as DeviceAuthsFile;
     return deviceAuths;
-  } catch (err) {
-    logger.trace(err.message);
+  } catch (error) {
+    logger.trace(error);
     return undefined;
   }
 }
@@ -44,7 +44,7 @@ export async function getAccountAuth(account: string): Promise<AuthTokenResponse
 }
 
 export async function writeDeviceAuths(deviceAuths: DeviceAuthsFile): Promise<void> {
-  await fsx.outputJSON(deviceAuthsFilename, deviceAuths, 'utf-8');
+  await fsx.outputJSON(deviceAuthsFilename, deviceAuths, 'utf8');
 }
 
 export async function setAccountAuth(

@@ -28,7 +28,7 @@ export class HomeAssistantNotifier extends NotifierService {
           data: {
             url,
             clickAction: url,
-            ...(this.config.customData ?? {}),
+            ...this.config.customData,
           },
         },
         {
@@ -38,13 +38,13 @@ export class HomeAssistantNotifier extends NotifierService {
           responseType: 'json',
         },
       );
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(
         { homeassistantConfig: this.config },
         'Error sending homeassistant message. Please check your configuration',
       );
-      throw err;
+      throw error;
     }
   }
 }

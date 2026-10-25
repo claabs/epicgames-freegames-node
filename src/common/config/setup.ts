@@ -46,9 +46,10 @@ export const CONFIG_FILE_NAME = process.env.CONFIG_FILE_NAME
   : 'config';
 
 const configPaths = EXTENSIONS.map((ext) => path.resolve(CONFIG_DIR, `${CONFIG_FILE_NAME}${ext}`));
-const configPath = (
-  await Promise.all(configPaths.map(async (p) => ((await fs.exists(p)) ? p : undefined)))
-).find(Boolean);
+const existingPaths = await Promise.all(
+  configPaths.map(async (p) => ((await fs.exists(p)) ? p : undefined)),
+);
+const configPath = existingPaths.find(Boolean);
 
 const defaultConfig: AppConfigInput = {
   accounts: [{ email: 'youremailhere' }],
@@ -62,7 +63,18 @@ const defaultConfig: AppConfigInput = {
 
 let configParseResult: z.ZodSafeParseResult<AppConfig>;
 
-if (!configPath) {
+if (configPath) {
+  L.debug({ configPath }, 'Reading existing config file');
+  let configRaw: string;
+  try {
+    configRaw = await fs.readFile(configPath, 'utf8');
+  } catch (error) {
+    L.error(error, `Unable to read ${configPath}. Fix the permissions and restart.`);
+    throw error;
+  }
+  const parsedConfig = json5.parse<unknown>(configRaw);
+  configParseResult = appConfigSchema.safeParse(parsedConfig);
+} else {
   L.info('No config file detected, checking if valid with environment variables');
   configParseResult = appConfigSchema.safeParse({});
 
@@ -77,22 +89,11 @@ if (!configPath) {
       L.debug({ newConfigPath }, 'Creating new config file');
       await fs.writeJSON(newConfigPath, defaultConfig, { spaces: 2 });
       L.info({ newConfigPath }, 'Wrote new default config file');
-    } catch (err) {
-      L.warn({ err }, 'Not allowed to create new config.');
+    } catch (error) {
+      L.warn({ err: error }, 'Not allowed to create new config.');
     }
     L.warn(`New config generated at ${newConfigPath}. Populate it with your details and restart.`);
   }
-} else {
-  L.debug({ configPath }, 'Reading existing config file');
-  let configRaw: string;
-  try {
-    configRaw = await fs.readFile(configPath, 'utf8');
-  } catch (err) {
-    L.error(err, `Unable to read ${configPath}. Fix the permissions and restart.`);
-    throw err;
-  }
-  const parsedConfig = json5.parse(configRaw);
-  configParseResult = appConfigSchema.safeParse(parsedConfig);
 }
 
 if (configParseResult.error) {
@@ -119,5 +120,5 @@ if (cronIntervalMs > intervalMinimumMs) {
 export { config };
 
 export function getMsUntilNextRun(): number {
-  return CronExpressionParser.parse(config.cronSchedule).next().getTime() - new Date().getTime();
+  return CronExpressionParser.parse(config.cronSchedule).next().getTime() - Date.now();
 }

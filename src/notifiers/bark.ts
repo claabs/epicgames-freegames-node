@@ -28,10 +28,10 @@ export class BarkNotifier extends NotifierService {
     L.trace({ requestUrl }, 'Sending request');
     try {
       await axios.get(requestUrl);
-    } catch (err) {
-      L.error(err);
+    } catch (error) {
+      L.error(error);
       L.error(this.config, `Failed to send message`);
-      throw err;
+      throw error;
     }
   }
 }

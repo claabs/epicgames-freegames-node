@@ -47,11 +47,11 @@ export class EulaManager {
     this.deviceAuth = deviceAuth;
   }
 
-  private async getAccountId(): Promise<string> {
+  private getAccountId(): string {
     return this.deviceAuth.account_id;
   }
 
-  private async getAccessToken(): Promise<string> {
+  private getAccessToken(): string {
     return this.deviceAuth.access_token;
   }
 
@@ -59,7 +59,7 @@ export class EulaManager {
     this.L.debug('Checking EULA status');
     const pendingEulas = await this.fetchPendingEulas();
 
-    if (pendingEulas.length) {
+    if (pendingEulas.length > 0) {
       if (config.notifyEula) {
         this.L.error('User needs to log in an accept an updated EULA');
         const actionUrl = generateLoginRedirect(STORE_HOMEPAGE);
@@ -74,11 +74,11 @@ export class EulaManager {
 
   private async fetchPendingEulas() {
     const eulaStatuses: (EulaVersion | undefined)[] = await Promise.all(
-      REQUIRED_EULAS.map(async (key) => {
-        const url = `${EULA_AGREEMENTS_ENDPOINT}/${key}/account/${await this.getAccountId()}`;
+      REQUIRED_EULAS.map(async (key): Promise<EulaVersion | undefined> => {
+        const url = `${EULA_AGREEMENTS_ENDPOINT}/${key}/account/${this.getAccountId()}`;
         this.L.trace({ url }, 'Checking EULA status');
         const response = await axios.get<EulaAgreementResponse | undefined>(url, {
-          headers: { Authorization: `Bearer ${await this.getAccessToken()}` },
+          headers: { Authorization: `Bearer ${this.getAccessToken()}` },
         });
         if (!response.data) return undefined;
         this.L.debug({ key }, 'EULA is not accepted');
@@ -97,11 +97,11 @@ export class EulaManager {
   private async acceptEulas(eulaVersions: EulaVersion[]): Promise<void> {
     await Promise.all(
       eulaVersions.map(async (eulaVersion) => {
-        const url = `${EULA_AGREEMENTS_ENDPOINT}/${eulaVersion.key}/version/${eulaVersion.version}/account/${await this.getAccountId()}/accept`;
+        const url = `${EULA_AGREEMENTS_ENDPOINT}/${eulaVersion.key}/version/${eulaVersion.version.toFixed(0)}/account/${this.getAccountId()}/accept`;
         this.L.trace({ url }, 'Accepting EULA');
         await axios.post(url, undefined, {
           params: { locale: eulaVersion.locale },
-          headers: { Authorization: `Bearer ${await this.getAccessToken()}` },
+          headers: { Authorization: `Bearer ${this.getAccessToken()}` },
         });
         this.L.debug({ key: eulaVersion.key }, 'EULA accepted');
       }),
