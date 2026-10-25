@@ -1,4 +1,4 @@
-name: MultiArchDockerBuild
+name: Docker Build
 
 on:
   push:
@@ -12,8 +12,8 @@ on:
       - master
 
 jobs:
-  build_multi_arch_image:
-    name: Build multi-arch Docker image.
+  docker:
+    name: Build Docker image
     runs-on: ubuntu-latest
     steps:
       - name: Docker meta
@@ -28,6 +28,15 @@ jobs:
             type=raw,value=debian,enable={{is_default_branch}}
             type=sha,enable={{is_default_branch}}
             type=ref,event=pr,enable=${{ github.event_name == 'pull_request' }}
+          labels: |
+            org.opencontainers.image.created={{ date 'YYYY-MM-DD[T]HH:mm:ss[Z]' }}
+            org.opencontainers.image.authors=Charlie Laabs (https://github.com/claabs)
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision={{ sha }}
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=epicgames-freegames-node
+            org.opencontainers.image.description=Automatically notify about free games promotions on the Epic Games store
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -48,7 +57,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push master
+      - name: Build and push
         uses: docker/build-push-action@v7
         with:
           push: true
