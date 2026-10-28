@@ -123,7 +123,7 @@ export default class PuppetBase {
     return false;
   }
 
-  public async setupCookies(deviceAuth?: AuthTokenResponse): Promise<void> {
+  public async setupCookies(deviceAuth?: AuthTokenResponse): Promise<boolean> {
     this.L.debug('Logging in with Playwright');
     try {
       if (deviceAuth) {
@@ -158,7 +158,20 @@ export default class PuppetBase {
       }
       this.page = await safeNewPage(this.browser, this.L);
       this.L.debug('Going to page: STORE_CART_EN');
-      await this.page.goto(STORE_CART_EN); // Get EG1 cookie;
+      // Get EG1 cookie;
+      await this.page.goto(STORE_CART_EN);
+      const deadline = new Date(Date.now() + config.browserNavigationTimeout);
+      this.L.trace({ deadline }, 'Waiting for EPIC_EG1 cookie');
+      while (new Date() < deadline) {
+        // eslint-disable-next-line no-await-in-loop
+        if (await this.checkCookie()) return true;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(resolve, 500);
+        });
+      }
+      this.L.warn('Timed out waiting for EPIC_EG1 cookie');
+      return false;
     } catch (error) {
       await this.handlePageError(error);
       throw error;
@@ -177,7 +190,7 @@ export default class PuppetBase {
     }
   }
 
-  protected async handlePageError(err: unknown): Promise<void> {
+  public async handlePageError(err: unknown): Promise<void> {
     if (this.page && !this.page.isClosed()) {
       const errorFile = `error-${new Date().toISOString()}.png`;
       await ensureDir(config.errorsDir);

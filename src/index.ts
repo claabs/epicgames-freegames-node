@@ -38,19 +38,18 @@ export async function redeemAccount(account: AccountConfig): Promise<void> {
 
     if (!isCookieValid && deviceAuth) {
       L.info('Stored cookie is missing/expired. Refreshing with cached device auth');
-      await freeGames.setupCookies(deviceAuth);
-      isCookieValid = await freeGames.checkCookie();
+      isCookieValid = await freeGames.setupCookies(deviceAuth);
     }
 
     if (!isCookieValid) {
       L.info('Stored cookie is missing/expired. Refreshing with new device auth');
       deviceAuth = await deviceLogin.newDeviceAuthLogin();
-      await freeGames.setupCookies(deviceAuth);
-      isCookieValid = await freeGames.checkCookie();
+      isCookieValid = await freeGames.setupCookies(deviceAuth);
     }
 
     if (!isCookieValid) {
-      throw new Error('Could not generate authenticated browser session');
+      const error = new Error('Could not generate authenticated browser session');
+      await freeGames.handlePageError(error);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
