@@ -20,8 +20,9 @@ export class HomeAssistantNotifier extends NotifierService {
     L.trace('Sending homeassistant notification');
 
     try {
+      const baseUrl = this.config.instance.replace(/\/+$/, '');
       await axios.post(
-        `${this.config.instance}/api/services/notify/${this.config.notifyservice}`,
+        `${baseUrl}/api/services/notify/${this.config.notifyservice}`,
         {
           title: `Action request from Epic Games`,
           message: `epicgames needs an action performed. Reason: ${reason} {{ '\n' -}} Link: ${url}`,
