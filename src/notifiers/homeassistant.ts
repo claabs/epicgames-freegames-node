@@ -1,3 +1,5 @@
+import urlJoin from 'url-join';
+
 import axios from '../axios-base.ts';
 import { NotifierService } from './notifier-service.ts';
 import logger from '../common/logger.ts';
@@ -21,7 +23,7 @@ export class HomeAssistantNotifier extends NotifierService {
 
     try {
       await axios.post(
-        `${this.config.instance}/api/services/notify/${this.config.notifyservice}`,
+        urlJoin(this.config.instance, 'api/services/notify', this.config.notifyservice),
         {
           title: `Action request from Epic Games`,
           message: `epicgames needs an action performed. Reason: ${reason} {{ '\n' -}} Link: ${url}`,

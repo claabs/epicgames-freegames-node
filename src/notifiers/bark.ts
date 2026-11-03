@@ -1,3 +1,5 @@
+import urlJoin from 'url-join';
+
 import axios from '../axios-base.ts';
 import { NotifierService } from './notifier-service.ts';
 import logger from '../common/logger.ts';
@@ -21,13 +23,21 @@ export class BarkNotifier extends NotifierService {
 
     const message = encodeURIComponent(`reason: ${reason}, account: ${account}`);
 
-    const requestUrl = `${this.config.apiUrl}/${encodeURIComponent(
-      this.config.key,
-    )}/${encodeURIComponent(this.config.title)}/${message}?url=${encodeURIComponent(url)}&group=${encodeURIComponent(this.config.group)}`;
+    const requestUrl = urlJoin(
+      this.config.apiUrl,
+      encodeURIComponent(this.config.key),
+      encodeURIComponent(this.config.title),
+      message,
+    );
 
     L.trace({ requestUrl }, 'Sending request');
     try {
-      await axios.get(requestUrl);
+      await axios.get(requestUrl, {
+        params: {
+          url,
+          group: this.config.group,
+        },
+      });
     } catch (error) {
       L.error(error);
       L.error(this.config, `Failed to send message`);

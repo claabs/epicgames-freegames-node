@@ -1,3 +1,5 @@
+import urlJoin from 'url-join';
+
 import axios from '../axios-base.ts';
 import { NotifierService } from './notifier-service.ts';
 import logger from '../common/logger.ts';
@@ -40,9 +42,13 @@ export class TelegramNotifier extends NotifierService {
     L.trace({ jsonPayload }, 'Sending json payload');
 
     try {
-      await axios.post(`${this.config.apiUrl}/bot${this.config.token}/sendMessage`, jsonPayload, {
-        responseType: 'json',
-      });
+      await axios.post(
+        urlJoin(this.config.apiUrl, `bot${this.config.token}`, 'sendMessage'),
+        jsonPayload,
+        {
+          responseType: 'json',
+        },
+      );
     } catch (error) {
       L.error(error);
       L.error({ chatId: this.config.chatId }, `Failed to send message`);

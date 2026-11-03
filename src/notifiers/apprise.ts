@@ -1,3 +1,5 @@
+import urlJoin from 'url-join';
+
 import axios from '../axios-base.ts';
 import { NotifierService } from './notifier-service.ts';
 import logger from '../common/logger.ts';
@@ -37,7 +39,7 @@ url: ${url}`,
     L.trace({ apiUrl: this.config.apiUrl, jsonPayload }, 'Sending json payload');
 
     try {
-      await axios.post(`${this.config.apiUrl}/notify`, jsonPayload, {
+      await axios.post(urlJoin(this.config.apiUrl, 'notify'), jsonPayload, {
         responseType: 'text',
       });
     } catch (error) {

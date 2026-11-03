@@ -1,3 +1,5 @@
+import urlJoin from 'url-join';
+
 import axios from '../axios-base.ts';
 import { NotifierService } from './notifier-service.ts';
 import logger from '../common/logger.ts';
@@ -40,8 +42,11 @@ export class GotifyNotifier extends NotifierService {
     };
 
     try {
-      await axios.post(`${this.config.apiUrl}/message?token=${this.config.token}`, jsonPayload, {
+      await axios.post(urlJoin(this.config.apiUrl, 'message'), jsonPayload, {
         responseType: 'json',
+        params: {
+          token: this.config.token,
+        },
       });
     } catch (error) {
       L.error(error);
