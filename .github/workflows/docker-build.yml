@@ -15,6 +15,9 @@ jobs:
   docker:
     name: Build Docker image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Docker meta
         id: meta
@@ -61,7 +64,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          push: true
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
