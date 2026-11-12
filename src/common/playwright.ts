@@ -22,9 +22,11 @@ const getPlaywrightProxyConfig = () => {
   const proxyString =
     getProxyEnvironmentVariable('https_proxy') ?? getProxyEnvironmentVariable('all_proxy');
   if (proxyString) {
+    const bypass = getProxyEnvironmentVariable('no_proxy');
     return {
       proxy: {
         server: proxyString,
+        bypass,
       },
     };
   }
