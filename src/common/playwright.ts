@@ -26,7 +26,7 @@ const getPlaywrightProxyConfig = () => {
     return {
       proxy: {
         server: proxyString,
-        ...(bypass ? { bypass } : {}),
+        bypass,
       },
     };
   }
